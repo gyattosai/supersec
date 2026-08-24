@@ -16,7 +16,7 @@
 - [ ] Create the secretary dashboard and cross-subject overview.
 - [ ] Build elegant, mobile-first subject homes that always show the subject name, subject code, professor name, fixed weekday schedule, and upcoming no-class notice.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
-- [ ] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
+- [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [ ] Build per-session Class Attendance reports and an end-of-exams All Subject Attendance view.
 - [ ] Implement blog-style announcements with a rich editor, media uploads, manual version numbers, and public change history.
@@ -28,9 +28,9 @@
 - [x] Establish an Apple-inspired web typography system using system font stacks and accessible responsive type scales without requiring proprietary font files.
 - [ ] Add automated tests, mobile visual checks, accessibility checks, and sharing/preview validation before the first implementation delivery.
 - [x] Fix pasted Zoom participant parsing so each line remains intact and comma-based names are not split into fragments.
-- [ ] Add name normalization toward SECTION_LAST NAME, FIRST NAME + MIDDLE NAME before suggestion review.
-- [ ] Transform confidently derivable Zoom-name variants toward the required format and flag uncertain variants for secretary review.
-- [ ] Surface source name and normalized candidate together during secretary suggestion review before confirmation.
-- [ ] Add targeted normalization tests for correct, spacing, casing, missing-comma, reordered, sectionless, and uncertain names.
+- [x] Add name normalization toward SECTION_LAST NAME, FIRST NAME + MIDDLE NAME before suggestion review.
+- [x] Transform confidently derivable Zoom-name variants toward the required format and flag uncertain variants for secretary review.
+- [x] Surface source name and normalized candidate together during secretary suggestion review before confirmation.
+- [x] Add targeted normalization tests for correct, spacing, casing, missing-comma, reordered, sectionless, and uncertain names.
 - [x] Wire secretary confirmation of unclear Zoom suggestions, including candidate selection and resolved-state handling, into the Attendance page.
 - [ ] Add tests for Zoom parsing, normalization, ambiguity review, and secretary confirmation before publishing Attendance.

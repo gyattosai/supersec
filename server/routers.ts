@@ -43,9 +43,12 @@ export const appRouter = router({
         const item = await db.getPublicContentItem(input.kind, input.publicId);
         return item ? { available: true as const, item } : { available: false as const };
       }),
-    history: publicProcedure
-      .input(z.object({ entityType: z.string().min(1).max(48), entityId: z.number().int().positive() }))
-      .query(async ({ input }) => db.getPublicHistory(input.entityType, input.entityId)),
+    publicHistory: publicProcedure
+      .input(z.object({ kind: z.enum(["announcement", "resource", "question"]), publicId: z.string().min(8).max(24) }))
+      .query(async ({ input }) => {
+        const history = await db.getPublicContentHistory(input.kind, input.publicId);
+        return history ? { available: true as const, history } : { available: false as const };
+      }),
     media: router({
       upload: ownerProcedure
         .input(z.object({ fileName: z.string().min(1).max(255), mimeType: z.string().min(1).max(128), base64Data: z.string().min(1).max(12_000_000), altText: z.string().max(280).nullable().optional(), publicUse: z.boolean() }))
@@ -54,8 +57,8 @@ export const appRouter = router({
           if (!bytes.length || bytes.length > 8_000_000) throw new Error("Upload must be between 1 byte and 8 MB");
           const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
           const stored = await storagePut(`class-media/${ctx.user.id}/${Date.now()}-${safeName}`, bytes, input.mimeType);
-          await db.createMediaReference({ ownerId: ctx.user.id, storageKey: stored.key, servedUrl: stored.url, originalName: input.fileName, mimeType: input.mimeType, byteSize: bytes.length, altText: input.altText, publicUse: input.publicUse });
-          return { key: stored.key, url: stored.url, byteSize: bytes.length };
+          const id = await db.createMediaReference({ ownerId: ctx.user.id, storageKey: stored.key, servedUrl: stored.url, originalName: input.fileName, mimeType: input.mimeType, byteSize: bytes.length, altText: input.altText, publicUse: input.publicUse });
+          return { id, key: stored.key, url: stored.url, byteSize: bytes.length };
         }),
       createReference: ownerProcedure
         .input(
@@ -70,8 +73,8 @@ export const appRouter = router({
           }),
         )
         .mutation(async ({ ctx, input }) => {
-          await db.createMediaReference({ ...input, ownerId: ctx.user.id });
-          return { success: true as const };
+          const id = await db.createMediaReference({ ...input, ownerId: ctx.user.id });
+          return { success: true as const, id };
         }),
     }),
   }),

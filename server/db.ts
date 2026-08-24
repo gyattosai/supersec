@@ -169,6 +169,8 @@ export type PublicContentPayload = {
   sourceDomain?: string;
   tagsText?: string | null;
   isOfficial?: boolean;
+  media?: { url: string; altText: string | null } | null;
+  socialPreviewMedia?: { url: string; altText: string | null } | null;
 };
 
 /** Selects only an explicitly published item and its published subject context. */
@@ -177,15 +179,28 @@ export async function getPublicContentItem(kind: PublicContentPayload["kind"], p
   if (!db) return null;
   const publishedSubject = and(eq(subjects.status, "active"), eq(subjects.publishState, "published"));
   if (kind === "announcement") {
-    const rows = await db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, version: announcements.version, publishedAt: announcements.publishedAt, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(announcements.publicId, publicId), eq(announcements.publishState, "published"), publishedSubject)).limit(1);
-    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+    const rows = await db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, version: announcements.version, publishedAt: announcements.publishedAt, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(announcements.mediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(announcements.publicId, publicId), eq(announcements.publishState, "published"), publishedSubject)).limit(1);
+    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
   }
   if (kind === "resource") {
-    const rows = await db.select({ publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
-    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+    const rows = await db.select({ publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
+    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
   }
-  const rows = await db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, body: questionsAnswers.answer, version: questionsAnswers.version, publishedAt: questionsAnswers.publishedAt, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(questionsAnswers.publicId, publicId), eq(questionsAnswers.publishState, "published"), publishedSubject)).limit(1);
-  const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, tagsText: row.tagsText, isOfficial: row.isOfficial, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+  const rows = await db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, body: questionsAnswers.answer, version: questionsAnswers.version, publishedAt: questionsAnswers.publishedAt, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(questionsAnswers.socialPreviewMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(questionsAnswers.publicId, publicId), eq(questionsAnswers.publishState, "published"), publishedSubject)).limit(1);
+  const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, tagsText: row.tagsText, isOfficial: row.isOfficial, socialPreviewMedia: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+}
+
+/** Public History requires a published public ID; numeric entity IDs never become an anonymous API contract. */
+export async function getPublicContentHistory(kind: PublicContentPayload["kind"], publicId: string) {
+  const item = await getPublicContentItem(kind, publicId);
+  if (!item) return null;
+  const db = await getDb();
+  if (!db) return null;
+  const table = kind === "announcement" ? announcements : kind === "resource" ? resources : questionsAnswers;
+  const entityType = kind === "question" ? "question" : kind;
+  const rows = await db.select({ id: table.id }).from(table).where(eq(table.publicId, publicId)).limit(1);
+  if (!rows[0]) return null;
+  return getPublicHistory(entityType, rows[0].id);
 }
 
 export async function createPublicHistoryEntry(input: {
@@ -213,5 +228,6 @@ export async function createMediaReference(input: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  await db.insert(mediaAssets).values(input);
+  const [row] = await db.insert(mediaAssets).values(input).$returningId();
+  return row.id;
 }

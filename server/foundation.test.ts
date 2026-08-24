@@ -36,4 +36,9 @@ describe("Milestone 2 foundation access", () => {
     const caller = appRouter.createCaller(contextFor("public-caller"));
     await expect(caller.foundation.publicItem({ kind: "resource", publicId: "not-a-real-public-id" })).resolves.toEqual({ available: false });
   });
+
+  it("does not expose History through guessed or unpublished public IDs", async () => {
+    const caller = appRouter.createCaller(contextFor("public-caller"));
+    await expect(caller.foundation.publicHistory({ kind: "announcement", publicId: "not-a-real-public-id" })).resolves.toEqual({ available: false });
+  });
 });
