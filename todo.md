@@ -5,13 +5,19 @@
 - [x] Produce and obtain approval for a Product Requirements Document before creating milestones, product design, or feature implementation.
 - [x] Revise the information architecture so every navigation and content label uses the approved simple taxonomy consistently.
 - [x] Produce and obtain approval for a dependency-aware build milestone breakdown before product design or feature implementation.
-- [ ] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
-- [ ] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
+- [ ] Produce and obtain approval for one unified milestone build plan that pairs product-design work with each development implementation stage.
+- [x] Implement Milestone 2 app foundation: owner-only management access, safe public route access, schema, History, media references, and dark route shell.
+- [ ] Verify all Milestone 2 interface work follows the approved Milestone 1 dark, Apple-inspired, mobile-first, accessible design foundation.
+- [x] Reconcile the partially applied Milestone 2 database schema before continuing direct implementation.
+- [ ] Re-run and document complete Milestone 2 mobile and desktop validation for dark default, focus, touch targets, reduced transparency, and public/private states.
+- [ ] Fix and verify remaining blank or loading route states on protected and public pages before the next checkpoint.
+- [x] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
+- [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [ ] Create the secretary dashboard and cross-subject overview.
 - [ ] Build elegant, mobile-first subject homes that always show the subject name, subject code, professor name, fixed weekday schedule, and upcoming no-class notice.
-- [ ] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
+- [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [ ] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
-- [ ] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
+- [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [ ] Build per-session Class Attendance reports and an end-of-exams All Subject Attendance view.
 - [ ] Implement blog-style announcements with a rich editor, media uploads, manual version numbers, and public change history.
 - [ ] Implement visual resource web cards with title, description, category, type, source/domain label, fallback thumbnail, version history, and support for Google Drive, Google Forms, external sites, Facebook, images, and Zoom links.
@@ -19,5 +25,12 @@
 - [ ] Store announcement media, resource fallback thumbnails, and custom social-preview images securely in managed object storage.
 - [ ] Add social-preview SEO metadata and crawler-visible previews for shareable subject, announcement, resource, and Q&A pages, with neutral non-sensitive metadata for attendance views.
 - [ ] Apply the Apple-inspired, mobile-first design direction, HIG-informed accessibility checks, and a coherent class-workspace icon strategy.
-- [ ] Establish an Apple-inspired web typography system using system font stacks and accessible responsive type scales without requiring proprietary font files.
+- [x] Establish an Apple-inspired web typography system using system font stacks and accessible responsive type scales without requiring proprietary font files.
 - [ ] Add automated tests, mobile visual checks, accessibility checks, and sharing/preview validation before the first implementation delivery.
+- [x] Fix pasted Zoom participant parsing so each line remains intact and comma-based names are not split into fragments.
+- [ ] Add name normalization toward SECTION_LAST NAME, FIRST NAME + MIDDLE NAME before suggestion review.
+- [ ] Transform confidently derivable Zoom-name variants toward the required format and flag uncertain variants for secretary review.
+- [ ] Surface source name and normalized candidate together during secretary suggestion review before confirmation.
+- [ ] Add targeted normalization tests for correct, spacing, casing, missing-comma, reordered, sectionless, and uncertain names.
+- [x] Wire secretary confirmation of unclear Zoom suggestions, including candidate selection and resolved-state handling, into the Attendance page.
+- [ ] Add tests for Zoom parsing, normalization, ambiguity review, and secretary confirmation before publishing Attendance.

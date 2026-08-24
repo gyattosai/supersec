@@ -1,0 +1,52 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/lib/trpc";
+import { ArrowLeft, BookOpen, CircleHelp, Copy, ExternalLink, Megaphone, Send } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { toast } from "sonner";
+import { Link, useRoute } from "wouter";
+
+const tabs = [
+  { key: "announcements", label: "Announcements", icon: Megaphone },
+  { key: "resources", label: "Resources", icon: BookOpen },
+  { key: "questions", label: "Questions & Answers", icon: CircleHelp },
+] as const;
+type ContentKind = (typeof tabs)[number]["key"];
+
+export default function ContentPage() {
+  const [, params] = useRoute("/app/content/:subjectId/:kind");
+  const subjectId = Number(params?.subjectId);
+  const kind: ContentKind = tabs.some(tab => tab.key === params?.kind) ? params!.kind as ContentKind : "announcements";
+  const utils = trpc.useUtils();
+  const announcements = trpc.content.announcements.list.useQuery({ subjectId });
+  const resources = trpc.content.resources.list.useQuery({ subjectId });
+  const questions = trpc.content.questions.list.useQuery({ subjectId });
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [category, setCategory] = useState("");
+  const [url, setUrl] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const refresh = async () => { await Promise.all([utils.content.announcements.list.invalidate({ subjectId }), utils.content.resources.list.invalidate({ subjectId }), utils.content.questions.list.invalidate({ subjectId })]); };
+  const announcementCreate = trpc.content.announcements.create.useMutation({ onSuccess: () => { setTitle(""); setBody(""); refresh(); toast.success("Announcement saved as draft"); }, onError: error => toast.error(error.message) });
+  const resourceCreate = trpc.content.resources.create.useMutation({ onSuccess: () => { setTitle(""); setBody(""); setCategory(""); setUrl(""); refresh(); toast.success("Resource saved as draft"); }, onError: error => toast.error(error.message) });
+  const questionCreate = trpc.content.questions.create.useMutation({ onSuccess: () => { setQuestion(""); setAnswer(""); refresh(); toast.success("Question & Answer saved as draft"); }, onError: error => toast.error(error.message) });
+  const publishAnnouncement = trpc.content.announcements.publish.useMutation({ onSuccess: () => { refresh(); toast.success("Announcement published"); }, onError: error => toast.error(error.message) });
+  const publishResource = trpc.content.resources.publish.useMutation({ onSuccess: () => { refresh(); toast.success("Resource published"); }, onError: error => toast.error(error.message) });
+  const publishQuestion = trpc.content.questions.publish.useMutation({ onSuccess: () => { refresh(); toast.success("Question & Answer published"); }, onError: error => toast.error(error.message) });
+  const currentTab = tabs.find(tab => tab.key === kind)!;
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (kind === "announcements") announcementCreate.mutate({ subjectId, title, body });
+    if (kind === "resources") resourceCreate.mutate({ subjectId, title, description: body, category, resourceType: category, destinationUrl: url });
+    if (kind === "questions") questionCreate.mutate({ subjectId, question, answer, isOfficial: true });
+  };
+  const busy = announcementCreate.isPending || resourceCreate.isPending || questionCreate.isPending;
+
+  return <DashboardLayout><section className="mx-auto max-w-5xl"><Link href="/app/subjects" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Back to Subjects</Link><div className="mt-4"><p className="text-sm font-semibold text-primary">Subject information</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">{currentTab.label}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Create drafts, review details, then publish the version classmates may see. Private notes and working details stay out of public links.</p></div><nav className="mt-6 flex gap-2 overflow-x-auto pb-1">{tabs.map(tab => { const Icon = tab.icon; return <Link key={tab.key} href={`/app/content/${subjectId}/${tab.key}`} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold ${kind === tab.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}><Icon className="h-4 w-4" />{tab.label}</Link>; })}</nav><div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]"><form onSubmit={onSubmit} className="rounded-[28px] border border-border bg-card p-5"><h2 className="font-semibold">New {kind === "questions" ? "Question & Answer" : kind.slice(0, -1)}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">New items begin as drafts so you remain in control of every public update.</p>{kind !== "questions" ? <><Input required className="mt-5" value={title} onChange={event => setTitle(event.target.value)} placeholder={kind === "resources" ? "Resource title" : "Announcement title"} />{kind === "resources" ? <><Input required className="mt-3" value={category} onChange={event => setCategory(event.target.value)} placeholder="Type, such as Google Drive or Zoom" /><Input required type="url" className="mt-3" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://" /></> : null}<Textarea required className="mt-3 min-h-40" value={body} onChange={event => setBody(event.target.value)} placeholder={kind === "resources" ? "Description for classmates" : "Write the announcement"} /></> : <><Textarea required className="mt-5 min-h-28" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Question from Messenger" /><Textarea required className="mt-3 min-h-40" value={answer} onChange={event => setAnswer(event.target.value)} placeholder="Official answer" /></>}<Button disabled={busy} className="mt-4 min-h-11 w-full rounded-2xl"><Send className="mr-2 h-4 w-4" />Save draft</Button></form><section className="rounded-[28px] border border-border bg-card p-5"><h2 className="font-semibold">Saved items</h2><div className="mt-4 space-y-3">{kind === "announcements" && announcements.data?.map(item => <ContentRow key={item.id} title={item.title} detail={item.body} state={item.publishState} version={item.version} sharePath={`/a/${item.publicId}`} onPublish={() => publishAnnouncement.mutate({ id: item.id, summary: "Published by the class secretary" })} busy={publishAnnouncement.isPending} />)}{kind === "resources" && resources.data?.map(item => <ContentRow key={item.id} title={item.title} detail={`${item.category} · ${item.sourceDomain}`} state={item.publishState} version={item.version} href={item.destinationUrl} sharePath={`/r/${item.publicId}`} onPublish={() => publishResource.mutate({ id: item.id, summary: "Published by the class secretary" })} busy={publishResource.isPending} />)}{kind === "questions" && questions.data?.map(item => <ContentRow key={item.id} title={item.question} detail={item.answer} state={item.publishState} version={item.version} sharePath={`/q/${item.publicId}`} onPublish={() => publishQuestion.mutate({ id: item.id, summary: "Published as the official answer", official: true })} busy={publishQuestion.isPending} />)}{((kind === "announcements" && !announcements.data?.length) || (kind === "resources" && !resources.data?.length) || (kind === "questions" && !questions.data?.length)) ? <p className="py-10 text-center text-sm text-muted-foreground">No saved items yet.</p> : null}</div></section></div></section></DashboardLayout>;
+}
+
+function ContentRow({ title, detail, state, version, href, sharePath, onPublish, busy }: { title: string; detail: string; state: "draft" | "published" | "archived"; version: number; href?: string; sharePath: string; onPublish: () => void; busy: boolean }) { const copyLink = async () => { await navigator.clipboard.writeText(`${window.location.origin}${sharePath}`); toast.success("Public link copied for Messenger"); }; return <article className="rounded-2xl bg-secondary p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="font-semibold">{title}</h3><p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">{detail}</p></div><Badge variant={state === "published" ? "default" : "secondary"} className="shrink-0 rounded-full">{state}</Badge></div><div className="mt-3 flex flex-wrap items-center gap-3"><span className="text-xs text-muted-foreground">Version {version}</span>{href ? <a href={href} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-primary"><ExternalLink className="h-3.5 w-3.5" />Open</a> : null}{state === "published" ? <><a href={sharePath} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center text-xs font-semibold text-primary">View public</a><button onClick={copyLink} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-primary"><Copy className="h-3.5 w-3.5" />Copy link</button></> : null}{state === "draft" ? <Button size="sm" disabled={busy} onClick={onPublish} className="ml-auto min-h-9 rounded-xl">Publish</Button> : null}</div></article>; }
