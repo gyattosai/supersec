@@ -35,6 +35,7 @@ describe("Milestone 2 foundation access", () => {
     await expect(caller.content.archiveList()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.subjects.sessions.createNoClass({ subjectId: 1, startsAt: new Date(), reason: "Holiday" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.subjects.students.remove({ membershipId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.subjects.update({ subjectId: 1, name: "Research Methods", code: "RM 101", professorName: "Professor Name", termName: null, meetingDays: [{ weekday: 2, startTime: null, endTime: null }] })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("allows the project owner into the secretary context", async () => {

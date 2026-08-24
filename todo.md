@@ -16,6 +16,7 @@
 - [x] Add a safe Subject-level action to remove a Student from an active roster without deleting the Student record.
 - [x] Create the secretary dashboard and cross-subject overview.
 - [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
+- [x] Add editable Subject details and fixed-weekday Schedule management after Subject creation.
 - [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.
 - [x] Add a direct No Class date creation workflow without requiring a placeholder class session.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
