@@ -41,3 +41,4 @@
 - [x] Verify a real archived Report appears in Archive, restores as a draft, and is removed from the Archive list end to end.
 - [ ] Verify an archived Subject appears in Archive, restores, and is removed from the Archive list end to end.
 - [ ] Verify archived Announcements, Resources, and Questions & Answers each restore from Archive and update the list end to end.
+- [ ] Save the post-verification release-candidate checkpoint and provide production deployment and monitoring handoff guidance.
