@@ -33,6 +33,7 @@ describe("Milestone 2 foundation access", () => {
     await expect(caller.attendance.confirmSuggestion({ suggestionId: 1, membershipId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.reports.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.content.archiveList()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.subjects.sessions.createNoClass({ subjectId: 1, startsAt: new Date(), reason: "Holiday" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("allows the project owner into the secretary context", async () => {
