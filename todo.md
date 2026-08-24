@@ -18,6 +18,7 @@
 - [x] Refresh stale secretary-dashboard milestone wording so it accurately describes implemented workflows.
 - [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
 - [x] Add editable Subject details and fixed-weekday Schedule management after Subject creation.
+- [x] Add optional start and end time controls for each selected fixed Schedule day.
 - [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.
 - [x] Add a direct No Class date creation workflow without requiring a placeholder class session.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
