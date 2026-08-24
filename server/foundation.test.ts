@@ -27,6 +27,12 @@ describe("Milestone 2 foundation access", () => {
     await expect(caller.foundation.owner.getContext()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("rejects a signed-in non-owner from Attendance and report procedures", async () => {
+    const caller = appRouter.createCaller(contextFor("not-the-project-owner"));
+    await expect(caller.attendance.list({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.reports.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("allows the project owner into the secretary context", async () => {
     const caller = appRouter.createCaller(contextFor(ENV.ownerOpenId));
     await expect(caller.foundation.owner.getContext()).resolves.toMatchObject({ mode: "secretary" });
@@ -40,5 +46,10 @@ describe("Milestone 2 foundation access", () => {
   it("does not expose History through guessed or unpublished public IDs", async () => {
     const caller = appRouter.createCaller(contextFor("public-caller"));
     await expect(caller.foundation.publicHistory({ kind: "announcement", publicId: "not-a-real-public-id" })).resolves.toEqual({ available: false });
+  });
+
+  it("returns an unavailable state for guessed published Attendance links", async () => {
+    const caller = appRouter.createCaller(contextFor("public-caller"));
+    await expect(caller.foundation.publicAttendance({ publicId: "not-a-real-public-id" })).resolves.toEqual({ available: false });
   });
 });

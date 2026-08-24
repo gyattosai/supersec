@@ -118,8 +118,9 @@ export const subjectsRouter = router({
     create: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), startsAt: z.coerce.date() })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       await ownerSubject(database, ctx.user.id, input.subjectId);
-      const [created] = await database.insert(classSessions).values({ subjectId: input.subjectId, startsAt: input.startsAt, sessionState: "scheduled", publishState: "draft" }).$returningId();
-      return { id: created.id };
+      const publicId = nanoid(12);
+      const [created] = await database.insert(classSessions).values({ subjectId: input.subjectId, publicId, startsAt: input.startsAt, sessionState: "scheduled", publishState: "draft" }).$returningId();
+      return { id: created.id, publicId };
     }),
     setNoClass: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), noClass: z.boolean(), reason: z.string().trim().max(255).nullable().optional(), publish: z.boolean().default(true) })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();

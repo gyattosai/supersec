@@ -98,6 +98,8 @@ export const classSessions = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     subjectId: int("subjectId").notNull().references(() => subjects.id, { onDelete: "cascade" }),
+    /** Opaque identifier used by anonymous published Attendance links. */
+    publicId: varchar("publicId", { length: 24 }).notNull(),
     startsAt: timestamp("startsAt").notNull(),
     sessionState: mysqlEnum("sessionState", ["scheduled", "no_class", "completed"]).default("scheduled").notNull(),
     noClassReason: varchar("noClassReason", { length: 255 }),
@@ -107,6 +109,7 @@ export const classSessions = mysqlTable(
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   table => [
+    uniqueIndex("class_sessions_public_id_unique").on(table.publicId),
     uniqueIndex("class_sessions_subject_start_unique").on(table.subjectId, table.startsAt),
     index("class_sessions_subject_state_idx").on(table.subjectId, table.sessionState),
   ],

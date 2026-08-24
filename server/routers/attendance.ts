@@ -101,7 +101,7 @@ export function normalizeZoomParticipantName(value: string): ZoomNameNormalizati
 export function normalizeZoomDisplayName(value: string) { const normalized = normalizeZoomParticipantName(value); return normalized.normalizedCandidate ?? canonicalSegment(normalized.sourceName); }
 
 async function ownerSession(database: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, sessionId: number) {
-  const session = await database.select({ id: classSessions.id, subjectId: classSessions.subjectId, startsAt: classSessions.startsAt }).from(classSessions).innerJoin((await import("../../drizzle/schema")).subjects, eq(classSessions.subjectId, (await import("../../drizzle/schema")).subjects.id)).where(and(eq(classSessions.id, sessionId), eq((await import("../../drizzle/schema")).subjects.ownerId, ownerId))).limit(1);
+  const session = await database.select({ id: classSessions.id, subjectId: classSessions.subjectId, publicId: classSessions.publicId, startsAt: classSessions.startsAt, publishState: classSessions.publishState }).from(classSessions).innerJoin((await import("../../drizzle/schema")).subjects, eq(classSessions.subjectId, (await import("../../drizzle/schema")).subjects.id)).where(and(eq(classSessions.id, sessionId), eq((await import("../../drizzle/schema")).subjects.ownerId, ownerId))).limit(1);
   if (!session[0]) throw new Error("Class session not found");
   return session[0];
 }
@@ -112,6 +112,10 @@ async function ensureRecords(database: Awaited<ReturnType<typeof databaseOrThrow
 }
 
 export const attendanceRouter = router({
+  session: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const database = await databaseOrThrow();
+    return ownerSession(database, ctx.user.id, input.sessionId);
+  }),
   list: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);
     return database.select({ recordId: attendanceRecords.id, membershipId: subjectStudents.id, canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, publishState: attendanceRecords.publishState, version: attendanceRecords.publishedVersion }).from(attendanceRecords).innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(attendanceRecords.classSessionId, session.id)).orderBy(asc(students.canonicalName));

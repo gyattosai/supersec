@@ -34,3 +34,5 @@
 - [x] Add targeted normalization tests for correct, spacing, casing, missing-comma, reordered, sectionless, and uncertain names.
 - [x] Wire secretary confirmation of unclear Zoom suggestions, including candidate selection and resolved-state handling, into the Attendance page.
 - [ ] Add tests for Zoom parsing, normalization, ambiguity review, and secretary confirmation before publishing Attendance.
+- [x] Add and verify a direct Attendance-to-Reports path for each class session.
+- [ ] Add published per-session Attendance viewing with opaque view-only links, safe roster-status fields, and public History while keeping Zoom imports and review data private.

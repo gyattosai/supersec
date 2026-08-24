@@ -13,6 +13,7 @@ import {
   subjectMeetingDays,
   subjectStudents,
   subjects,
+  students,
   users,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -76,6 +77,7 @@ export type PublicSubjectPayload = {
   meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }>;
   noClass: { startsAt: Date; reason: string } | null;
   latest: {
+    attendance: Array<{ publicId: string; startsAt: Date }>;
     announcements: Array<{ publicId: string; title: string }>;
     resources: Array<{ publicId: string; title: string }>;
     questions: Array<{ publicId: string; title: string }>;
@@ -131,7 +133,8 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     .orderBy(asc(classSessions.startsAt))
     .limit(1);
 
-  const [announcementRows, resourceRows, questionRows] = await Promise.all([
+  const [attendanceRows, announcementRows, resourceRows, questionRows] = await Promise.all([
+    db.select({ publicId: classSessions.publicId, startsAt: classSessions.startsAt }).from(classSessions).where(and(eq(classSessions.subjectId, subject.id), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"))).orderBy(desc(classSessions.startsAt)).limit(3),
     db.select({ publicId: announcements.publicId, title: announcements.title }).from(announcements).where(and(eq(announcements.subjectId, subject.id), eq(announcements.publishState, "published"))).orderBy(desc(announcements.publishedAt)).limit(3),
     db.select({ publicId: resources.publicId, title: resources.title }).from(resources).where(and(eq(resources.subjectId, subject.id), eq(resources.publishState, "published"))).orderBy(desc(resources.publishedAt)).limit(3),
     db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question }).from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, subject.id), eq(questionsAnswers.publishState, "published"), eq(questionsAnswers.isOfficial, true))).orderBy(desc(questionsAnswers.publishedAt)).limit(3),
@@ -144,7 +147,7 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     professorName: subject.professorName,
     meetingDays,
     noClass: noClass && noClass.reason ? { startsAt: noClass.startsAt, reason: noClass.reason } : null,
-    latest: { announcements: announcementRows, resources: resourceRows, questions: questionRows },
+    latest: { attendance: attendanceRows, announcements: announcementRows, resources: resourceRows, questions: questionRows },
   };
 }
 
@@ -204,6 +207,51 @@ export async function getPublicContentHistory(kind: PublicContentPayload["kind"]
   const rows = await db.select({ id: table.id }).from(table).where(eq(table.publicId, publicId)).limit(1);
   if (!rows[0]) return null;
   return getPublicHistory(entityType, rows[0].id);
+}
+
+export type PublicAttendancePayload = {
+  publicId: string;
+  startsAt: Date;
+  version: number;
+  subject: { publicId: string; name: string; code: string; professorName: string };
+  records: Array<{ canonicalName: string; status: "PRESENT" | "ABSENT" | "NOT_SET" }>;
+  history: Awaited<ReturnType<typeof getPublicHistory>>;
+};
+
+/**
+ * An opaque published Attendance link returns only final canonical names, statuses, and public
+ * History. Raw Zoom text, normalization candidates, AI suggestions, aliases, and owner data are
+ * never selected for an anonymous caller.
+ */
+export async function getPublicAttendanceById(publicId: string): Promise<PublicAttendancePayload | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({ id: classSessions.id, publicId: classSessions.publicId, startsAt: classSessions.startsAt, version: attendanceRecords.publishedVersion, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName })
+    .from(classSessions)
+    .innerJoin(subjects, eq(classSessions.subjectId, subjects.id))
+    .leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id))
+    .where(and(eq(classSessions.publicId, publicId), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"), eq(subjects.status, "active"), eq(subjects.publishState, "published")))
+    .orderBy(asc(attendanceRecords.id))
+    .limit(1);
+  const session = rows[0];
+  if (!session) return null;
+  const records = await db
+    .select({ canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus })
+    .from(attendanceRecords)
+    .innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id))
+    .innerJoin(students, eq(subjectStudents.studentId, students.id))
+    .where(and(eq(attendanceRecords.classSessionId, session.id), eq(attendanceRecords.publishState, "published")))
+    .orderBy(asc(students.canonicalName));
+  const history = await getPublicHistory("attendance", session.id);
+  return {
+    publicId: session.publicId,
+    startsAt: session.startsAt,
+    version: session.version ?? 0,
+    subject: { publicId: session.subjectPublicId, name: session.subjectName, code: session.subjectCode, professorName: session.professorName },
+    records,
+    history,
+  };
 }
 
 export type PublicReportPayload = {

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Check, ClipboardPaste, Sparkles, Upload } from "lucide-react";
+import { ArrowLeft, ChartNoAxesCombined, Check, ClipboardPaste, Copy, ExternalLink, Sparkles, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useRoute } from "wouter";
@@ -14,18 +14,146 @@ export default function AttendancePage() {
   const [, params] = useRoute("/app/attendance/:sessionId");
   const sessionId = Number(params?.sessionId);
   const utils = trpc.useUtils();
+  const session = trpc.attendance.session.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
   const records = trpc.attendance.list.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
   const [rawNames, setRawNames] = useState("");
   const [importId, setImportId] = useState<number | null>(null);
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
   const suggestions = trpc.attendance.suggestions.useQuery({ importId: importId ?? 0 }, { enabled: importId !== null });
-  const importNames = trpc.attendance.importZoomNames.useMutation({ onSuccess: output => { setImportId(output.importId); setCandidateSelections({}); toast.success(`${output.count} Zoom names ready for review`); }, onError: error => toast.error(error.message) });
-  const setStatus = trpc.attendance.setStatus.useMutation({ onSuccess: () => utils.attendance.list.invalidate({ sessionId }), onError: error => toast.error(error.message) });
-  const confirmSuggestion = trpc.attendance.confirmSuggestion.useMutation({ onSuccess: () => { suggestions.refetch(); utils.attendance.list.invalidate({ sessionId }); toast.success("Zoom suggestion confirmed"); }, onError: error => toast.error(error.message) });
-  const publish = trpc.attendance.publish.useMutation({ onSuccess: output => { utils.attendance.list.invalidate({ sessionId }); toast.success(`Attendance published as version ${output.version}`); }, onError: error => toast.error(error.message) });
-  const totals = useMemo(() => ({ present: records.data?.filter(row => row.status === "PRESENT").length ?? 0, absent: records.data?.filter(row => row.status === "ABSENT").length ?? 0, unset: records.data?.filter(row => row.status === "NOT_SET").length ?? 0 }), [records.data]);
 
-  return <DashboardLayout><section className="mx-auto max-w-5xl"><Link href="/app/subjects" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Back to Subjects</Link><div className="mt-4 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-primary">Class session</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Attendance</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Paste Zoom names for private suggestions, then confirm every final status yourself before publishing.</p></div><Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length} className="min-h-11 rounded-2xl"><Upload className="mr-2 h-4 w-4" />Publish Attendance</Button></div><div className="mt-7 grid gap-4 sm:grid-cols-3"><Summary label="Present" count={totals.present} tone="text-emerald-300" /><Summary label="Absent" count={totals.absent} tone="text-red-300" /><Summary label="Not set" count={totals.unset} tone="text-amber-300" /></div><div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]"><section className="rounded-[28px] border border-border bg-card p-5"><div className="flex items-center gap-2"><ClipboardPaste className="h-5 w-5 text-primary" /><h2 className="font-semibold">Paste Zoom names</h2></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Paste participant names from a chosen Zoom capture time. Suggestions and source names stay private and never become Attendance automatically.</p><Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} /><Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date() })} disabled={importNames.isPending || !rawNames.trim()} className="mt-3 min-h-11 w-full rounded-2xl"><Sparkles className="mr-2 h-4 w-4" />Suggest matches</Button>{suggestions.data?.length ? <div className="mt-5 space-y-3"><h3 className="text-sm font-semibold">Review suggestions</h3>{suggestions.data.map(item => { const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : ""); return <div key={item.id} className="rounded-2xl bg-secondary p-3"><div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold">Private review</span><Badge variant={item.reviewState === "clear" ? "default" : "secondary"} className="rounded-full">{item.reviewState.replace("_", " ")}</Badge></div><dl className="mt-3 space-y-2 text-sm"><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Zoom source</dt><dd className="mt-1 break-words font-medium text-foreground">{item.sourceName}</dd></div><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Normalized candidate</dt><dd className="mt-1 break-words font-medium text-foreground">{item.normalizedCandidate ?? "No confident required-format candidate"}</dd></div></dl>{item.reviewNote ? <p className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs leading-5 text-amber-100">{item.reviewNote}</p> : null}{item.flags.length ? <div className="mt-2 flex flex-wrap gap-1">{item.flags.map(flag => <Badge key={flag} variant="outline" className="rounded-full text-[11px]">{flag.replace("_", " ")}</Badge>)}</div> : null}<p className="mt-3 text-xs leading-5 text-muted-foreground">Choose the matching Student or explicitly confirm that no roster match applies. The suggestion remains advisory.</p><div className="mt-3 flex gap-2"><select aria-label={`Match for ${item.sourceName}`} value={selected} onChange={event => setCandidateSelections(current => ({ ...current, [item.id]: event.target.value }))} className="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-card px-3 text-sm"><option value="">Choose Student</option><option value="none">No roster match</option>{records.data?.map(record => <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>)}</select><Button size="sm" className="min-h-11 rounded-xl" disabled={confirmSuggestion.isPending || !selected} onClick={() => confirmSuggestion.mutate({ suggestionId: item.id, membershipId: selected === "none" ? null : Number(selected) })}>Confirm</Button></div></div>; })}</div> : null}</section><section className="rounded-[28px] border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Student status</h2><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div><div className="mt-4 space-y-2">{records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}{records.data?.map(record => <div key={record.recordId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}</p></div><div className="flex gap-1">{statusOptions.map(status => <button key={status} onClick={() => setStatus.mutate({ recordId: record.recordId, status })} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div></div>)}{!records.isLoading && !records.data?.length ? <p className="py-8 text-center text-sm leading-6 text-muted-foreground">Add Students to the Subject before managing Attendance.</p> : null}</div></section></div><section className="mt-6 rounded-2xl border border-border bg-card p-4 text-sm leading-6 text-muted-foreground"><Check className="mr-2 inline h-4 w-4 text-primary" />Published Attendance keeps a public version History. Raw Zoom input, normalized review data, and suggestions remain private to the secretary.</section></section></DashboardLayout>;
+  const importNames = trpc.attendance.importZoomNames.useMutation({
+    onSuccess: output => {
+      setImportId(output.importId);
+      setCandidateSelections({});
+      toast.success(`${output.count} Zoom names ready for review`);
+    },
+    onError: error => toast.error(error.message),
+  });
+  const setStatus = trpc.attendance.setStatus.useMutation({
+    onSuccess: () => utils.attendance.list.invalidate({ sessionId }),
+    onError: error => toast.error(error.message),
+  });
+  const confirmSuggestion = trpc.attendance.confirmSuggestion.useMutation({
+    onSuccess: () => {
+      suggestions.refetch();
+      utils.attendance.list.invalidate({ sessionId });
+      toast.success("Zoom suggestion confirmed");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const publish = trpc.attendance.publish.useMutation({
+    onSuccess: output => {
+      utils.attendance.list.invalidate({ sessionId });
+      utils.attendance.session.invalidate({ sessionId });
+      toast.success(`Attendance published as version ${output.version}`);
+    },
+    onError: error => toast.error(error.message),
+  });
+  const totals = useMemo(
+    () => ({
+      present: records.data?.filter(row => row.status === "PRESENT").length ?? 0,
+      absent: records.data?.filter(row => row.status === "ABSENT").length ?? 0,
+      unset: records.data?.filter(row => row.status === "NOT_SET").length ?? 0,
+    }),
+    [records.data],
+  );
+  const copyPublicAttendance = async () => {
+    if (!session.data?.publicId) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/attendance/${session.data.publicId}`);
+    toast.success("Public Attendance link copied for Messenger");
+  };
+
+  return (
+    <DashboardLayout>
+      <section className="mx-auto max-w-5xl">
+        <Link href="/app/subjects" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />Back to Subjects
+        </Link>
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-primary">Class session</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Attendance</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Paste Zoom names for private suggestions, then confirm every final status yourself before publishing.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/app/reports?sessionId=${sessionId}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+            >
+              <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
+            </Link>
+            {session.data?.publishState === "published" ? <><a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"><ExternalLink className="mr-2 h-4 w-4" />View shared</a><button type="button" onClick={copyPublicAttendance} className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"><Copy className="mr-2 h-4 w-4" />Copy link</button></> : null}
+            <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length} className="min-h-11 rounded-2xl">
+              <Upload className="mr-2 h-4 w-4" />Publish Attendance
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-7 grid gap-4 sm:grid-cols-3">
+          <Summary label="Present" count={totals.present} tone="text-emerald-300" />
+          <Summary label="Absent" count={totals.absent} tone="text-red-300" />
+          <Summary label="Not set" count={totals.unset} tone="text-amber-300" />
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
+          <section className="rounded-[28px] border border-border bg-card p-5">
+            <div className="flex items-center gap-2"><ClipboardPaste className="h-5 w-5 text-primary" /><h2 className="font-semibold">Paste Zoom names</h2></div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Paste participant names from a chosen Zoom capture time. Suggestions and source names stay private and never become Attendance automatically.</p>
+            <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} />
+            <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date() })} disabled={importNames.isPending || !rawNames.trim()} className="mt-3 min-h-11 w-full rounded-2xl">
+              <Sparkles className="mr-2 h-4 w-4" />Suggest matches
+            </Button>
+            {suggestions.data?.length ? (
+              <div className="mt-5 space-y-3">
+                <h3 className="text-sm font-semibold">Review suggestions</h3>
+                {suggestions.data.map(item => {
+                  const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : "");
+                  return (
+                    <div key={item.id} className="rounded-2xl bg-secondary p-3">
+                      <div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold">Private review</span><Badge variant={item.reviewState === "clear" ? "default" : "secondary"} className="rounded-full">{item.reviewState.replace("_", " ")}</Badge></div>
+                      <dl className="mt-3 space-y-2 text-sm">
+                        <div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Zoom source</dt><dd className="mt-1 break-words font-medium text-foreground">{item.sourceName}</dd></div>
+                        <div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Normalized candidate</dt><dd className="mt-1 break-words font-medium text-foreground">{item.normalizedCandidate ?? "No confident required-format candidate"}</dd></div>
+                      </dl>
+                      {item.reviewNote ? <p className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs leading-5 text-amber-100">{item.reviewNote}</p> : null}
+                      {item.flags.length ? <div className="mt-2 flex flex-wrap gap-1">{item.flags.map(flag => <Badge key={flag} variant="outline" className="rounded-full text-[11px]">{flag.replace("_", " ")}</Badge>)}</div> : null}
+                      <p className="mt-3 text-xs leading-5 text-muted-foreground">Choose the matching Student or explicitly confirm that no roster match applies. The suggestion remains advisory.</p>
+                      <div className="mt-3 flex gap-2">
+                        <select aria-label={`Match for ${item.sourceName}`} value={selected} onChange={event => setCandidateSelections(current => ({ ...current, [item.id]: event.target.value }))} className="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-card px-3 text-sm">
+                          <option value="">Choose Student</option><option value="none">No roster match</option>
+                          {records.data?.map(record => <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>)}
+                        </select>
+                        <Button size="sm" className="min-h-11 rounded-xl" disabled={confirmSuggestion.isPending || !selected} onClick={() => confirmSuggestion.mutate({ suggestionId: item.id, membershipId: selected === "none" ? null : Number(selected) })}>Confirm</Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </section>
+
+          <section className="rounded-[28px] border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Student status</h2><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
+            <div className="mt-4 space-y-2">
+              {records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}
+              {records.data?.map(record => (
+                <div key={record.recordId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-3">
+                  <div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}</p></div>
+                  <div className="flex gap-1">{statusOptions.map(status => <button key={status} onClick={() => setStatus.mutate({ recordId: record.recordId, status })} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div>
+                </div>
+              ))}
+              {!records.isLoading && !records.data?.length ? <p className="py-8 text-center text-sm leading-6 text-muted-foreground">Add Students to the Subject before managing Attendance.</p> : null}
+            </div>
+          </section>
+        </div>
+        <section className="mt-6 rounded-2xl border border-border bg-card p-4 text-sm leading-6 text-muted-foreground"><Check className="mr-2 inline h-4 w-4 text-primary" />Published Attendance keeps a public version History. Raw Zoom input, normalized review data, and suggestions remain private to the secretary.</section>
+      </section>
+    </DashboardLayout>
+  );
 }
 
-function Summary({ label, count, tone }: { label: string; count: number; tone: string }) { return <section className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className={`mt-2 text-3xl font-semibold ${tone}`}>{count}</p></section>; }
+function Summary({ label, count, tone }: { label: string; count: number; tone: string }) {
+  return <section className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className={`mt-2 text-3xl font-semibold ${tone}`}>{count}</p></section>;
+}
