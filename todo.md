@@ -15,6 +15,7 @@
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [x] Add a safe Subject-level action to remove a Student from an active roster without deleting the Student record.
 - [x] Create the secretary dashboard and cross-subject overview.
+- [x] Refresh stale secretary-dashboard milestone wording so it accurately describes implemented workflows.
 - [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
 - [x] Add editable Subject details and fixed-weekday Schedule management after Subject creation.
 - [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.

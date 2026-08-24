@@ -7,9 +7,9 @@ import { Archive, ArrowRight, BookOpen, CalendarDays, ChartNoAxesCombined, Circl
 import { Link } from "wouter";
 
 const pageInfo = {
-  subjects: { icon: BookOpen, title: "Subjects", body: "Add and publish Subjects in Milestone 3. Each Subject will have its own Students, Schedule, Attendance, and class information." },
-  reports: { icon: ChartNoAxesCombined, title: "Reports", body: "Per-session Class Attendance and end-of-exams All Subject Attendance reports will be added in Milestone 6." },
-  settings: { icon: Settings, title: "Settings", body: "Workspace settings and archive controls will be added as the management tools are built." },
+  subjects: { icon: BookOpen, title: "Subjects", body: "Each Subject keeps its own Students, Schedule, Attendance, class information, and shared public links." },
+  reports: { icon: ChartNoAxesCombined, title: "Reports", body: "Create per-session Class Attendance and end-of-exams All Subject Attendance reports, then share aggregate-only views." },
+  settings: { icon: Settings, title: "Settings", body: "Use the workspace controls to manage Subjects, Archive retained records, and keep public information ready to share." },
 } as const;
 
 export function SecretaryDashboard() {
