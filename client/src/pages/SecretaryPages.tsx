@@ -25,10 +25,10 @@ export function SecretaryDashboard() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <FoundationCard icon={BookOpen} title="Subjects" body="Create separate class spaces with independent Students and fixed weekday Schedules." route="/app/subjects" />
           <FoundationCard icon={CalendarDays} title="Attendance" body="Add a class session inside a Subject, then review PRESENT, ABSENT, and NOT SET." route="/app/subjects" />
-          <FoundationCard icon={ChartNoAxesCombined} title="Reports" body="Published class and all-subject reports will be ready to share later." route="/app/reports" />
+          <FoundationCard icon={ChartNoAxesCombined} title="Reports" body="Create private class and all-subject summaries, then publish aggregate-only report links." route="/app/reports" />
         </div>
         <section className="mt-6 rounded-[28px] border border-border bg-card p-6">
-          <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">Workspace status</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Subject setup, Attendance review, and draft/publish tools for Announcements, Resources, and Questions & Answers are underway. Shared links expose only published information.</p></div></div>
+          <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">Workspace status</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Create Subjects, review Attendance, publish Announcements, Resources, and Questions & Answers, then share published links. Shared pages expose only public information.</p></div></div>
         </section>
       </section>
     </DashboardLayout>
