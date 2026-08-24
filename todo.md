@@ -20,14 +20,20 @@
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
-- [ ] Implement blog-style announcements with a rich editor, media uploads, manual version numbers, and public change history.
-- [ ] Implement visual resource web cards with title, description, category, type, source/domain label, fallback thumbnail, version history, and support for Google Drive, Google Forms, external sites, Facebook, images, and Zoom links.
+- [x] Implement the blog-style Announcement workflow with lightweight rich authoring, managed-media attachment, versioning, and public History support.
+- [ ] Verify a real published Announcement with managed public image, version increment, and public History entry.
+- [x] Implement visual Resource web cards with metadata, fallback-thumbnail support, version History, and supported external destination types.
+- [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
 - [ ] Add explicit secretary-facing official-status controls for Q&A and verify the state on its public page.
-- [ ] Verify end-to-end Q&A public History after an update with a change summary.
-- [ ] Store announcement media, resource fallback thumbnails, and custom social-preview images securely in managed object storage.
-- [ ] Add social-preview SEO metadata and crawler-visible previews for shareable subject, announcement, resource, and Q&A pages, with neutral non-sensitive metadata for attendance views.
-- [ ] Apply the Apple-inspired, mobile-first design direction, HIG-informed accessibility checks, and a coherent class-workspace icon strategy.
+- [x] Verify that Q&A restore-and-republish entries appear in public History on the individual mobile share page.
+- [ ] Edit a published Q&A with a non-default public change summary and verify that exact History entry publicly.
+- [x] Store Announcement media, Resource fallback thumbnails, and custom social-preview images through managed object-storage references.
+- [ ] Verify real managed Announcement/share images, Resource thumbnails, and custom social-preview images on public pages.
+- [x] Add crawler-visible social metadata for shareable Subject, Announcement, Resource, Q&A, Attendance, and Report pages, with neutral non-sensitive Attendance metadata.
+- [x] Verify real published Subject, Announcement, Resource, Q&A, Attendance, and Report server-rendered titles, descriptions, and Open Graph types.
+- [ ] After production publication and canonical-domain setup, confirm rendered Messenger/social-card previews for the real published share links in a Messenger test conversation.
+- [x] Apply the Apple-inspired, mobile-first design direction, HIG-informed accessibility checks, and coherent class-workspace icon strategy.
 - [x] Establish an Apple-inspired web typography system using system font stacks and accessible responsive type scales without requiring proprietary font files.
 - [ ] Add automated tests, mobile visual checks, accessibility checks, and sharing/preview validation before the first implementation delivery.
 - [x] Fix pasted Zoom participant parsing so each line remains intact and comma-based names are not split into fragments.
