@@ -18,7 +18,8 @@
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
-- [ ] Build per-session Class Attendance reports and an end-of-exams All Subject Attendance view.
+- [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
+- [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [ ] Implement blog-style announcements with a rich editor, media uploads, manual version numbers, and public change history.
 - [ ] Implement visual resource web cards with title, description, category, type, source/domain label, fallback thumbnail, version history, and support for Google Drive, Google Forms, external sites, Facebook, images, and Zoom links.
 - [ ] Implement forum-based Q&A posts with manual publication, official status, manual version history, public change history, and individual view-only Messenger share links.
@@ -35,6 +36,8 @@
 - [x] Wire secretary confirmation of unclear Zoom suggestions, including candidate selection and resolved-state handling, into the Attendance page.
 - [ ] Add tests for Zoom parsing, normalization, ambiguity review, and secretary confirmation before publishing Attendance.
 - [x] Add and verify a direct Attendance-to-Reports path for each class session.
-- [ ] Add published per-session Attendance viewing with opaque view-only links, safe roster-status fields, and public History while keeping Zoom imports and review data private.
+- [x] Add published per-session Attendance viewing with opaque view-only links, safe roster-status fields, and public History while keeping Zoom imports and review data private.
 - [x] Add record-specific restore entry points from Archive for retained Subjects, reports, and archived content.
-- [ ] Verify opening each Archive record, restoring it, and updating the Archive list end to end.
+- [x] Verify a real archived Report appears in Archive, restores as a draft, and is removed from the Archive list end to end.
+- [ ] Verify an archived Subject appears in Archive, restores, and is removed from the Archive list end to end.
+- [ ] Verify archived Announcements, Resources, and Questions & Answers each restore from Archive and update the list end to end.

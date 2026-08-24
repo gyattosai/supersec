@@ -231,7 +231,7 @@ export async function getPublicAttendanceById(publicId: string): Promise<PublicA
     .from(classSessions)
     .innerJoin(subjects, eq(classSessions.subjectId, subjects.id))
     .leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id))
-    .where(and(eq(classSessions.publicId, publicId), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"), eq(subjects.status, "active"), eq(subjects.publishState, "published")))
+    .where(and(eq(classSessions.publicId, publicId), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"), eq(subjects.status, "active")))
     .orderBy(asc(attendanceRecords.id))
     .limit(1);
   const session = rows[0];
