@@ -33,6 +33,7 @@
 - [x] Identify official Q&A answers on their individual public share page.
 - [x] Display explicit public labels for official and non-official Q&A states; user completed manual validation with published examples.
 - [x] Refactor placeholder-driven Announcement and Q&A editor controls into explicit, state-bound components.
+- [x] Add a visible safe official-status badge to individual public Q&A share pages.
 - [ ] Deferred: capture additional automated evidence for both published Q&A states and a custom History entry only if future regression work requires it.
 - [x] Store Announcement media, Resource fallback thumbnails, and custom social-preview images through managed object-storage references.
 - [ ] Verify real managed Announcement/share images, Resource thumbnails, and custom social-preview images on public pages.
