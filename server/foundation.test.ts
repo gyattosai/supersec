@@ -30,7 +30,9 @@ describe("Milestone 2 foundation access", () => {
   it("rejects a signed-in non-owner from Attendance and report procedures", async () => {
     const caller = appRouter.createCaller(contextFor("not-the-project-owner"));
     await expect(caller.attendance.list({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.attendance.suggestionsForSession({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.attendance.confirmSuggestion({ suggestionId: 1, membershipId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.attendance.publish({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.reports.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.content.archiveList()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.subjects.sessions.createNoClass({ subjectId: 1, startsAt: new Date(), reason: "Holiday" })).rejects.toMatchObject({ code: "FORBIDDEN" });

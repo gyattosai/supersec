@@ -20,16 +20,15 @@ export default function AttendancePage() {
   const session = trpc.attendance.session.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
   const records = trpc.attendance.list.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
   const [rawNames, setRawNames] = useState("");
-  const [importId, setImportId] = useState<number | null>(null);
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("ALL");
   const [captureAt, setCaptureAt] = useState(() => localDateTimeValue());
-  const suggestions = trpc.attendance.suggestions.useQuery({ importId: importId ?? 0 }, { enabled: importId !== null });
+  const suggestions = trpc.attendance.suggestionsForSession.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
 
   const importNames = trpc.attendance.importZoomNames.useMutation({
     onSuccess: output => {
-      setImportId(output.importId);
       setCandidateSelections({});
+      utils.attendance.suggestionsForSession.invalidate({ sessionId });
       toast.success(`${output.count} Zoom names ready for review`);
     },
     onError: error => toast.error(error.message),
@@ -40,7 +39,7 @@ export default function AttendancePage() {
   });
   const confirmSuggestion = trpc.attendance.confirmSuggestion.useMutation({
     onSuccess: () => {
-      suggestions.refetch();
+      utils.attendance.suggestionsForSession.invalidate({ sessionId });
       utils.attendance.list.invalidate({ sessionId });
       toast.success("Zoom suggestion confirmed");
     },
@@ -63,6 +62,7 @@ export default function AttendancePage() {
     [records.data],
   );
   const filteredRecords = useMemo(() => records.data?.filter(record => statusFilter === "ALL" || record.status === statusFilter) ?? [], [records.data, statusFilter]);
+  const unresolvedSuggestionCount = suggestions.data?.filter(item => item.reviewState !== "confirmed").length ?? 0;
   const copyPublicAttendance = async () => {
     if (!session.data?.publicId) return;
     await navigator.clipboard.writeText(`${window.location.origin}/attendance/${session.data.publicId}`);
@@ -91,8 +91,8 @@ export default function AttendancePage() {
               <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
             </Link>
             {session.data?.publishState === "published" ? <><a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"><ExternalLink className="mr-2 h-4 w-4" />View shared</a><button type="button" onClick={copyPublicAttendance} className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"><Copy className="mr-2 h-4 w-4" />Copy link</button></> : null}
-            <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length} className="min-h-11 rounded-2xl">
-              <Upload className="mr-2 h-4 w-4" />Publish Attendance
+            <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0} className="min-h-11 rounded-2xl">
+              <Upload className="mr-2 h-4 w-4" />{unresolvedSuggestionCount ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}` : "Publish Attendance"}
             </Button>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function AttendancePage() {
             </Button>
             {suggestions.data?.length ? (
               <div className="mt-5 space-y-3">
-                <h3 className="text-sm font-semibold">Review suggestions</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Review suggestions</h3>{unresolvedSuggestionCount ? <Badge variant="secondary" className="rounded-full text-amber-200">{unresolvedSuggestionCount} need review</Badge> : <Badge variant="secondary" className="rounded-full text-emerald-200">All confirmed</Badge>}</div>
                 {suggestions.data.map(item => {
                   const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : "");
                   return (
@@ -132,7 +132,7 @@ export default function AttendancePage() {
                           <option value="">Choose Student</option><option value="none">No roster match</option>
                           {records.data?.map(record => <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>)}
                         </select>
-                        <Button size="sm" className="min-h-11 rounded-xl" disabled={confirmSuggestion.isPending || !selected} onClick={() => confirmSuggestion.mutate({ suggestionId: item.id, membershipId: selected === "none" ? null : Number(selected) })}>Confirm</Button>
+                        <Button size="sm" className="min-h-11 rounded-xl" disabled={item.reviewState === "confirmed" || confirmSuggestion.isPending || !selected} onClick={() => confirmSuggestion.mutate({ suggestionId: item.id, membershipId: selected === "none" ? null : Number(selected) })}>{item.reviewState === "confirmed" ? "Confirmed" : "Confirm"}</Button>
                       </div>
                     </div>
                   );

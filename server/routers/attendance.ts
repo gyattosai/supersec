@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { attendanceRecords, classSessions, historyEntries, subjectStudents, students, zoomImports, zoomMatchSuggestions } from "../../drizzle/schema";
 import { getDb } from "../db";
@@ -155,6 +155,11 @@ export const attendanceRouter = router({
     if (rows[0]) await ownerSession(database, ctx.user.id, rows[0].sessionId);
     return rows.map(row => ({ ...row, ...normalizeZoomParticipantName(row.sourceName) }));
   }),
+  suggestionsForSession: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId);
+    const rows = await database.select({ id: zoomMatchSuggestions.id, sourceName: zoomMatchSuggestions.sourceName, suggestedSubjectStudentId: zoomMatchSuggestions.suggestedSubjectStudentId, reviewState: zoomMatchSuggestions.reviewState, createdAt: zoomMatchSuggestions.createdAt }).from(zoomMatchSuggestions).innerJoin(zoomImports, eq(zoomMatchSuggestions.zoomImportId, zoomImports.id)).where(eq(zoomImports.classSessionId, session.id)).orderBy(asc(zoomMatchSuggestions.createdAt));
+    return rows.map(row => ({ ...row, ...normalizeZoomParticipantName(row.sourceName) }));
+  }),
   confirmSuggestion: ownerProcedure.input(z.object({ suggestionId: z.number().int().positive(), membershipId: z.number().int().positive().nullable() })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow();
     const row = await database.select({ id: zoomMatchSuggestions.id, importId: zoomMatchSuggestions.zoomImportId, sessionId: zoomImports.classSessionId }).from(zoomMatchSuggestions).innerJoin(zoomImports, eq(zoomMatchSuggestions.zoomImportId, zoomImports.id)).where(eq(zoomMatchSuggestions.id, input.suggestionId)).limit(1);
@@ -169,6 +174,8 @@ export const attendanceRouter = router({
   }),
   publish: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), summary: z.string().trim().min(3).max(280).default("Attendance was published.") })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);
+    const unresolvedSuggestion = await database.select({ id: zoomMatchSuggestions.id }).from(zoomMatchSuggestions).innerJoin(zoomImports, eq(zoomMatchSuggestions.zoomImportId, zoomImports.id)).where(and(eq(zoomImports.classSessionId, session.id), ne(zoomMatchSuggestions.reviewState, "confirmed"))).limit(1);
+    if (unresolvedSuggestion[0]) throw new Error("Confirm every Zoom suggestion or mark it as No roster match before publishing Attendance.");
     const existing = await database.select({ version: historyEntries.version }).from(historyEntries).where(and(eq(historyEntries.entityType, "attendance"), eq(historyEntries.entityId, session.id))).orderBy(asc(historyEntries.version)); const version = (existing.at(-1)?.version ?? 0) + 1;
     await database.update(attendanceRecords).set({ publishState: "published", publishedVersion: version }).where(eq(attendanceRecords.classSessionId, session.id));
     await database.update(classSessions).set({ sessionState: "completed", publishState: "published" }).where(eq(classSessions.id, session.id));

@@ -1,5 +1,7 @@
 # Project TODO
 
+- [ ] Reconcile the attached PRD against the implemented Class Management System and complete remaining PRD-aligned development work.
+- [ ] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
 - [x] Produce an approval-ready information architecture before starting product design or feature implementation.
 - [x] Produce and obtain approval for a Product Requirements Document before creating milestones, product design, or feature implementation.
@@ -25,6 +27,7 @@
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Add status filters to focus Attendance review on PRESENT, ABSENT, or NOT SET Students.
 - [x] Let the secretary record the actual Zoom participant-list capture time with pasted Attendance input.
+- [x] Block Attendance publication until every imported Zoom suggestion for the session has been explicitly confirmed by the secretary.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [x] Correct public Home guidance so it reflects direct private-group Subject-link sharing rather than an open Subject directory.
