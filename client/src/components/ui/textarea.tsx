@@ -66,6 +66,7 @@ function Textarea({
       {...props}
     />
   );
+  if (props.placeholder === "Official answer") return <div className="space-y-3"><>{textarea}</><div className="rounded-xl border border-border bg-secondary/40 p-3"><label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium"><input name="questionOfficial" type="checkbox" value="true" defaultChecked className="h-4 w-4 rounded border-input accent-primary" />Mark as an official answer</label><input name="questionChangeSummary" className="mt-2 min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Public change summary when saving an edit" /></div></div>;
   if (!richAnnouncement) return textarea;
   const format = (prefix: string, suffix = prefix) => {
     const element = editorRef.current;

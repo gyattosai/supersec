@@ -25,9 +25,12 @@
 - [x] Implement visual Resource web cards with metadata, fallback-thumbnail support, version History, and supported external destination types.
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
-- [ ] Add explicit secretary-facing official-status controls for Q&A and verify the state on its public page.
+- [x] Implement explicit secretary-facing official-status controls for Q&A.
+- [ ] Verify the selected official state on a published public Q&A page.
 - [x] Verify that Q&A restore-and-republish entries appear in public History on the individual mobile share page.
-- [ ] Edit a published Q&A with a non-default public change summary and verify that exact History entry publicly.
+- [x] Implement a custom Q&A change-summary input for published edits.
+- [ ] Verify the exact custom Q&A summary appears in public History after an edit.
+- [ ] Display the selected Q&A official state clearly on its individual public share page.
 - [x] Store Announcement media, Resource fallback thumbnails, and custom social-preview images through managed object-storage references.
 - [ ] Verify real managed Announcement/share images, Resource thumbnails, and custom social-preview images on public pages.
 - [x] Add crawler-visible social metadata for shareable Subject, Announcement, Resource, Q&A, Attendance, and Report pages, with neutral non-sensitive Attendance metadata.
