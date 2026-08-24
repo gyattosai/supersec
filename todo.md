@@ -1,6 +1,11 @@
 # Project TODO
 
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
+- [x] Produce an approval-ready information architecture before starting product design or feature implementation.
+- [x] Produce and obtain approval for a Product Requirements Document before creating milestones, product design, or feature implementation.
+- [x] Revise the information architecture so every navigation and content label uses the approved simple taxonomy consistently.
+- [x] Produce and obtain approval for a dependency-aware build milestone breakdown before product design or feature implementation.
+- [ ] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
 - [ ] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [ ] Create the secretary dashboard and cross-subject overview.
 - [ ] Build elegant, mobile-first subject homes that always show the subject name, subject code, professor name, fixed weekday schedule, and upcoming no-class notice.
