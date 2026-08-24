@@ -13,6 +13,7 @@
 - [ ] Fix and verify remaining blank or loading route states on protected and public pages before the next checkpoint.
 - [x] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
+- [x] Add a safe Subject-level action to remove a Student from an active roster without deleting the Student record.
 - [x] Create the secretary dashboard and cross-subject overview.
 - [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
 - [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.
