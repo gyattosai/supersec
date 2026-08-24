@@ -23,6 +23,7 @@
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [x] Implement the blog-style Announcement workflow with lightweight rich authoring, managed-media attachment, versioning, and public History support.
+- [x] Add custom public History summaries when editing published Announcements and Resources.
 - [ ] Verify a real published Announcement with managed public image, version increment, and public History entry.
 - [x] Implement visual Resource web cards with metadata, fallback-thumbnail support, version History, and supported external destination types.
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
