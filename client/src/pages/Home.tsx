@@ -36,7 +36,7 @@ export default function Home() {
               <InfoRow icon={MessageCircleMore} title="Shareable updates" body="Published items have simple links that are ready to send in Messenger." />
               <InfoRow icon={LockKeyhole} title="Safe public view" body="Private Zoom input, drafts, and secretary-only work are not shown on shared pages." />
             </div>
-            <p className="mt-7 rounded-2xl bg-muted px-4 py-3 text-sm leading-6 text-muted-foreground">Subjects will appear here after the secretary creates and publishes them.</p>
+            <p className="mt-7 rounded-2xl bg-muted px-4 py-3 text-sm leading-6 text-muted-foreground">Your secretary shares a Subject link when its class information is ready for your group.</p>
           </section>
         </section>
       </div>

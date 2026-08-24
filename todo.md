@@ -25,6 +25,7 @@
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
+- [x] Correct public Home guidance so it reflects direct private-group Subject-link sharing rather than an open Subject directory.
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [x] Implement the blog-style Announcement workflow with lightweight rich authoring, managed-media attachment, versioning, and public History support.
