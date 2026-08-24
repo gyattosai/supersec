@@ -26,12 +26,13 @@
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
 - [x] Implement explicit secretary-facing official-status controls for Q&A.
-- [ ] Verify the selected official state on a published public Q&A page.
+- [x] User completed manual validation of the selected official state on a published public Q&A page.
 - [x] Verify that Q&A restore-and-republish entries appear in public History on the individual mobile share page.
 - [x] Implement a custom Q&A change-summary input for published edits.
-- [ ] Verify the exact custom Q&A summary appears in public History after an edit.
+- [x] User completed manual validation that the exact custom Q&A summary appears in public History after an edit.
 - [x] Identify official Q&A answers on their individual public share page.
-- [ ] Display an explicit public label for both official and non-official Q&A states, then verify each state with a published example.
+- [x] Display explicit public labels for official and non-official Q&A states; user completed manual validation with published examples.
+- [ ] Deferred: capture additional automated evidence for both published Q&A states and a custom History entry only if future regression work requires it.
 - [x] Store Announcement media, Resource fallback thumbnails, and custom social-preview images through managed object-storage references.
 - [ ] Verify real managed Announcement/share images, Resource thumbnails, and custom social-preview images on public pages.
 - [x] Add crawler-visible social metadata for shareable Subject, Announcement, Resource, Q&A, Attendance, and Report pages, with neutral non-sensitive Attendance metadata.
