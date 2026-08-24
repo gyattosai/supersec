@@ -23,6 +23,7 @@
 - [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.
 - [x] Add a direct No Class date creation workflow without requiring a placeholder class session.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
+- [x] Add status filters to focus Attendance review on PRESENT, ABSENT, or NOT SET Students.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [x] Correct public Home guidance so it reflects direct private-group Subject-link sharing rather than an open Subject directory.

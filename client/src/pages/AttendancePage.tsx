@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Link, useRoute } from "wouter";
 
 const statusOptions = ["PRESENT", "ABSENT", "NOT_SET"] as const;
+const statusFilters = ["ALL", ...statusOptions] as const;
 
 export default function AttendancePage() {
   const [, params] = useRoute("/app/attendance/:sessionId");
@@ -19,6 +20,7 @@ export default function AttendancePage() {
   const [rawNames, setRawNames] = useState("");
   const [importId, setImportId] = useState<number | null>(null);
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
+  const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("ALL");
   const suggestions = trpc.attendance.suggestions.useQuery({ importId: importId ?? 0 }, { enabled: importId !== null });
 
   const importNames = trpc.attendance.importZoomNames.useMutation({
@@ -57,6 +59,7 @@ export default function AttendancePage() {
     }),
     [records.data],
   );
+  const filteredRecords = useMemo(() => records.data?.filter(record => statusFilter === "ALL" || record.status === statusFilter) ?? [], [records.data, statusFilter]);
   const copyPublicAttendance = async () => {
     if (!session.data?.publicId) return;
     await navigator.clipboard.writeText(`${window.location.origin}/attendance/${session.data.publicId}`);
@@ -136,15 +139,17 @@ export default function AttendancePage() {
 
           <section className="rounded-[28px] border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Student status</h2><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filter Students by Attendance status">{statusFilters.map(filter => <button key={filter} type="button" aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className={`min-h-11 shrink-0 rounded-xl px-3 text-xs font-semibold ${statusFilter === filter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{filter === "ALL" ? "All" : filter.replace("_", " ")}</button>)}</div>
             <div className="mt-4 space-y-2">
               {records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}
-              {records.data?.map(record => (
+              {filteredRecords.map(record => (
                 <div key={record.recordId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-3">
                   <div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}</p></div>
                   <div className="flex gap-1">{statusOptions.map(status => <button key={status} onClick={() => setStatus.mutate({ recordId: record.recordId, status })} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div>
                 </div>
               ))}
               {!records.isLoading && !records.data?.length ? <p className="py-8 text-center text-sm leading-6 text-muted-foreground">Add Students to the Subject before managing Attendance.</p> : null}
+              {!records.isLoading && Boolean(records.data?.length) && !filteredRecords.length ? <p className="py-8 text-center text-sm leading-6 text-muted-foreground">No Students have this Attendance status yet.</p> : null}
             </div>
           </section>
         </div>
