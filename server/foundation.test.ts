@@ -31,6 +31,7 @@ describe("Milestone 2 foundation access", () => {
     const caller = appRouter.createCaller(contextFor("not-the-project-owner"));
     await expect(caller.attendance.list({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.reports.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.content.archiveList()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("allows the project owner into the secretary context", async () => {

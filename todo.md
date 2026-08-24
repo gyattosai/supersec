@@ -36,3 +36,5 @@
 - [ ] Add tests for Zoom parsing, normalization, ambiguity review, and secretary confirmation before publishing Attendance.
 - [x] Add and verify a direct Attendance-to-Reports path for each class session.
 - [ ] Add published per-session Attendance viewing with opaque view-only links, safe roster-status fields, and public History while keeping Zoom imports and review data private.
+- [x] Add record-specific restore entry points from Archive for retained Subjects, reports, and archived content.
+- [ ] Verify opening each Archive record, restoring it, and updating the Archive list end to end.

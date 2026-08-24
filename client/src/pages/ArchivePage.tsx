@@ -1,0 +1,33 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { ArchiveRestore, BookOpen, FileArchive, Megaphone, MessageCircleQuestion } from "lucide-react";
+import { toast } from "sonner";
+
+type ArchiveCardProps = { icon: typeof FileArchive; title: string; detail: string; version?: number; onRestore: () => void; busy: boolean };
+
+function ArchiveCard({ icon: Icon, title, detail, version, onRestore, busy }: ArchiveCardProps) {
+  return <article className="rounded-2xl border border-border bg-secondary p-4"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card text-primary"><Icon className="h-5 w-5" /></span><div className="min-w-0 flex-1"><h3 className="truncate font-semibold">{title}</h3><p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">{detail}</p>{version ? <p className="mt-2 text-xs text-muted-foreground">Version {version}</p> : null}</div></div><Button type="button" variant="outline" disabled={busy} onClick={onRestore} className="mt-4 min-h-11 rounded-xl"><ArchiveRestore className="mr-2 h-4 w-4" />Restore as draft</Button></article>;
+}
+
+export default function ArchivePage() {
+  const utils = trpc.useUtils();
+  const subjects = trpc.subjects.list.useQuery();
+  const reports = trpc.reports.list.useQuery();
+  const content = trpc.content.archiveList.useQuery();
+  const refresh = async () => Promise.all([utils.subjects.list.invalidate(), utils.reports.list.invalidate(), utils.content.archiveList.invalidate()]);
+  const restoreSubject = trpc.subjects.archive.useMutation({ onSuccess: async () => { await refresh(); toast.success("Subject restored"); }, onError: error => toast.error(error.message) });
+  const restoreReport = trpc.reports.restore.useMutation({ onSuccess: async () => { await refresh(); toast.success("Report restored as draft"); }, onError: error => toast.error(error.message) });
+  const restoreAnnouncement = trpc.content.announcements.restore.useMutation({ onSuccess: async () => { await refresh(); toast.success("Announcement restored as draft"); }, onError: error => toast.error(error.message) });
+  const restoreResource = trpc.content.resources.restore.useMutation({ onSuccess: async () => { await refresh(); toast.success("Resource restored as draft"); }, onError: error => toast.error(error.message) });
+  const restoreQuestion = trpc.content.questions.restore.useMutation({ onSuccess: async () => { await refresh(); toast.success("Question & Answer restored as draft"); }, onError: error => toast.error(error.message) });
+  const busy = restoreSubject.isPending || restoreReport.isPending || restoreAnnouncement.isPending || restoreResource.isPending || restoreQuestion.isPending;
+  const archivedSubjects = subjects.data?.filter(subject => subject.status === "archived") ?? [];
+  const archivedReports = reports.data?.filter(report => report.publishState === "archived") ?? [];
+  const archivedContentCount = (content.data?.announcements.length ?? 0) + (content.data?.resources.length ?? 0) + (content.data?.questions.length ?? 0);
+
+  return <DashboardLayout><section className="mx-auto max-w-5xl"><p className="text-sm font-semibold text-primary">Retained records</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Archive</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Archived records stay available here. Restore any record as a draft; nothing is permanently deleted from this page.</p><div className="mt-7 grid gap-3 sm:grid-cols-3"><ArchiveMetric label="Subjects" value={archivedSubjects.length} /><ArchiveMetric label="Reports" value={archivedReports.length} /><ArchiveMetric label="Content" value={archivedContentCount} /></div><section className="mt-6 rounded-[28px] border border-border bg-card p-5"><div className="flex items-center gap-2"><FileArchive className="h-5 w-5 text-primary" /><h2 className="font-semibold">Subjects</h2></div><div className="mt-4 grid gap-3 md:grid-cols-2">{archivedSubjects.map(subject => <ArchiveCard key={subject.id} icon={BookOpen} title={subject.name} detail={`${subject.code} · ${subject.professorName}`} onRestore={() => restoreSubject.mutate({ subjectId: subject.id, archive: false })} busy={busy} />)}{!archivedSubjects.length ? <EmptyArchive label="No archived Subjects." /> : null}</div></section><section className="mt-6 rounded-[28px] border border-border bg-card p-5"><div className="flex items-center gap-2"><ArchiveRestore className="h-5 w-5 text-primary" /><h2 className="font-semibold">Reports</h2></div><div className="mt-4 grid gap-3 md:grid-cols-2">{archivedReports.map(report => <ArchiveCard key={report.id} icon={FileArchive} title={report.reportType === "class_attendance" ? "Class Attendance" : "All Subject Attendance"} detail="Restore this saved report as a draft." version={report.version} onRestore={() => restoreReport.mutate({ id: report.id })} busy={busy} />)}{!archivedReports.length ? <EmptyArchive label="No archived reports." /> : null}</div></section><section className="mt-6 rounded-[28px] border border-border bg-card p-5"><div className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" /><h2 className="font-semibold">Content</h2></div><div className="mt-4 grid gap-3 md:grid-cols-2">{content.data?.announcements.map(item => <ArchiveCard key={`a-${item.id}`} icon={Megaphone} title={item.title} detail={`Announcement · ${item.subjectName}`} version={item.version} onRestore={() => restoreAnnouncement.mutate({ id: item.id })} busy={busy} />)}{content.data?.resources.map(item => <ArchiveCard key={`r-${item.id}`} icon={BookOpen} title={item.title} detail={`Resource · ${item.subjectName}`} version={item.version} onRestore={() => restoreResource.mutate({ id: item.id })} busy={busy} />)}{content.data?.questions.map(item => <ArchiveCard key={`q-${item.id}`} icon={MessageCircleQuestion} title={item.title} detail={`Question & Answer · ${item.subjectName}`} version={item.version} onRestore={() => restoreQuestion.mutate({ id: item.id })} busy={busy} />)}{!archivedContentCount ? <EmptyArchive label="No archived announcements, resources, or Questions & Answers." /> : null}</div></section></section></DashboardLayout>;
+}
+
+function ArchiveMetric({ label, value }: { label: string; value: number }) { return <section className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p></section>; }
+function EmptyArchive({ label }: { label: string }) { return <p className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">{label}</p>; }

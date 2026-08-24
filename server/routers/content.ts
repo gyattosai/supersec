@@ -14,6 +14,15 @@ const publicMediaInput = z.number().int().positive().nullable().optional();
 const updateSummary = z.string().trim().min(3).max(280);
 
 export const contentRouter = router({
+  archiveList: ownerProcedure.query(async ({ ctx }) => {
+    const db = await databaseOrThrow();
+    const [announcementRows, resourceRows, questionRows] = await Promise.all([
+      db.select({ id: announcements.id, subjectId: subjects.id, subjectName: subjects.name, title: announcements.title, version: announcements.version, updatedAt: announcements.updatedAt }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(subjects.ownerId, ctx.user.id), eq(announcements.publishState, "archived"))).orderBy(desc(announcements.updatedAt)),
+      db.select({ id: resources.id, subjectId: subjects.id, subjectName: subjects.name, title: resources.title, version: resources.version, updatedAt: resources.updatedAt }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(subjects.ownerId, ctx.user.id), eq(resources.publishState, "archived"))).orderBy(desc(resources.updatedAt)),
+      db.select({ id: questionsAnswers.id, subjectId: subjects.id, subjectName: subjects.name, title: questionsAnswers.question, version: questionsAnswers.version, updatedAt: questionsAnswers.updatedAt }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(subjects.ownerId, ctx.user.id), eq(questionsAnswers.publishState, "archived"))).orderBy(desc(questionsAnswers.updatedAt)),
+    ]);
+    return { announcements: announcementRows, resources: resourceRows, questions: questionRows };
+  }),
   announcements: router({
     list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => (await assertSubject(ctx.user.id, input.subjectId)).select().from(announcements).where(eq(announcements.subjectId, input.subjectId)).orderBy(desc(announcements.updatedAt))),
     create: ownerProcedure.input(subjectInput.extend({ title: z.string().trim().min(2).max(220), body: z.string().trim().min(1).max(20000), mediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput })).mutation(async ({ ctx, input }) => { const db = await assertSubject(ctx.user.id, input.subjectId); await assertPublicMedia(db, ctx.user.id, input.mediaAssetId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const [row] = await db.insert(announcements).values({ subjectId: input.subjectId, publicId: nanoid(12), title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null }).$returningId(); return { id: row.id }; }),

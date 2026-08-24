@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { BookOpen, ChartNoAxesCombined, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { Archive, BookOpen, ChartNoAxesCombined, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 
@@ -8,13 +8,14 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
   { icon: BookOpen, label: "Subjects", path: "/app/subjects" },
   { icon: ChartNoAxesCombined, label: "Reports", path: "/app/reports" },
+  { icon: Archive, label: "Archive", path: "/app/archive" },
   { icon: Settings, label: "Settings", path: "/app/settings" },
 ];
 
 function NavItems({ mobile = false }: { mobile?: boolean }) {
   const [location] = useLocation();
   return (
-    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "grid grid-cols-4 gap-1" : "space-y-1"}>
+    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "grid grid-cols-5 gap-1" : "space-y-1"}>
       {menuItems.map(item => {
         const active = location === item.path;
         return (
