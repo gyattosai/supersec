@@ -15,6 +15,7 @@
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [x] Create the secretary dashboard and cross-subject overview.
 - [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
+- [x] Replace the Subject workspace No Class browser prompt with an explicit mobile-friendly reason dialog.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
