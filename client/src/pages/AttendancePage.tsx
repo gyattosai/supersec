@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ChartNoAxesCombined, Check, ClipboardPaste, Copy, ExternalLink, Sparkles, Upload } from "lucide-react";
@@ -10,6 +11,7 @@ import { Link, useRoute } from "wouter";
 
 const statusOptions = ["PRESENT", "ABSENT", "NOT_SET"] as const;
 const statusFilters = ["ALL", ...statusOptions] as const;
+const localDateTimeValue = (date = new Date()) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
 export default function AttendancePage() {
   const [, params] = useRoute("/app/attendance/:sessionId");
@@ -21,6 +23,7 @@ export default function AttendancePage() {
   const [importId, setImportId] = useState<number | null>(null);
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("ALL");
+  const [captureAt, setCaptureAt] = useState(() => localDateTimeValue());
   const suggestions = trpc.attendance.suggestions.useQuery({ importId: importId ?? 0 }, { enabled: importId !== null });
 
   const importNames = trpc.attendance.importZoomNames.useMutation({
@@ -104,8 +107,9 @@ export default function AttendancePage() {
           <section className="rounded-[28px] border border-border bg-card p-5">
             <div className="flex items-center gap-2"><ClipboardPaste className="h-5 w-5 text-primary" /><h2 className="font-semibold">Paste Zoom names</h2></div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">Paste participant names from a chosen Zoom capture time. Suggestions and source names stay private and never become Attendance automatically.</p>
+            <div className="mt-4"><label htmlFor="zoom-capture-time" className="text-sm font-medium">Participant-list capture time</label><Input id="zoom-capture-time" type="datetime-local" value={captureAt} onChange={event => setCaptureAt(event.target.value)} className="mt-2" /></div>
             <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} />
-            <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date() })} disabled={importNames.isPending || !rawNames.trim()} className="mt-3 min-h-11 w-full rounded-2xl">
+            <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="mt-3 min-h-11 w-full rounded-2xl">
               <Sparkles className="mr-2 h-4 w-4" />Suggest matches
             </Button>
             {suggestions.data?.length ? (
