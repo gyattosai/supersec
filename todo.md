@@ -43,6 +43,7 @@
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
 - [x] Implement explicit secretary-facing official-status controls for Q&A.
+- [x] Let the secretary author and update Q&A tags, then display them on private and public Q&A pages.
 - [x] User completed manual validation of the selected official state on a published public Q&A page.
 - [x] Verify that Q&A restore-and-republish entries appear in public History on the individual mobile share page.
 - [x] Implement a custom Q&A change-summary input for published edits.
