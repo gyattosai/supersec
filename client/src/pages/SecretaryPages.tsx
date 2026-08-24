@@ -14,22 +14,30 @@ const pageInfo = {
 
 export function SecretaryDashboard() {
   const owner = trpc.foundation.owner.getContext.useQuery();
+  const subjects = trpc.subjects.list.useQuery();
+  const reports = trpc.reports.list.useQuery();
+  const activeSubjects = subjects.data?.filter(subject => subject.status === "active").length ?? 0;
+  const sharedSubjects = subjects.data?.filter(subject => subject.status === "active" && subject.publishState === "published").length ?? 0;
+  const publishedReports = reports.data?.filter(report => report.publishState === "published").length ?? 0;
+  const archivedSubjects = subjects.data?.filter(subject => subject.status === "archived").length ?? 0;
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
         <p className="text-sm font-semibold text-primary">Secretary workspace</p>
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div><h1 className="text-3xl font-semibold tracking-[-0.035em]">Welcome{owner.data?.name ? `, ${owner.data.name}` : ""}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Manage each Subject separately, review Attendance, and prepare official information before sharing public links.</p></div>
-          <Badge variant="secondary" className="rounded-full px-3 py-1">In progress</Badge>
+          <Badge variant="secondary" className="rounded-full px-3 py-1">{activeSubjects} active {activeSubjects === 1 ? "Subject" : "Subjects"}</Badge>
         </div>
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><OverviewMetric label="Active Subjects" value={activeSubjects} /><OverviewMetric label="Shared Subjects" value={sharedSubjects} tone="text-emerald-300" /><OverviewMetric label="Published reports" value={publishedReports} tone="text-primary" /><OverviewMetric label="Archived Subjects" value={archivedSubjects} tone="text-muted-foreground" /></div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <FoundationCard icon={BookOpen} title="Subjects" body="Create separate class spaces with independent Students and fixed weekday Schedules." route="/app/subjects" />
           <FoundationCard icon={CalendarDays} title="Attendance" body="Add a class session inside a Subject, then review PRESENT, ABSENT, and NOT SET." route="/app/subjects" />
           <FoundationCard icon={ChartNoAxesCombined} title="Reports" body="Create private class and all-subject summaries, then publish aggregate-only report links." route="/app/reports" />
         </div>
         <section className="mt-6 rounded-[28px] border border-border bg-card p-6">
-          <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">Workspace status</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Create Subjects, review Attendance, publish Announcements, Resources, and Questions & Answers, then share published links. Shared pages expose only public information.</p></div></div>
+          <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">Workspace status</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">{activeSubjects ? "Review Attendance, publish Announcements, Resources, and Questions & Answers, then share public links. Shared pages expose only public information." : "Start with a Subject, its Schedule, and its independent Student list. Then add class sessions and publish only the information ready to share."}</p></div></div>
         </section>
+        <Link href="/app/archive" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-accent"><Archive className="h-4 w-4 text-primary" />Open Archive</Link>
       </section>
     </DashboardLayout>
   );
@@ -56,3 +64,5 @@ function FoundationCard({ icon: Icon, title, body, route, disabled }: { icon: ty
   const card = <div className="rounded-[24px] border border-border bg-card p-5 transition-colors hover:bg-card/80"><Icon className="h-5 w-5 text-primary" /><h2 className="mt-5 font-semibold">{title}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>{disabled ? <p className="mt-5 text-sm font-medium text-muted-foreground">Coming in Milestone 4</p> : <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">Open <ArrowRight className="h-4 w-4" /></span>}</div>;
   return route ? <Link href={route} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{card}</Link> : card;
 }
+
+function OverviewMetric({ label, value, tone = "text-foreground" }: { label: string; value: number; tone?: string }) { return <section className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className={`mt-2 text-3xl font-semibold ${tone}`}>{value}</p></section>; }

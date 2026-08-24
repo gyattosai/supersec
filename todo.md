@@ -13,7 +13,7 @@
 - [ ] Fix and verify remaining blank or loading route states on protected and public pages before the next checkpoint.
 - [x] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
-- [ ] Create the secretary dashboard and cross-subject overview.
+- [x] Create the secretary dashboard and cross-subject overview.
 - [ ] Build elegant, mobile-first subject homes that always show the subject name, subject code, professor name, fixed weekday schedule, and upcoming no-class notice.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
