@@ -263,6 +263,7 @@ export const reports = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     publicId: varchar("publicId", { length: 24 }).notNull(),
+    ownerId: int("ownerId").notNull().references(() => users.id, { onDelete: "cascade" }),
     reportType: mysqlEnum("reportType", ["class_attendance", "all_subject_attendance"]).notNull(),
     subjectId: int("subjectId").references(() => subjects.id, { onDelete: "set null" }),
     classSessionId: int("classSessionId").references(() => classSessions.id, { onDelete: "set null" }),
@@ -275,6 +276,7 @@ export const reports = mysqlTable(
   },
   table => [
     uniqueIndex("reports_public_id_unique").on(table.publicId),
+    index("reports_owner_updated_idx").on(table.ownerId, table.updatedAt),
     index("reports_subject_type_idx").on(table.subjectId, table.reportType, table.publishState),
   ],
 );

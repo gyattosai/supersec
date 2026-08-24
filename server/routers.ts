@@ -49,6 +49,10 @@ export const appRouter = router({
         const history = await db.getPublicContentHistory(input.kind, input.publicId);
         return history ? { available: true as const, history } : { available: false as const };
       }),
+    publicReport: publicProcedure.input(publicIdInput).query(async ({ input }) => {
+      const report = await db.getPublicReportById(input.publicId);
+      return report ? { available: true as const, report } : { available: false as const };
+    }),
     media: router({
       upload: ownerProcedure
         .input(z.object({ fileName: z.string().min(1).max(255), mimeType: z.string().min(1).max(128), base64Data: z.string().min(1).max(12_000_000), altText: z.string().max(280).nullable().optional(), publicUse: z.boolean() }))

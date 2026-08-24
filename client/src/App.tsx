@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
-import { PublicAnnouncementPage, PublicQuestionPage, PublicResourcePage, PublicSubjectPage, PublicUnavailable } from "@/pages/PublicPages";
+import { PublicAnnouncementPage, PublicQuestionPage, PublicReportPage, PublicResourcePage, PublicSubjectPage, PublicUnavailable } from "@/pages/PublicPages";
 import { SecretaryDashboard, SecretaryPlaceholder } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
 import AttendancePage from "@/pages/AttendancePage";
@@ -27,7 +27,7 @@ function Router() {
       <Route path="/r/:publicId" component={PublicResourcePage} />
       <Route path="/q/:publicId" component={PublicQuestionPage} />
       <Route path="/attendance/:publicId" component={PublicUnavailable} />
-      <Route path="/reports/:publicId" component={PublicUnavailable} />
+      <Route path="/reports/:publicId" component={PublicReportPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

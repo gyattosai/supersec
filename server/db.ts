@@ -2,13 +2,16 @@ import { and, asc, desc, eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   announcements,
+  attendanceRecords,
   classSessions,
   historyEntries,
   InsertUser,
   mediaAssets,
   questionsAnswers,
+  reports,
   resources,
   subjectMeetingDays,
+  subjectStudents,
   subjects,
   users,
 } from "../drizzle/schema";
@@ -201,6 +204,36 @@ export async function getPublicContentHistory(kind: PublicContentPayload["kind"]
   const rows = await db.select({ id: table.id }).from(table).where(eq(table.publicId, publicId)).limit(1);
   if (!rows[0]) return null;
   return getPublicHistory(entityType, rows[0].id);
+}
+
+export type PublicReportPayload = {
+  publicId: string;
+  reportType: "class_attendance" | "all_subject_attendance";
+  version: number;
+  publishedAt: Date | null;
+  title: string;
+  startsAt?: Date;
+  totals?: { present: number; absent: number; notSet: number };
+  subjects?: Array<{ subjectName: string; subjectCode: string; present: number; absent: number; notSet: number }>;
+};
+
+/** Published reports expose aggregates only—never roster records, Zoom input, suggestions, or owner data. */
+export async function getPublicReportById(publicId: string): Promise<PublicReportPayload | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const reportRows = await db.select({ id: reports.id, ownerId: reports.ownerId, reportType: reports.reportType, classSessionId: reports.classSessionId, version: reports.version, publishedAt: reports.publishedAt }).from(reports).where(and(eq(reports.publicId, publicId), eq(reports.publishState, "published"))).limit(1);
+  const report = reportRows[0];
+  if (!report) return null;
+  if (report.reportType === "class_attendance" && report.classSessionId) {
+    const rows = await db.select({ startsAt: classSessions.startsAt, subjectName: subjects.name, subjectCode: subjects.code, status: attendanceRecords.attendanceStatus }).from(classSessions).innerJoin(subjects, eq(classSessions.subjectId, subjects.id)).leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id)).where(and(eq(classSessions.id, report.classSessionId), eq(subjects.ownerId, report.ownerId))).orderBy(asc(attendanceRecords.id));
+    if (!rows[0]) return null;
+    const totals = rows.reduce((result, row) => { if (row.status === "PRESENT") result.present += 1; else if (row.status === "ABSENT") result.absent += 1; else result.notSet += 1; return result; }, { present: 0, absent: 0, notSet: 0 });
+    return { publicId, reportType: "class_attendance", version: report.version, publishedAt: report.publishedAt, title: `${rows[0].subjectName} Attendance`, startsAt: rows[0].startsAt, totals };
+  }
+  const rows = await db.select({ subjectId: subjects.id, subjectName: subjects.name, subjectCode: subjects.code, status: attendanceRecords.attendanceStatus }).from(subjects).leftJoin(subjectStudents, and(eq(subjectStudents.subjectId, subjects.id), eq(subjectStudents.membershipState, "active"))).leftJoin(attendanceRecords, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).where(and(eq(subjects.ownerId, report.ownerId), eq(subjects.status, "active")));
+  const grouped = new Map<number, { subjectName: string; subjectCode: string; present: number; absent: number; notSet: number }>();
+  for (const row of rows) { const current = grouped.get(row.subjectId) ?? { subjectName: row.subjectName, subjectCode: row.subjectCode, present: 0, absent: 0, notSet: 0 }; if (row.status === "PRESENT") current.present += 1; else if (row.status === "ABSENT") current.absent += 1; else current.notSet += 1; grouped.set(row.subjectId, current); }
+  return { publicId, reportType: "all_subject_attendance", version: report.version, publishedAt: report.publishedAt, title: "All Subject Attendance", subjects: Array.from(grouped.values()) };
 }
 
 export async function createPublicHistoryEntry(input: {
