@@ -31,6 +31,7 @@
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [x] Identify each saved class-session report with its Subject and session date in the private Reports list.
+- [x] Identify archived class-session reports with their Subject and session date in Archive.
 - [x] Implement the blog-style Announcement workflow with lightweight rich authoring, managed-media attachment, versioning, and public History support.
 - [x] Render lightweight Announcement Markdown formatting safely on public share pages.
 - [x] Add custom public History summaries when editing published Announcements and Resources.
