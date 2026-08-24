@@ -14,7 +14,7 @@
 - [x] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [x] Create the secretary dashboard and cross-subject overview.
-- [ ] Build elegant, mobile-first subject homes that always show the subject name, subject code, professor name, fixed weekday schedule, and upcoming no-class notice.
+- [x] Build elegant, mobile-first subject homes that show the subject name, subject code, professor name, fixed weekday Schedule, and No Class surface.
 - [x] Implement class sessions and attendance records with PRESENT, ABSENT, and NOT SET statuses.
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
@@ -22,7 +22,9 @@
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [ ] Implement blog-style announcements with a rich editor, media uploads, manual version numbers, and public change history.
 - [ ] Implement visual resource web cards with title, description, category, type, source/domain label, fallback thumbnail, version history, and support for Google Drive, Google Forms, external sites, Facebook, images, and Zoom links.
-- [ ] Implement forum-based Q&A posts with manual publication, official status, manual version history, public change history, and individual view-only Messenger share links.
+- [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
+- [ ] Add explicit secretary-facing official-status controls for Q&A and verify the state on its public page.
+- [ ] Verify end-to-end Q&A public History after an update with a change summary.
 - [ ] Store announcement media, resource fallback thumbnails, and custom social-preview images securely in managed object storage.
 - [ ] Add social-preview SEO metadata and crawler-visible previews for shareable subject, announcement, resource, and Q&A pages, with neutral non-sensitive metadata for attendance views.
 - [ ] Apply the Apple-inspired, mobile-first design direction, HIG-informed accessibility checks, and a coherent class-workspace icon strategy.
@@ -41,4 +43,5 @@
 - [x] Verify a real archived Report appears in Archive, restores as a draft, and is removed from the Archive list end to end.
 - [ ] Verify an archived Subject appears in Archive, restores, and is removed from the Archive list end to end.
 - [ ] Verify archived Announcements, Resources, and Questions & Answers each restore from Archive and update the list end to end.
-- [ ] Save the post-verification release-candidate checkpoint and provide production deployment and monitoring handoff guidance.
+- [x] Save the post-verification release-candidate checkpoint.
+- [x] Provide concrete production deployment and monitoring handoff guidance.

@@ -1,6 +1,7 @@
 import { useDialogComposition } from "@/components/ui/dialog";
 import { useComposition } from "@/hooks/useComposition";
 import { cn } from "@/lib/utils";
+import { Bold, Heading2, Italic, Link2, List, ListOrdered, Quote } from "lucide-react";
 import * as React from "react";
 
 function Textarea({
@@ -10,6 +11,8 @@ function Textarea({
   onCompositionEnd,
   ...props
 }: React.ComponentProps<"textarea">) {
+  const editorRef = React.useRef<HTMLTextAreaElement>(null);
+  const richAnnouncement = props.placeholder === "Write the announcement";
   // Get dialog composition context if available (will be no-op if not inside Dialog)
   const dialogComposition = useDialogComposition();
 
@@ -49,8 +52,9 @@ function Textarea({
     },
   });
 
-  return (
+  const textarea = (
     <textarea
+      ref={editorRef}
       data-slot="textarea"
       className={cn(
         "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -62,6 +66,28 @@ function Textarea({
       {...props}
     />
   );
+  if (!richAnnouncement) return textarea;
+  const format = (prefix: string, suffix = prefix) => {
+    const element = editorRef.current;
+    if (!element) return;
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    const selected = element.value.slice(start, end) || "text";
+    const next = `${element.value.slice(0, start)}${prefix}${selected}${suffix}${element.value.slice(end)}`;
+    props.onChange?.({ target: { ...element, value: next }, currentTarget: { ...element, value: next } } as React.ChangeEvent<HTMLTextAreaElement>);
+    requestAnimationFrame(() => { element.focus(); element.setSelectionRange(start + prefix.length, start + prefix.length + selected.length); });
+  };
+  const prefixLine = (prefix: string) => {
+    const element = editorRef.current;
+    if (!element) return;
+    const start = element.selectionStart;
+    const lineStart = element.value.lastIndexOf("\n", start - 1) + 1;
+    const next = `${element.value.slice(0, lineStart)}${prefix}${element.value.slice(lineStart)}`;
+    props.onChange?.({ target: { ...element, value: next }, currentTarget: { ...element, value: next } } as React.ChangeEvent<HTMLTextAreaElement>);
+    requestAnimationFrame(() => { element.focus(); element.setSelectionRange(start + prefix.length, start + prefix.length); });
+  };
+  const tool = (label: string, action: () => void, icon: React.ReactNode) => <button type="button" onClick={action} className="grid min-h-9 min-w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={label} title={label}>{icon}</button>;
+  return <div className="mt-3 overflow-hidden rounded-2xl border border-input bg-background"><div className="flex flex-wrap gap-1 border-b border-border p-2" role="toolbar" aria-label="Announcement formatting">{tool("Bold", () => format("**"), <Bold className="h-4 w-4" />)}{tool("Italic", () => format("*"), <Italic className="h-4 w-4" />)}{tool("Heading", () => prefixLine("## "), <Heading2 className="h-4 w-4" />)}{tool("Bullet list", () => prefixLine("- "), <List className="h-4 w-4" />)}{tool("Numbered list", () => prefixLine("1. "), <ListOrdered className="h-4 w-4" />)}{tool("Quote", () => prefixLine("> "), <Quote className="h-4 w-4" />)}{tool("Link", () => format("[", "](https://)"), <Link2 className="h-4 w-4" />)}</div>{textarea}<p className="px-3 pb-3 text-xs leading-5 text-muted-foreground">Use the formatting controls for readable Markdown-style content.</p></div>;
 }
 
 export { Textarea };
