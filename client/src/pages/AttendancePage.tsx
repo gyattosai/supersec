@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
+import { WorkspaceFormFooter } from "@/components/WorkspaceFormFooter";
 import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,9 +106,11 @@ export default function AttendancePage() {
             <p className="mt-2 text-sm leading-6 text-muted-foreground">Paste participant names from a chosen Zoom capture time. Suggestions and source names stay private and never become Attendance automatically.</p>
             <div className="mt-4"><label htmlFor="zoom-capture-time" className="text-sm font-medium">Participant-list capture time</label><Input id="zoom-capture-time" type="datetime-local" value={captureAt} onChange={event => setCaptureAt(event.target.value)} className="mt-2" /></div>
             <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} />
-            <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="mt-3 min-h-11 w-full rounded-2xl">
-              <Sparkles className="mr-2 h-4 w-4" />Suggest matches
-            </Button>
+            <WorkspaceFormFooter note="Suggestions stay private and advisory. Confirm each record before Attendance can be published.">
+              <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="min-h-11 w-full rounded-2xl">
+                <Sparkles className="mr-2 h-4 w-4" />Suggest matches
+              </Button>
+            </WorkspaceFormFooter>
             {suggestions.data?.length ? (
               <div className="mt-5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Review suggestions</h3>{unresolvedSuggestionCount ? <RecordStatusBadge tone="attention">{unresolvedSuggestionCount} need review</RecordStatusBadge> : <RecordStatusBadge tone="confirmed">All confirmed</RecordStatusBadge>}</div>
