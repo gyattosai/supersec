@@ -58,6 +58,7 @@
 - [x] Refine public Q&A title hierarchy so the visible status badge does not duplicate the page title.
 - [ ] Deferred: capture additional automated evidence for both published Q&A states and a custom History entry only if future regression work requires it.
 - [x] Store Announcement media, Resource fallback thumbnails, and custom social-preview images through managed object-storage references.
+- [x] Let the secretary choose a distinct managed Messenger preview image from the public Announcement or Resource image.
 - [ ] Verify real managed Announcement/share images, Resource thumbnails, and custom social-preview images on public pages.
 - [x] Add crawler-visible social metadata for shareable Subject, Announcement, Resource, Q&A, Attendance, and Report pages, with neutral non-sensitive Attendance metadata.
 - [x] Verify real published Subject, Announcement, Resource, Q&A, Attendance, and Report server-rendered titles, descriptions, and Open Graph types.
