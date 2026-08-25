@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { RecordStatusBadge } from "@/components/RecordStatusBadge";
 import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,12 +110,12 @@ export default function AttendancePage() {
             </Button>
             {suggestions.data?.length ? (
               <div className="mt-5 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Review suggestions</h3>{unresolvedSuggestionCount ? <Badge variant="secondary" className="rounded-full text-amber-200">{unresolvedSuggestionCount} need review</Badge> : <Badge variant="secondary" className="rounded-full text-emerald-200">All confirmed</Badge>}</div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Review suggestions</h3>{unresolvedSuggestionCount ? <RecordStatusBadge tone="attention">{unresolvedSuggestionCount} need review</RecordStatusBadge> : <RecordStatusBadge tone="confirmed">All confirmed</RecordStatusBadge>}</div>
                 {suggestions.data.map(item => {
                   const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : "");
                   return (
                     <div key={item.id} className="rounded-2xl bg-secondary p-3">
-                      <div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold">Private review</span><Badge variant={item.reviewState === "clear" ? "default" : "secondary"} className="rounded-full">{item.reviewState.replace("_", " ")}</Badge></div>
+                      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="text-sm font-semibold">Suggestion</span><RecordStatusBadge tone="private">Private review</RecordStatusBadge></div><RecordStatusBadge tone={item.reviewState === "confirmed" ? "confirmed" : "attention"}>{item.reviewState === "confirmed" ? "Confirmed" : "Needs review"}</RecordStatusBadge></div>
                       <dl className="mt-3 space-y-2 text-sm">
                         <div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Zoom source</dt><dd className="mt-1 break-words font-medium text-foreground">{item.sourceName}</dd></div>
                         <div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Normalized candidate</dt><dd className="mt-1 break-words font-medium text-foreground">{item.normalizedCandidate ?? "No confident required-format candidate"}</dd></div>
