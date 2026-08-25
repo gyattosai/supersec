@@ -55,7 +55,7 @@
 - [x] Add a private draft-safe preview for Announcement authoring before publication.
 - [x] Render lightweight Announcement Markdown formatting safely on public share pages.
 - [x] Add custom public History summaries when editing published Announcements and Resources.
-- [ ] Verify a real published Announcement with managed public image, version increment, and public History entry.
+- [x] Verify a real published Announcement with managed public image, version increment, and public History entry.
 - [x] Implement visual Resource web cards with metadata, fallback-thumbnail support, version History, and supported external destination types.
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [x] Implement Q&A drafts, publication, versioning, archive/restore, and individual view-only Messenger sharing.
