@@ -25,7 +25,7 @@ function NavItems({ mobile = false }: { mobile?: boolean }) {
             aria-current={active ? "page" : undefined}
             className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-[background-color,color,transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               mobile ? "flex-col justify-center gap-1 px-1 text-[10px] tracking-[-0.01em]" : ""
-            } ${active ? "bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(0,112,217,0.22)]" : "text-muted-foreground hover:translate-x-0.5 hover:bg-accent hover:text-accent-foreground"}`}
+            } ${active ? "bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(199,82,0,0.22)]" : "text-muted-foreground hover:translate-x-0.5 hover:bg-accent hover:text-accent-foreground"}`}
           >
             <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{item.label}</span>
@@ -67,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-sidebar-border/80 bg-sidebar/95 p-5 lg:flex">
         <div className="rounded-[26px] bg-sidebar-accent/45 p-1 ring-1 ring-sidebar-border/80"><Link href="/app" className="block rounded-[22px] bg-sidebar p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[background-color,transform] duration-300 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:bg-sidebar-accent/70 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_8px_18px_rgba(0,112,217,0.22)]">CM</span><span><span className="block font-semibold tracking-tight">Class Management</span><span className="mt-0.5 block text-xs text-muted-foreground">Academic operations</span></span></span>
+          <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_8px_18px_rgba(199,82,0,0.22)]">CM</span><span><span className="block font-semibold tracking-tight">Class Management</span><span className="mt-0.5 block text-xs text-muted-foreground">Academic operations</span></span></span>
         </Link></div>
         <div className="mt-9"><p className="px-3 text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Workspace</p><div className="mt-3"><NavItems /></div></div>
         <div className="mt-auto rounded-[26px] bg-sidebar-accent/60 p-1 ring-1 ring-sidebar-border/80"><div className="rounded-[22px] bg-sidebar p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">

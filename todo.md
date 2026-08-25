@@ -14,6 +14,7 @@
 - [x] Compact the private Reports summary metrics so the mobile review flow prioritizes report actions and saved records.
 - [x] Compact the private Attendance summary metrics so Zoom review and Student status controls appear sooner on mobile.
 - [x] Apply a restrained high-end visual-finish pass to the shared private shell and workspace headers using existing shadcn/ui primitives without compromising academic-operations clarity.
+- [x] Replace the shared primary palette with accessible tropical orange tokens and adopt Manrope with Inter typography.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
