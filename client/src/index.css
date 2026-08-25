@@ -111,3 +111,13 @@
 @media (prefers-reduced-transparency: reduce) {
   .backdrop-blur { backdrop-filter: none !important; }
 }
+
+@media print {
+  html, body { background: #ffffff !important; color: #111827 !important; }
+  .print-hidden { display: none !important; }
+  .print-report { border: 0 !important; background: #ffffff !important; box-shadow: none !important; color: #111827 !important; }
+  .print-report * { border-color: #d1d5db !important; }
+  .print-report .bg-secondary { background: #f8fafc !important; }
+  .print-report .text-muted-foreground { color: #4b5563 !important; }
+  .print-report .text-primary, .print-report .text-emerald-300, .print-report .text-red-300, .print-report .text-amber-300 { color: #111827 !important; }
+}
