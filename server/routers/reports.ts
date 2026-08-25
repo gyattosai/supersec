@@ -1,7 +1,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { attendanceRecords, classSessions, reports, subjectStudents, subjects } from "../../drizzle/schema";
+import { attendanceRecords, classSessions, reports, students, subjectStudents, subjects } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
@@ -11,8 +11,12 @@ async function databaseOrThrow() { const database = await getDb(); if (!database
 export const reportsRouter = router({
   classAttendance: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const db = await databaseOrThrow();
-    const rows = await db.select({ sessionId: classSessions.id, startsAt: classSessions.startsAt, subjectName: subjects.name, subjectCode: subjects.code, status: attendanceRecords.attendanceStatus }).from(classSessions).innerJoin(subjects, eq(classSessions.subjectId, subjects.id)).leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id)).where(and(eq(classSessions.id, input.sessionId), eq(subjects.ownerId, ctx.user.id))).orderBy(asc(attendanceRecords.id));
-    if (!rows[0]) throw new Error("Class session not found"); const totals = rows.reduce((result, row) => { if (row.status === "PRESENT") result.present += 1; else if (row.status === "ABSENT") result.absent += 1; else result.notSet += 1; return result; }, { present: 0, absent: 0, notSet: 0 }); return { sessionId: rows[0].sessionId, startsAt: rows[0].startsAt, subjectName: rows[0].subjectName, subjectCode: rows[0].subjectCode, ...totals };
+    const sessionRows = await db.select({ sessionId: classSessions.id, subjectId: classSessions.subjectId, startsAt: classSessions.startsAt, subjectName: subjects.name, subjectCode: subjects.code }).from(classSessions).innerJoin(subjects, eq(classSessions.subjectId, subjects.id)).where(and(eq(classSessions.id, input.sessionId), eq(subjects.ownerId, ctx.user.id))).limit(1);
+    const session = sessionRows[0]; if (!session) throw new Error("Class session not found");
+    const rows = await db.select({ canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus }).from(subjectStudents).innerJoin(students, eq(subjectStudents.studentId, students.id)).leftJoin(attendanceRecords, and(eq(attendanceRecords.subjectStudentId, subjectStudents.id), eq(attendanceRecords.classSessionId, session.sessionId))).where(and(eq(subjectStudents.subjectId, session.subjectId), eq(subjectStudents.membershipState, "active"))).orderBy(asc(students.canonicalName));
+    const roster = rows.map(row => ({ canonicalName: row.canonicalName, status: row.status ?? "NOT_SET" as const }));
+    const totals = roster.reduce((result, row) => { if (row.status === "PRESENT") result.present += 1; else if (row.status === "ABSENT") result.absent += 1; else result.notSet += 1; return result; }, { present: 0, absent: 0, notSet: 0 });
+    return { sessionId: session.sessionId, startsAt: session.startsAt, subjectName: session.subjectName, subjectCode: session.subjectCode, students: roster, ...totals };
   }),
   allSubjectAttendance: ownerProcedure.query(async ({ ctx }) => {
     const db = await databaseOrThrow(); const rows = await db.select({ subjectId: subjects.id, subjectName: subjects.name, subjectCode: subjects.code, status: attendanceRecords.attendanceStatus }).from(subjects).leftJoin(subjectStudents, and(eq(subjectStudents.subjectId, subjects.id), eq(subjectStudents.membershipState, "active"))).leftJoin(attendanceRecords, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).where(and(eq(subjects.ownerId, ctx.user.id), eq(subjects.status, "active"))); const bySubject = new Map<number, { subjectId: number; subjectName: string; subjectCode: string; present: number; absent: number; notSet: number }>(); for (const row of rows) { const current = bySubject.get(row.subjectId) ?? { subjectId: row.subjectId, subjectName: row.subjectName, subjectCode: row.subjectCode, present: 0, absent: 0, notSet: 0 }; if (row.status === "PRESENT") current.present += 1; else if (row.status === "ABSENT") current.absent += 1; else current.notSet += 1; bySubject.set(row.subjectId, current); } return Array.from(bySubject.values());

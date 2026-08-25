@@ -33,6 +33,7 @@
 - [x] Correct public Home guidance so it reflects direct private-group Subject-link sharing rather than an open Subject directory.
 - [x] Replace the private Settings placeholder with direct entry points to each Subject’s details, Students, Schedule, and sharing controls.
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
+- [x] Show the secretary the Student-by-Student official statuses in private Class Attendance reports while preserving aggregate-only public reports.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [x] Identify each saved class-session report with its Subject and session date in the private Reports list.
 - [x] Add a print-friendly export action to published public report pages.
