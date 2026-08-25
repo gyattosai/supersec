@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,10 +37,7 @@ export default function SubjectsPage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div><p className="text-sm font-semibold text-primary">Private workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Subjects</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Keep every class separate: its Students, Schedule, Attendance, and shared information stay in one Subject.</p></div>
-          <Badge variant="secondary" className="rounded-full px-3 py-1">{subjects.data?.length ?? 0} total</Badge>
-        </div>
+        <WorkspacePageHeader eyebrow="Private workspace" title="Subjects" description="Keep every class separate: its Students, Schedule, Attendance, and shared information stay in one Subject." action={<Badge variant="secondary" className="rounded-full px-3 py-1">{subjects.data?.length ?? 0} total</Badge>} />
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.65fr)]">
           <div className="space-y-4">
             <CreateSubjectForm busy={create.isPending} onCreate={input => create.mutate(input)} />

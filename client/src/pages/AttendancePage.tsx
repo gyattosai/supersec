@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,18 +73,12 @@ export default function AttendancePage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-5xl">
-        <Link href="/app/subjects" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />Back to Subjects
-        </Link>
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-primary">Class session</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em]">Attendance</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Paste Zoom names for private suggestions, then confirm every final status yourself before publishing.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <WorkspacePageHeader
+          eyebrow="Class session"
+          title="Attendance"
+          description="Paste Zoom names for private suggestions, then confirm every final status yourself before publishing."
+          back={<Link href="/app/subjects" className="inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft className="h-4 w-4" />Back to Subjects</Link>}
+          action={<>
             <Link
               href={`/app/reports?sessionId=${sessionId}`}
               className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
@@ -94,8 +89,8 @@ export default function AttendancePage() {
             <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0} className="min-h-11 rounded-2xl">
               <Upload className="mr-2 h-4 w-4" />{unresolvedSuggestionCount ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}` : "Publish Attendance"}
             </Button>
-          </div>
-        </div>
+          </>}
+        />
 
         <div className="mt-7 grid gap-4 sm:grid-cols-3">
           <Summary label="Present" count={totals.present} tone="text-emerald-300" />

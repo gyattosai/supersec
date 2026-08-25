@@ -4,6 +4,7 @@
 - [x] Publish a design-system alignment brief with prioritized shared-component and screen refinements.
 - [x] Redesign the secretary dashboard so feature areas are not visually compressed on mobile or desktop.
 - [x] Align the private workspace navigation and page shell with the refined academic operations design system.
+- [x] Standardize private workspace page headers and section action groups with the academic operations hierarchy.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
