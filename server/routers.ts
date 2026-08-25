@@ -35,6 +35,10 @@ export const appRouter = router({
       const subject = await db.getPublicSubjectById(input.publicId);
       return subject ? { available: true as const, subject } : { available: false as const };
     }),
+    publicQuestions: publicProcedure.input(publicIdInput.extend({ query: z.string().trim().max(100).optional() })).query(async ({ input }) => {
+      const result = await db.getPublicQuestionsBySubjectId(input.publicId, input.query);
+      return result ? { available: true as const, ...result } : { available: false as const };
+    }),
     publicAttendance: publicProcedure.input(publicIdInput).query(async ({ input }) => {
       const attendance = await db.getPublicAttendanceById(input.publicId);
       return attendance ? { available: true as const, attendance } : { available: false as const };

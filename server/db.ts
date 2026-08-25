@@ -151,6 +151,30 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
   };
 }
 
+/** Returns only published Q&A data intended for a public Subject-level browse page. */
+export async function getPublicQuestionsBySubjectId(publicId: string, query?: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const subjectRows = await db
+    .select({ id: subjects.id, publicId: subjects.publicId, name: subjects.name, code: subjects.code })
+    .from(subjects)
+    .where(and(eq(subjects.publicId, publicId), eq(subjects.status, "active"), eq(subjects.publishState, "published")))
+    .limit(1);
+  const subject = subjectRows[0];
+  if (!subject) return null;
+  const normalizedQuery = query?.trim().toLocaleLowerCase() ?? "";
+  const rows = await db
+    .select({ publicId: questionsAnswers.publicId, question: questionsAnswers.question, answer: questionsAnswers.answer, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, publishedAt: questionsAnswers.publishedAt })
+    .from(questionsAnswers)
+    .where(and(eq(questionsAnswers.subjectId, subject.id), eq(questionsAnswers.publishState, "published")))
+    .orderBy(desc(questionsAnswers.publishedAt))
+    .limit(100);
+  const questions = normalizedQuery
+    ? rows.filter(row => `${row.question} ${row.answer} ${row.tagsText ?? ""}`.toLocaleLowerCase().includes(normalizedQuery))
+    : rows;
+  return { subject: { publicId: subject.publicId, name: subject.name, code: subject.code }, questions };
+}
+
 export async function getPublicHistory(entityType: string, entityId: number) {
   const db = await getDb();
   if (!db) return [];
