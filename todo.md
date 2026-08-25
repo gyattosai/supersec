@@ -12,6 +12,7 @@
 - [ ] Refine Archive record cards so retained context and the restore action scan in a durable record hierarchy.
 - [x] Refine Settings subject navigation cards so private configuration destinations scan consistently with the workspace.
 - [x] Compact the private Reports summary metrics so the mobile review flow prioritizes report actions and saved records.
+- [x] Compact the private Attendance summary metrics so Zoom review and Student status controls appear sooner on mobile.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.

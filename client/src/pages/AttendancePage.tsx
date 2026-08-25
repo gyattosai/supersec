@@ -94,7 +94,7 @@ export default function AttendancePage() {
           </>}
         />
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-3">
+        <div className="mt-7 grid grid-cols-3 gap-3">
           <Summary label="Present" count={totals.present} tone="text-emerald-300" />
           <Summary label="Absent" count={totals.absent} tone="text-red-300" />
           <Summary label="Not set" count={totals.unset} tone="text-amber-300" />
@@ -163,5 +163,5 @@ export default function AttendancePage() {
 }
 
 function Summary({ label, count, tone }: { label: string; count: number; tone: string }) {
-  return <section className="rounded-2xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">{label}</p><p className={`mt-2 text-3xl font-semibold ${tone}`}>{count}</p></section>;
+  return <section className="rounded-2xl border border-border bg-card p-3 sm:p-4"><p className="text-xs text-muted-foreground sm:text-sm">{label}</p><p className={`mt-1 text-2xl font-semibold ${tone} sm:mt-2 sm:text-3xl`}>{count}</p></section>;
 }
