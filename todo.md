@@ -1,6 +1,9 @@
 # Project TODO
 
-- [ ] Reconcile the attached PRD against the implemented Class Management System and complete remaining PRD-aligned development work.
+- [ ] Conduct a product-design audit and align implemented Class Management System screens to the dark-first Apple-inspired design system.
+- [x] Publish a design-system alignment brief with prioritized shared-component and screen refinements.
+- [x] Redesign the secretary dashboard so feature areas are not visually compressed on mobile or desktop.
+- [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
 - [x] Produce an approval-ready information architecture before starting product design or feature implementation.
