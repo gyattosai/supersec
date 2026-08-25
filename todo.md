@@ -1,7 +1,7 @@
 # Project TODO
 
 - [ ] Reconcile the attached PRD against the implemented Class Management System and complete remaining PRD-aligned development work.
-- [ ] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
+- [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
 - [x] Produce an approval-ready information architecture before starting product design or feature implementation.
 - [x] Produce and obtain approval for a Product Requirements Document before creating milestones, product design, or feature implementation.
@@ -31,6 +31,7 @@
 - [x] Implement pasted Zoom participant-name intake, normalization to SECTION_LAST NAME, FIRST NAME + MIDDLE NAME, LLM-assisted roster-match suggestions, ambiguity flags, and secretary-only final confirmation.
 - [x] Add public view-only subject sharing suitable for small Messenger groups while hiding secretary-only data.
 - [x] Correct public Home guidance so it reflects direct private-group Subject-link sharing rather than an open Subject directory.
+- [x] Replace the private Settings placeholder with direct entry points to each Subject’s details, Students, Schedule, and sharing controls.
 - [x] Build and validate the per-session Class Attendance report lifecycle, including aggregate-only public sharing and Archive restore.
 - [x] Validate the end-of-exams All Subject Attendance report lifecycle: draft, publication, aggregate-only public output, Archive, restore, and republish.
 - [x] Identify each saved class-session report with its Subject and session date in the private Reports list.

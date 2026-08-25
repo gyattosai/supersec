@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { Archive, BookOpen, CalendarDays, Check, CircleAlert, CircleHelp, Clipboard, GraduationCap, Megaphone, Pencil, Plus, UserMinus, UserPlus, Users } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,12 +17,16 @@ const scheduleTimeMap = (days: Array<{ weekday: number; startTime?: string | nul
 export default function SubjectsPage() {
   const utils = trpc.useUtils();
   const subjects = trpc.subjects.list.useQuery();
+  const [location] = useLocation();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const requestedId = Number(new URLSearchParams(location.split("?")[1] ?? "").get("subject"));
   const selected = useMemo(() => subjects.data?.find(subject => subject.id === selectedId) ?? subjects.data?.[0] ?? null, [subjects.data, selectedId]);
 
   useEffect(() => {
-    if (subjects.data?.length && selectedId === null) setSelectedId(subjects.data[0].id);
-  }, [subjects.data, selectedId]);
+    if (!subjects.data?.length) return;
+    if (Number.isInteger(requestedId) && subjects.data.some(subject => subject.id === requestedId)) { if (selectedId !== requestedId) setSelectedId(requestedId); return; }
+    if (selectedId === null) setSelectedId(subjects.data[0].id);
+  }, [subjects.data, selectedId, requestedId]);
 
   const create = trpc.subjects.create.useMutation({
     onSuccess: async ({ id }) => { await utils.subjects.list.invalidate(); setSelectedId(id); toast.success("Subject created"); },

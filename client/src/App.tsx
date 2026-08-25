@@ -3,7 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
 import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, PublicReportPage, PublicResourcePage, PublicSubjectPage, PublicSubjectQuestionsPage } from "@/pages/PublicPages";
-import { SecretaryDashboard, SecretaryPlaceholder } from "@/pages/SecretaryPages";
+import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
 import AttendancePage from "@/pages/AttendancePage";
 import ContentPage from "@/pages/ContentPage";
@@ -23,7 +23,7 @@ function Router() {
       <Route path="/app/content/:subjectId/:kind" component={ContentPage} />
       <Route path="/app/reports" component={ReportsPage} />
       <Route path="/app/archive" component={ArchivePage} />
-      <Route path="/app/settings">{() => <SecretaryPlaceholder page="settings" />}</Route>
+      <Route path="/app/settings" component={SecretarySettingsPage} />
       <Route path="/s/:publicId/questions" component={PublicSubjectQuestionsPage} />
       <Route path="/s/:publicId" component={PublicSubjectPage} />
       <Route path="/a/:publicId" component={PublicAnnouncementPage} />
