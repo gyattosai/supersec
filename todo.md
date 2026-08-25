@@ -8,6 +8,7 @@
 - [x] Standardize private workspace status badges so published, draft, private-review, attention, and archived states remain semantically distinct.
 - [x] Refine high-use private form shells so preparation context and primary actions remain clear on mobile and desktop.
 - [x] Refine Subject destination cards so private content workspaces scan as clear operational choices.
+- [x] Refine the public share-page shell for calm, reader-focused navigation and content framing.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
