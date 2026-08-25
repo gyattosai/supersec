@@ -37,6 +37,7 @@
 - [x] Add a print-friendly export action to published public report pages.
 - [x] Identify archived class-session reports with their Subject and session date in Archive.
 - [x] Implement the blog-style Announcement workflow with lightweight rich authoring, managed-media attachment, versioning, and public History support.
+- [x] Add a private draft-safe preview for Announcement authoring before publication.
 - [x] Render lightweight Announcement Markdown formatting safely on public share pages.
 - [x] Add custom public History summaries when editing published Announcements and Resources.
 - [ ] Verify a real published Announcement with managed public image, version increment, and public History entry.
