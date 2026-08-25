@@ -15,16 +15,17 @@ const menuItems = [
 function NavItems({ mobile = false }: { mobile?: boolean }) {
   const [location] = useLocation();
   return (
-    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "grid grid-cols-5 gap-1" : "space-y-1"}>
+    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "grid grid-cols-5 gap-1 rounded-2xl bg-sidebar/75 p-1" : "space-y-1"}>
       {menuItems.map(item => {
         const active = location === item.path;
         return (
           <Link
             key={item.path}
             href={item.path}
-            className={`flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              mobile ? "flex-col justify-center gap-1 px-1 text-[11px]" : ""
-            } ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
+            aria-current={active ? "page" : undefined}
+            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-[background-color,color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              mobile ? "flex-col justify-center gap-1 px-1 text-[10px] tracking-[-0.01em]" : ""
+            } ${active ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
           >
             <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{item.label}</span>
@@ -64,23 +65,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-border bg-sidebar p-4 lg:flex">
-        <Link href="/app" className="flex min-h-11 items-center gap-3 rounded-2xl px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">CM</span>
-          <span className="font-semibold tracking-tight">Class Management</span>
+      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-border bg-sidebar/95 p-5 lg:flex">
+        <Link href="/app" className="rounded-[22px] border border-border bg-sidebar-accent/50 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-md shadow-primary/20">CM</span><span><span className="block font-semibold tracking-tight">Class Management</span><span className="mt-0.5 block text-xs text-muted-foreground">Academic operations</span></span></span>
         </Link>
-        <div className="mt-8"><NavItems /></div>
-        <div className="mt-auto rounded-2xl bg-sidebar-accent p-3">
+        <div className="mt-9"><p className="px-3 text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Workspace</p><div className="mt-3"><NavItems /></div></div>
+        <div className="mt-auto rounded-[22px] border border-border bg-sidebar-accent/70 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Secretary account</p>
           <p className="truncate text-sm font-medium">{user.name || "Class secretary"}</p>
           <p className="mt-1 truncate text-xs text-muted-foreground">{user.email || "Workspace owner"}</p>
-          <Button onClick={logout} variant="ghost" className="mt-3 min-h-11 w-full justify-start rounded-xl text-muted-foreground hover:text-foreground">
+          <Button onClick={logout} variant="ghost" className="mt-4 min-h-11 w-full justify-start rounded-xl text-muted-foreground hover:bg-background/70 hover:text-foreground">
             <LogOut className="mr-2 h-4 w-4" /> Sign out
           </Button>
         </div>
       </aside>
 
       <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between border-b border-border bg-background/92 px-5 backdrop-blur lg:ml-72 lg:hidden">
-        <Link href="/app" className="flex items-center gap-2 font-semibold tracking-tight">
+        <Link href="/app" className="flex items-center gap-2 rounded-xl font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">CM</span>
           <span>Class Management</span>
         </Link>
@@ -89,8 +90,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Button>
       </header>
 
-      <main className="min-h-screen px-5 pb-28 pt-7 lg:ml-72 lg:px-10 lg:pb-10">{children}</main>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-2 backdrop-blur lg:hidden"><NavItems mobile /></div>
+      <main className="min-h-screen px-5 pb-30 pt-7 lg:ml-72 lg:px-10 lg:pb-12 lg:pt-10">{children}</main>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-3 py-2.5 backdrop-blur lg:hidden"><NavItems mobile /></div>
     </div>
   );
 }
