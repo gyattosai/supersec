@@ -21,7 +21,7 @@ function compactDisplayName(value: string) { return value.trim().replace(/\s+/g,
 function canonicalSegment(value: string) { return value.trim().replace(/\s+/g, " ").toUpperCase(); }
 function isSectionSurnameSegment(value: string) { return /^[A-Z0-9][A-Z0-9-]*_[A-Z0-9][A-Z0-9 .'-]*$/.test(canonicalSegment(value)); }
 
-export function parseParticipantLines(value: string) { return value.split(/\r?\n/).map(line => line.trim().replace(/\s+/g, " ")).filter(line => line.length > 1 && !/^participants?$/i.test(line)).slice(0, 300); }
+export function parseParticipantLines(value: string) { return value.split(/\r?\n/).map(line => line.trim().replace(/\s+/g, " ")).filter(line => line.length > 1 && !/^participants?(?:\s*\(\d+\))?$/i.test(line)).slice(0, 300); }
 
 /**
  * Produces a private review candidate only where the section/surname and given-name boundary is explicit.

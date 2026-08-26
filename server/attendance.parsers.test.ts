@@ -9,6 +9,10 @@ describe("Zoom participant parsing", () => {
   it("removes only blank lines and the participant heading", () => {
     expect(parseParticipantLines("\nParticipants\r\n\r\nBSIT_REYES, Maria\r\n")).toEqual(["BSIT_REYES, Maria"]);
   });
+
+  it("removes a common Zoom participant-count heading without splitting any comma-based names", () => {
+    expect(parseParticipantLines("Participants (2)\nBSIT_DELA CRUZ, Juan M.\nBSIT_SANTOS, Ana")).toEqual(["BSIT_DELA CRUZ, Juan M.", "BSIT_SANTOS, Ana"]);
+  });
 });
 
 describe("Zoom display-name cleanup", () => {

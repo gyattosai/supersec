@@ -66,6 +66,7 @@ export default function AttendancePage() {
   );
   const filteredRecords = useMemo(() => records.data?.filter(record => statusFilter === "ALL" || record.status === statusFilter) ?? [], [records.data, statusFilter]);
   const unresolvedSuggestionCount = suggestions.data?.filter(item => item.reviewState !== "confirmed").length ?? 0;
+  const pastedNameCount = useMemo(() => rawNames.split(/\r?\n/).map(name => name.trim()).filter(Boolean).length, [rawNames]);
   const copyPublicAttendance = async () => {
     if (!session.data?.publicId) return;
     await navigator.clipboard.writeText(`${window.location.origin}/attendance/${session.data.publicId}`);
@@ -101,14 +102,15 @@ export default function AttendancePage() {
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
-          <section className="rounded-[28px] border border-border bg-card p-5">
-            <div className="flex items-center gap-2"><ClipboardPaste className="h-5 w-5 text-primary" /><h2 className="font-semibold">Paste Zoom names</h2></div>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">Paste participant names from a chosen Zoom capture time. Suggestions and source names stay private and never become Attendance automatically.</p>
+          <section className="rounded-[28px] bg-secondary/35 p-1 ring-1 ring-border/75"><div className="rounded-[24px] bg-card p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles /></span><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Private AI assistant</p><h2 className="mt-1 font-semibold">Analyze pasted Zoom names</h2></div></div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">Paste a Zoom participant list from a chosen capture time. The assistant cleans up names and compares them with this Subject’s roster, but it never changes Attendance on its own.</p>
             <div className="mt-4"><label htmlFor="zoom-capture-time" className="text-sm font-medium">Participant-list capture time</label><Input id="zoom-capture-time" type="datetime-local" value={captureAt} onChange={event => setCaptureAt(event.target.value)} className="mt-2" /></div>
-            <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} />
-            <WorkspaceFormFooter note="Suggestions stay private and advisory. Confirm each record before Attendance can be published.">
+            <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} aria-describedby="zoom-name-count" />
+            <div id="zoom-name-count" className="mt-2 flex items-center justify-between gap-3 text-xs leading-5 text-muted-foreground"><span>{pastedNameCount ? `${pastedNameCount} pasted ${pastedNameCount === 1 ? "name" : "names"} ready for analysis` : "Paste one participant name per line"}</span>{rawNames ? <button type="button" onClick={() => setRawNames("")} className="min-h-11 px-2 text-xs font-semibold text-primary">Clear list</button> : null}</div>
+            <WorkspaceFormFooter note="The AI output stays private and advisory. You must confirm every roster match or explicitly choose No roster match before Attendance can be published.">
               <Button onClick={() => importNames.mutate({ sessionId, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="min-h-11 w-full rounded-2xl">
-                <Sparkles className="mr-2 h-4 w-4" />Suggest matches
+                <Sparkles data-icon="inline-start" />{importNames.isPending ? "Analyzing private list…" : `Analyze ${pastedNameCount || "Zoom"} ${pastedNameCount === 1 ? "name" : "names"}`}
               </Button>
             </WorkspaceFormFooter>
             {suggestions.data?.length ? (
@@ -138,7 +140,7 @@ export default function AttendancePage() {
                 })}
               </div>
             ) : null}
-          </section>
+          </div></section>
 
           <section className="rounded-[28px] border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Student status</h2><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>

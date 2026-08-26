@@ -16,6 +16,11 @@
 - [x] Apply a restrained high-end visual-finish pass to the shared private shell and workspace headers using existing shadcn/ui primitives without compromising academic-operations clarity.
 - [x] Replace the shared primary palette with accessible tropical orange tokens and adopt Manrope with Inter typography.
 - [x] Redesign the private Subjects workspace to reduce visual compression and clarify the task hierarchy across desktop and mobile.
+- [x] Reframe Subjects as a gallery and give each Subject a dedicated private workspace route with an independent creation view.
+- [x] Give each Subject feature a dedicated private route and view while preserving existing deep links and public/private boundaries.
+- [x] Update and verify legacy private Subject deep links so Settings and other entry points resolve to the new dedicated workspace routes.
+- [x] Add a dedicated private Sharing route for each Subject and move publication and copy-link controls there.
+- [x] Strengthen the private AI-assisted Zoom participant paste and secretary review workflow for Attendance.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
