@@ -106,9 +106,16 @@ async function ownerSession(database: Awaited<ReturnType<typeof databaseOrThrow>
   return session[0];
 }
 
+export function attendanceDefaultForMembership(hasScheduleConflict: boolean) {
+  return {
+    attendanceStatus: hasScheduleConflict ? "PRESENT" as const : "NOT_SET" as const,
+    hasScheduleConflict,
+  };
+}
+
 async function ensureRecords(database: Awaited<ReturnType<typeof databaseOrThrow>>, sessionId: number, subjectId: number) {
-  const memberships = await database.select({ id: subjectStudents.id }).from(subjectStudents).where(and(eq(subjectStudents.subjectId, subjectId), eq(subjectStudents.membershipState, "active")));
-  if (memberships.length) await database.insert(attendanceRecords).values(memberships.map(member => ({ classSessionId: sessionId, subjectStudentId: member.id, attendanceStatus: "NOT_SET" as const, publishState: "draft" as const }))).onDuplicateKeyUpdate({ set: { classSessionId: sessionId } });
+  const memberships = await database.select({ id: subjectStudents.id, hasScheduleConflict: subjectStudents.hasScheduleConflict }).from(subjectStudents).where(and(eq(subjectStudents.subjectId, subjectId), eq(subjectStudents.membershipState, "active")));
+  if (memberships.length) await database.insert(attendanceRecords).values(memberships.map(member => ({ classSessionId: sessionId, subjectStudentId: member.id, ...attendanceDefaultForMembership(member.hasScheduleConflict), publishState: "draft" as const }))).onDuplicateKeyUpdate({ set: { classSessionId: sessionId } });
 }
 
 export const attendanceRouter = router({
@@ -118,7 +125,7 @@ export const attendanceRouter = router({
   }),
   list: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);
-    return database.select({ recordId: attendanceRecords.id, membershipId: subjectStudents.id, canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, publishState: attendanceRecords.publishState, version: attendanceRecords.publishedVersion }).from(attendanceRecords).innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(attendanceRecords.classSessionId, session.id)).orderBy(asc(students.canonicalName));
+    return database.select({ recordId: attendanceRecords.id, membershipId: subjectStudents.id, canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, hasScheduleConflict: attendanceRecords.hasScheduleConflict, publishState: attendanceRecords.publishState, version: attendanceRecords.publishedVersion }).from(attendanceRecords).innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(attendanceRecords.classSessionId, session.id)).orderBy(asc(students.canonicalName));
   }),
   setStatus: ownerProcedure.input(z.object({ recordId: z.number().int().positive(), status: z.enum(["PRESENT", "ABSENT", "NOT_SET"]) })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow();

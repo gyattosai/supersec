@@ -15,6 +15,24 @@ const subjectInput = z.object({
   meetingDays: z.array(meetingDayInput).min(1).max(7),
 });
 
+export function parseBulkStudentNames(value: string) {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  let skipped = 0;
+  for (const line of value.split(/\r?\n/).slice(0, 250)) {
+    const canonicalName = line.trim().replace(/\s+/g, " ");
+    if (!canonicalName) continue;
+    const key = canonicalName.toLocaleUpperCase();
+    if (canonicalName.length < 3 || canonicalName.length > 255 || seen.has(key)) {
+      skipped += 1;
+      continue;
+    }
+    seen.add(key);
+    names.push(canonicalName);
+  }
+  return { names, skipped };
+}
+
 async function databaseOrThrow() {
   const database = await getDb();
   if (!database) throw new Error("Database is not available");
@@ -90,7 +108,7 @@ export const subjectsRouter = router({
     list: ownerProcedure.input(z.object({ subjectId: z.number().int().positive() })).query(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       await ownerSubject(database, ctx.user.id, input.subjectId);
-      return database.select({ membershipId: subjectStudents.id, state: subjectStudents.membershipState, displayOrder: subjectStudents.displayOrder, studentId: students.id, canonicalName: students.canonicalName, aliasesText: students.aliasesText }).from(subjectStudents).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(subjectStudents.subjectId, input.subjectId)).orderBy(asc(subjectStudents.displayOrder), asc(students.canonicalName));
+      return database.select({ membershipId: subjectStudents.id, state: subjectStudents.membershipState, hasScheduleConflict: subjectStudents.hasScheduleConflict, displayOrder: subjectStudents.displayOrder, studentId: students.id, canonicalName: students.canonicalName, aliasesText: students.aliasesText }).from(subjectStudents).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(subjectStudents.subjectId, input.subjectId)).orderBy(asc(subjectStudents.displayOrder), asc(students.canonicalName));
     }),
     add: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), canonicalName: z.string().trim().min(3).max(255), aliasesText: z.string().max(1000).nullable().optional() })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
@@ -98,6 +116,44 @@ export const subjectsRouter = router({
       const existing = await database.select().from(students).where(and(eq(students.ownerId, ctx.user.id), eq(students.canonicalName, input.canonicalName))).limit(1);
       const student = existing[0] ?? (await database.insert(students).values({ ownerId: ctx.user.id, canonicalName: input.canonicalName, aliasesText: input.aliasesText ?? null }).$returningId()).map(row => ({ id: row.id }))[0];
       await database.insert(subjectStudents).values({ subjectId: input.subjectId, studentId: student.id, membershipState: "active" }).onDuplicateKeyUpdate({ set: { membershipState: "active", removedAt: null } });
+      return { success: true as const };
+    }),
+    addBulk: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), namesText: z.string().trim().min(1).max(12000) })).mutation(async ({ ctx, input }) => {
+      const database = await databaseOrThrow();
+      await ownerSubject(database, ctx.user.id, input.subjectId);
+      const parsed = parseBulkStudentNames(input.namesText);
+      const ownerStudents = await database.select({ id: students.id, canonicalName: students.canonicalName }).from(students).where(eq(students.ownerId, ctx.user.id));
+      const studentByName = new Map(ownerStudents.map(student => [student.canonicalName.trim().replace(/\s+/g, " ").toLocaleUpperCase(), student]));
+      let added = 0;
+      let reactivated = 0;
+      let skipped = parsed.skipped;
+      for (const canonicalName of parsed.names) {
+        const key = canonicalName.toLocaleUpperCase();
+        let student = studentByName.get(key);
+        if (!student) {
+          const [created] = await database.insert(students).values({ ownerId: ctx.user.id, canonicalName, aliasesText: null }).$returningId();
+          student = { id: created.id, canonicalName };
+          studentByName.set(key, student);
+        }
+        const membership = await database.select({ id: subjectStudents.id, state: subjectStudents.membershipState }).from(subjectStudents).where(and(eq(subjectStudents.subjectId, input.subjectId), eq(subjectStudents.studentId, student.id))).limit(1);
+        if (!membership[0]) {
+          await database.insert(subjectStudents).values({ subjectId: input.subjectId, studentId: student.id, membershipState: "active" });
+          added += 1;
+        } else if (membership[0].state === "removed") {
+          await database.update(subjectStudents).set({ membershipState: "active", removedAt: null }).where(eq(subjectStudents.id, membership[0].id));
+          reactivated += 1;
+        } else {
+          skipped += 1;
+        }
+      }
+      return { added, reactivated, skipped, processed: parsed.names.length };
+    }),
+    setScheduleConflict: ownerProcedure.input(z.object({ membershipId: z.number().int().positive(), hasScheduleConflict: z.boolean() })).mutation(async ({ ctx, input }) => {
+      const database = await databaseOrThrow();
+      const membership = await database.select({ id: subjectStudents.id, subjectId: subjectStudents.subjectId }).from(subjectStudents).where(eq(subjectStudents.id, input.membershipId)).limit(1);
+      if (!membership[0]) throw new Error("Student membership not found");
+      await ownerSubject(database, ctx.user.id, membership[0].subjectId);
+      await database.update(subjectStudents).set({ hasScheduleConflict: input.hasScheduleConflict }).where(eq(subjectStudents.id, input.membershipId));
       return { success: true as const };
     }),
     remove: ownerProcedure.input(z.object({ membershipId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {

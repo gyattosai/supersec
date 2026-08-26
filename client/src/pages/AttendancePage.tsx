@@ -101,7 +101,7 @@ export default function AttendancePage() {
           <Summary label="Not set" count={totals.unset} tone="text-amber-300" />
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
+        <div className="mt-6 flex flex-col gap-6">
           <section className="rounded-[28px] bg-secondary/35 p-1 ring-1 ring-border/75"><div className="rounded-[24px] bg-card p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
             <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles /></span><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Private AI assistant</p><h2 className="mt-1 font-semibold">Analyze pasted Zoom names</h2></div></div>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">Paste a Zoom participant list from a chosen capture time. The assistant cleans up names and compares them with this Subject’s roster, but it never changes Attendance on its own.</p>
@@ -149,7 +149,7 @@ export default function AttendancePage() {
               {records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}
               {filteredRecords.map(record => (
                 <div key={record.recordId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-3">
-                  <div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}</p></div>
+                  <div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}{record.hasScheduleConflict ? " · Schedule conflict default" : ""}</p></div>
                   <div className="flex gap-1">{statusOptions.map(status => <button key={status} onClick={() => setStatus.mutate({ recordId: record.recordId, status })} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div>
                 </div>
               ))}

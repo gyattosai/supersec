@@ -21,6 +21,13 @@
 - [x] Update and verify legacy private Subject deep links so Settings and other entry points resolve to the new dedicated workspace routes.
 - [x] Add a dedicated private Sharing route for each Subject and move publication and copy-link controls there.
 - [x] Strengthen the private AI-assisted Zoom participant paste and secretary review workflow for Attendance.
+- [x] Add safe bulk Student intake for a Subject using one name per line and clear validation feedback.
+- [x] Add a private schedule-conflict Student designation that defaults newly created Attendance records to Present while remaining visibly reviewable and separately overridable by the secretary.
+- [x] Simplify private task pages with focused one-column layouts and retain dedicated new-item creation views.
+- [x] Improve content editors with appropriate field types and richer, clearer authoring controls.
+- [x] Redesign view-only public share surfaces with a restrained premium reader experience.
+- [x] Convert the remaining private Content list and edit workflow to a focused one-column default while retaining dedicated creation routes.
+- [x] Deepen Announcement, Resource, and Question & Answer authoring controls with clearer property-field structure and evidence-backed editor usability refinement.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.

@@ -17,14 +17,14 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <label htmlFor="question-answer" className="sr-only">Answer</label>
+        <label htmlFor="question-answer" className="text-sm font-medium text-foreground">Answer</label>
         <Textarea
           id="question-answer"
           required
-          className="min-h-40"
+          className="mt-2 min-h-48"
           value={answer}
           onChange={event => onAnswerChange(event.target.value)}
-          placeholder="Answer for classmates"
+          placeholder="Write a clear answer classmates can reuse."
         />
       </div>
       <div>

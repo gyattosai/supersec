@@ -1,0 +1,2 @@
+ALTER TABLE `attendanceRecords` ADD `hasScheduleConflict` boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE `subjectStudents` ADD `hasScheduleConflict` boolean DEFAULT false NOT NULL;

@@ -36,6 +36,13 @@
       "when": 1787554319483,
       "tag": "0004_burly_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1787730300278,
+      "tag": "0005_amazing_hawkeye",
+      "breakpoints": true
     }
   ]
 }

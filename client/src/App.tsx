@@ -6,8 +6,11 @@ import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, Publi
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
 import { SubjectCreatePage, SubjectDetailsPage, SubjectOverviewPage, SubjectSchedulePage, SubjectSharingPage, SubjectStudentsPage } from "@/pages/SubjectPages";
+import { FocusedStudentsPage } from "@/pages/FocusedStudentsPage";
+import { FocusedSchedulePage } from "@/pages/FocusedSchedulePage";
 import AttendancePage from "@/pages/AttendancePage";
 import ContentPage from "@/pages/ContentPage";
+import FocusedContentPage from "@/pages/FocusedContentPage";
 import ReportsPage from "@/pages/ReportsPage";
 import ArchivePage from "@/pages/ArchivePage";
 import { Route, Switch } from "wouter";
@@ -22,11 +25,12 @@ function Router() {
       <Route path="/app/subjects" component={SubjectsPage} />
       <Route path="/app/subjects/new" component={SubjectCreatePage} />
       <Route path="/app/subjects/:subjectId/details" component={SubjectDetailsPage} />
-      <Route path="/app/subjects/:subjectId/students" component={SubjectStudentsPage} />
-      <Route path="/app/subjects/:subjectId/schedule" component={SubjectSchedulePage} />
+      <Route path="/app/subjects/:subjectId/students" component={FocusedStudentsPage} />
+      <Route path="/app/subjects/:subjectId/schedule" component={FocusedSchedulePage} />
       <Route path="/app/subjects/:subjectId/sharing" component={SubjectSharingPage} />
-      <Route path="/app/subjects/:subjectId/:kind/new" component={ContentPage} />
-      <Route path="/app/subjects/:subjectId/:kind" component={ContentPage} />
+      <Route path="/app/subjects/:subjectId/:kind/edit/:itemId" component={FocusedContentPage} />
+      <Route path="/app/subjects/:subjectId/:kind/new" component={FocusedContentPage} />
+      <Route path="/app/subjects/:subjectId/:kind" component={FocusedContentPage} />
       <Route path="/app/subjects/:subjectId" component={SubjectOverviewPage} />
       <Route path="/app/attendance/:sessionId" component={AttendancePage} />
       <Route path="/app/content/:subjectId/:kind" component={ContentPage} />

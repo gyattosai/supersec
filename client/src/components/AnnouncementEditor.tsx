@@ -64,12 +64,12 @@ export function AnnouncementEditor({ value, onChange, required }: AnnouncementEd
         ref={editorRef}
         id="announcement-body"
         required={required}
-        className="min-h-40 rounded-none border-0 shadow-none focus-visible:ring-0"
+        className="min-h-56 rounded-none border-0 shadow-none focus-visible:ring-0"
         value={value}
         onChange={event => onChange(event.target.value)}
         placeholder="Write the announcement"
       />
-      <p className="px-3 pb-3 text-xs leading-5 text-muted-foreground">Use the formatting controls for readable Markdown-style content.</p>
+      <p className="px-3 pb-3 text-xs leading-5 text-muted-foreground">Use the formatting controls for headings, emphasis, lists, quotes, and links. The shared page renders these safely and does not accept raw HTML.</p>
     </div>
   );
 }

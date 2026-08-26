@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { normalizeZoomDisplayName, normalizeZoomParticipantName, parseParticipantLines } from "./routers/attendance";
+import { attendanceDefaultForMembership, normalizeZoomDisplayName, normalizeZoomParticipantName, parseParticipantLines } from "./routers/attendance";
+
+describe("Attendance defaults", () => {
+  it("keeps the three official status values and defaults a conflict-designated Student to PRESENT", () => {
+    expect(attendanceDefaultForMembership(true)).toEqual({ attendanceStatus: "PRESENT", hasScheduleConflict: true });
+    expect(attendanceDefaultForMembership(false)).toEqual({ attendanceStatus: "NOT_SET", hasScheduleConflict: false });
+  });
+});
 
 describe("Zoom participant parsing", () => {
   it("preserves each newline-separated comma-based participant name", () => {
