@@ -15,7 +15,7 @@ const menuItems = [
 function NavItems({ mobile = false }: { mobile?: boolean }) {
   const [location] = useLocation();
   return (
-    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "apple-material grid grid-cols-5 gap-1 rounded-[22px] p-1" : "flex flex-col gap-1"}>
+    <nav aria-label={mobile ? "Main navigation" : "Secretary navigation"} className={mobile ? "linear-subnav grid grid-cols-5 gap-1 rounded-lg p-1" : "flex flex-col gap-1"}>
       {menuItems.map(item => {
         const active = location === item.path;
         return (
@@ -23,11 +23,11 @@ function NavItems({ mobile = false }: { mobile?: boolean }) {
             key={item.path}
             href={item.path}
             aria-current={active ? "page" : undefined}
-            className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-[background-color,color,transform] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`group flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-[background-color,color,border-color] duration-150 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               mobile ? "flex-col justify-center gap-1 px-1 text-[10px] tracking-[-0.01em]" : ""
-            } ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:translate-x-0.5 hover:bg-accent hover:text-accent-foreground"}`}
+            } ${active ? "border border-border bg-sidebar-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
           >
-            <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`} aria-hidden="true" />
             <span>{item.label}</span>
           </Link>
         );
@@ -46,13 +46,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-5 text-foreground">
-        <section className="w-full max-w-md rounded-[28px] border border-border bg-card p-7 shadow-2xl shadow-black/20">
-          <p className="text-sm font-medium text-primary">Class Management</p>
+        <section className="linear-panel w-full max-w-md p-6">
+          <p className="linear-label text-primary">Class Management</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">Sign in to manage your classes</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Secretary tools are available only to the workspace owner. Shared class pages do not require sign-in.
           </p>
-          <Button onClick={() => startLogin()} className="mt-7 min-h-11 w-full rounded-2xl">
+          <Button onClick={() => startLogin()} className="mt-7 min-h-11 w-full">
             Sign in
           </Button>
           <Link href="/" className="mt-5 block text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
@@ -65,33 +65,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-sidebar-border/75 bg-sidebar/88 p-5 backdrop-blur-2xl lg:flex">
-        <div className="apple-surface rounded-[24px] p-1"><Link href="/app" className="block rounded-[20px] p-4 transition-[background-color,transform] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:bg-sidebar-accent/70 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">CM</span><span><span className="block font-semibold tracking-[-0.03em]">Class Management</span><span className="mt-0.5 block text-xs text-muted-foreground">Academic operations</span></span></span>
-        </Link></div>
-        <div className="mt-9"><p className="px-3 text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Workspace</p><div className="mt-3"><NavItems /></div></div>
-        <div className="apple-surface mt-auto rounded-[24px] p-1"><div className="rounded-[20px] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Secretary account</p>
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
+        <Link href="/app" className="linear-action flex items-center gap-3 px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">CM</span><span><span className="block text-sm font-semibold tracking-[-0.03em]">Class Management</span><span className="mt-0.5 block text-xs text-muted-foreground">Secretary workspace</span></span>
+        </Link>
+        <div className="mt-8"><p className="linear-label px-3 text-muted-foreground">Workspace</p><div className="mt-2"><NavItems /></div></div>
+        <div className="mt-auto border-t border-sidebar-border px-3 pt-4">
+          <p className="linear-label text-muted-foreground">Secretary account</p>
           <p className="truncate text-sm font-medium">{user.name || "Class secretary"}</p>
           <p className="mt-1 truncate text-xs text-muted-foreground">{user.email || "Workspace owner"}</p>
-          <Button onClick={logout} variant="ghost" className="mt-4 min-h-11 w-full justify-start rounded-xl text-muted-foreground transition-[background-color,color,transform] duration-300 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:bg-background/70 hover:text-foreground active:scale-[0.98]">
+          <Button onClick={logout} variant="ghost" className="mt-4 min-h-11 w-full justify-start text-muted-foreground hover:text-foreground">
             <LogOut className="mr-2 h-4 w-4" /> Sign out
           </Button>
-        </div></div>
+        </div>
       </aside>
 
-      <header className="apple-material sticky top-0 z-30 flex min-h-16 items-center justify-between border-b border-border/65 px-5 lg:ml-72 lg:hidden">
-        <Link href="/app" className="flex items-center gap-2 rounded-xl font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">CM</span>
+      <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between border-b border-border bg-background px-4 lg:ml-64 lg:hidden">
+        <Link href="/app" className="flex items-center gap-2 rounded-md text-sm font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">CM</span>
           <span>Class Management</span>
         </Link>
-        <Button onClick={logout} variant="ghost" size="icon" className="min-h-11 min-w-11 rounded-xl" aria-label="Sign out">
+        <Button onClick={logout} variant="ghost" size="icon" className="min-h-11 min-w-11" aria-label="Sign out">
           <LogOut className="h-4 w-4" />
         </Button>
       </header>
 
-      <main className="min-h-screen px-5 pb-30 pt-7 lg:ml-72 lg:px-10 lg:pb-12 lg:pt-10">{children}</main>
-      <div className="apple-material fixed inset-x-0 bottom-0 z-40 border-t border-border/65 px-3 py-2.5 lg:hidden"><NavItems mobile /></div>
+      <main className="min-h-screen px-4 pb-28 pt-6 lg:ml-64 lg:px-8 lg:pb-10 lg:pt-8">{children}</main>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-sidebar px-3 py-2 lg:hidden"><NavItems mobile /></div>
     </div>
   );
 }

@@ -49,6 +49,13 @@
 - [x] Apply the dark-first Apple-inspired visual revamp to key private workspaces and premium public reader surfaces.
 - [x] Validate the visual revamp at mobile and desktop widths with TypeScript, tests, production build, and accessibility fundamentals.
 - [x] Run and document an evidence-backed accessibility fundamentals audit for the Apple visual revamp across shared Button, navigation/shell, and dialog/form surfaces.
+- [x] Replace the Apple-derived visual direction with a Linear-inspired dark product system, including lavender-blue accent, compact control geometry, hairline hierarchy, and technical typography.
+- [ ] Rebuild private workspace navigation, dashboard, Subject library, and focused operational layouts around the Linear-inspired system without changing workflows or data contracts.
+- [ ] Rebuild public sharing and reader layouts around the Linear-inspired system while preserving safe view-only projections and SSR social metadata.
+- [ ] Validate the Linear-inspired rebuild at mobile and desktop widths with accessibility fundamentals, TypeScript, tests, production builds, and public/private safety checks.
+- [ ] Apply true page-level Linear-inspired layout refactors to remaining high-use focused private workflows rather than relying on global legacy-surface overrides.
+- [ ] Finish the Linear-inspired rebuild across the remaining public sharing routes, then reverify SSR/social metadata on representative published public pages.
+- [ ] Re-run desktop/mobile, accessibility, and explicit safe-public-projection validation after the remaining Linear private and public rebuild work.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
