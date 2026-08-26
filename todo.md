@@ -62,6 +62,7 @@
 - [x] Reconcile the partially applied Milestone 2 database schema before continuing direct implementation.
 - [ ] Re-run and document complete Milestone 2 mobile and desktop validation for dark default, focus, touch targets, reduced transparency, and public/private states.
 - [ ] Fix and verify remaining blank or loading route states on protected and public pages before the next checkpoint.
+- [x] Document the previously observed blank/loading routes, their disposition as product issue or capture artifact, and targeted validation evidence before closing route-state verification.
 - [x] Use dark mode as the default visual baseline, including accessible contrast and reduced-transparency considerations, in the future product design.
 - [x] Define the data model for reusable subject containers with independent rosters, subject code, professor name, fixed weekday schedule, no-class events, and complete personal-use archival history.
 - [x] Add a safe Subject-level action to remove a Student from an active roster without deleting the Student record.
