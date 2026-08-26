@@ -11,6 +11,7 @@
 - [ ] Run the anti-generic UI finish gate on the routed Class Signalboard screens and correct any product-specific hierarchy or state gaps it finds.
 - [ ] Reduce visible clutter and replace AI-sounding explanatory copy with concise, task-specific language across the private and public Class Signalboard routes.
 - [ ] Capture post-cleanup responsive reviews for every primary private and public route before closing the anti-generic UI finish gate.
+- [x] Improve private workspace, server-backed workflow states, and view-only reader layouts through an autonomous product-design refinement cycle.
 
 - [ ] Conduct a product-design audit and align implemented Class Management System screens to the dark-first Apple-inspired design system.
 - [x] Publish a design-system alignment brief with prioritized shared-component and screen refinements.

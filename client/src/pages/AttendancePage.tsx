@@ -83,7 +83,7 @@ export default function AttendancePage() {
           eyebrow="Class session"
           title="Attendance"
           back={<Link href="/app/subjects" className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft className="h-4 w-4" />Back to Subjects</Link>}
-          action={<>
+          action={<div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             <Link
               href={`/app/reports?sessionId=${sessionId}`}
               className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
@@ -91,10 +91,10 @@ export default function AttendancePage() {
               <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
             </Link>
             {session.data?.publishState === "published" ? <><a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"><ExternalLink className="mr-2 h-4 w-4" />View shared</a><button type="button" onClick={copyPublicAttendance} className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"><Copy className="mr-2 h-4 w-4" />Copy link</button></> : null}
-            <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0} className="min-h-11">
+            <Button onClick={() => publish.mutate({ sessionId })} disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0} className="col-span-2 min-h-11 sm:col-auto">
               <Upload className="mr-2 h-4 w-4" />{unresolvedSuggestionCount ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}` : "Publish Attendance"}
             </Button>
-          </>}
+          </div>}
         />
 
         <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -162,7 +162,7 @@ export default function AttendancePage() {
             </div>
           </section>
         </div>
-        <section className="signal-inset mt-6 border-l-2 border-l-primary p-4 text-sm leading-6 text-muted-foreground"><Check className="mr-2 inline h-4 w-4 text-primary" />Published Attendance keeps a public version History. Raw Zoom input, normalized review data, and suggestions remain private to the secretary.</section>
+        <section className="signal-inset mt-6 border-l-2 border-l-primary p-4 text-sm text-muted-foreground"><Check className="mr-2 inline h-4 w-4 text-primary" />Published versions are shared; Zoom review stays private.</section>
       </section>
     </DashboardLayout>
   );
