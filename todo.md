@@ -44,6 +44,11 @@
 - [x] Replace the generic disabled-button pending fallback with action-specific pending labels bound to each Student and focused content row mutation, then revalidate the workflows.
 - [x] Replace shared-button pending heuristics with true Student and content row mutation-scoped labels and safe active-state validation evidence.
 - [x] Replace temporary module-level content action tracking with component-local mutation state and capture safe active-label evidence before checkpointing.
+- [x] Translate the supplied Apple design guidance into a dark-first tropical-orange visual direction for the class workspace.
+- [x] Refine shared typography, surface rhythm, navigation, action controls, focus states, and motion using the approved Apple principles without adopting Apple blue.
+- [x] Apply the dark-first Apple-inspired visual revamp to key private workspaces and premium public reader surfaces.
+- [x] Validate the visual revamp at mobile and desktop widths with TypeScript, tests, production build, and accessibility fundamentals.
+- [x] Run and document an evidence-backed accessibility fundamentals audit for the Apple visual revamp across shared Button, navigation/shell, and dialog/form surfaces.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.
