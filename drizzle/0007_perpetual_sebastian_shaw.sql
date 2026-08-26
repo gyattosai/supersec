@@ -1,0 +1,2 @@
+ALTER TABLE `attendanceRecords` MODIFY COLUMN `attendanceStatus` enum('PRESENT','ABSENT','EXCUSED','NOT_SET') NOT NULL DEFAULT 'NOT_SET';--> statement-breakpoint
+ALTER TABLE `attendanceRecords` ADD `excuseReason` varchar(500);

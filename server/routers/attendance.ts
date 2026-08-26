@@ -125,13 +125,13 @@ export const attendanceRouter = router({
   }),
   list: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);
-    return database.select({ recordId: attendanceRecords.id, membershipId: subjectStudents.id, canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, hasScheduleConflict: attendanceRecords.hasScheduleConflict, publishState: attendanceRecords.publishState, version: attendanceRecords.publishedVersion }).from(attendanceRecords).innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(attendanceRecords.classSessionId, session.id)).orderBy(asc(students.canonicalName));
+    return database.select({ recordId: attendanceRecords.id, membershipId: subjectStudents.id, canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, excuseReason: attendanceRecords.excuseReason, hasScheduleConflict: attendanceRecords.hasScheduleConflict, publishState: attendanceRecords.publishState, version: attendanceRecords.publishedVersion }).from(attendanceRecords).innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id)).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(attendanceRecords.classSessionId, session.id)).orderBy(asc(students.lastName), asc(students.firstName), asc(students.middleName));
   }),
-  setStatus: ownerProcedure.input(z.object({ recordId: z.number().int().positive(), status: z.enum(["PRESENT", "ABSENT", "NOT_SET"]) })).mutation(async ({ ctx, input }) => {
+  setStatus: ownerProcedure.input(z.object({ recordId: z.number().int().positive(), status: z.enum(["PRESENT", "ABSENT", "EXCUSED", "NOT_SET"]), excuseReason: z.string().trim().max(500).nullable().optional() }).superRefine((input, context) => { if (input.status === "EXCUSED" && !input.excuseReason?.trim()) context.addIssue({ code: "custom", path: ["excuseReason"], message: "An Excused Attendance status requires a reason." }); })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow();
     const record = await database.select({ id: attendanceRecords.id, sessionId: attendanceRecords.classSessionId }).from(attendanceRecords).where(eq(attendanceRecords.id, input.recordId)).limit(1);
     if (!record[0]) throw new Error("Attendance record not found"); await ownerSession(database, ctx.user.id, record[0].sessionId);
-    await database.update(attendanceRecords).set({ attendanceStatus: input.status, publishState: "draft" }).where(eq(attendanceRecords.id, input.recordId)); return { success: true as const };
+    await database.update(attendanceRecords).set({ attendanceStatus: input.status, excuseReason: input.status === "EXCUSED" ? input.excuseReason?.trim() ?? null : null, publishState: "draft" }).where(eq(attendanceRecords.id, input.recordId)); return { success: true as const };
   }),
   importZoomNames: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), rawNamesText: z.string().trim().min(1).max(12000), captureAt: z.coerce.date() })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);
@@ -176,7 +176,7 @@ export const attendanceRouter = router({
       if (!membership[0]) throw new Error("Selected Student does not belong to this Subject");
     }
     await database.update(zoomMatchSuggestions).set({ suggestedSubjectStudentId: input.membershipId, reviewState: "confirmed", confirmedByUserId: ctx.user.id, confirmedAt: new Date() }).where(eq(zoomMatchSuggestions.id, input.suggestionId));
-    if (input.membershipId) await database.update(attendanceRecords).set({ attendanceStatus: "PRESENT", publishState: "draft" }).where(and(eq(attendanceRecords.classSessionId, session.id), eq(attendanceRecords.subjectStudentId, input.membershipId)));
+    if (input.membershipId) await database.update(attendanceRecords).set({ attendanceStatus: "PRESENT", excuseReason: null, publishState: "draft" }).where(and(eq(attendanceRecords.classSessionId, session.id), eq(attendanceRecords.subjectStudentId, input.membershipId)));
     return { success: true as const };
   }),
   publish: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), summary: z.string().trim().min(3).max(280).default("Attendance was published.") })).mutation(async ({ ctx, input }) => {

@@ -10,6 +10,7 @@ import { attendanceRouter } from "./routers/attendance";
 import { contentRouter } from "./routers/content";
 import { reportsRouter } from "./routers/reports";
 import { storagePut } from "./storage";
+import { invokeLLM } from "./_core/llm";
 
 const publicIdInput = z.object({ publicId: z.string().min(8).max(24) });
 
@@ -30,6 +31,15 @@ export const appRouter = router({
         name: ctx.user.name ?? "Class secretary",
         email: ctx.user.email ?? null,
       })),
+      improveText: ownerProcedure.input(z.object({ target: z.enum(["student_note", "announcement", "resource_description", "question_answer", "excuse_reason"]), mode: z.enum(["improve", "autofill"]), text: z.string().max(12000), context: z.string().max(600).optional() })).mutation(async ({ input }) => {
+        const instruction = input.mode === "improve" ? "Improve the supplied draft for clarity, grammar, and scannability while preserving its facts, tone, and intent." : "Draft a concise starting point from the supplied context. Do not invent facts, personal details, dates, attendance reasons, or commitments.";
+        const result = await invokeLLM({ model: "gpt-5-mini", maxTokens: 1800, messages: [{ role: "system", content: `You are a private writing assistant for a class secretary. ${instruction} The target field is ${input.target}. Return only a suggested field value. Use plain text or lightweight Markdown when formatting helps. Never include raw HTML. This suggestion is advisory and must be reviewed before saving.` }, { role: "user", content: JSON.stringify({ currentText: input.text, context: input.context ?? "" }) }], outputSchema: { name: "private_text_suggestion", strict: true, schema: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false } } });
+        const content = result.choices[0]?.message.content;
+        const parsed = typeof content === "string" ? JSON.parse(content) as { text: string } : null;
+        const text = parsed?.text?.trim();
+        if (!text) throw new Error("The AI assistant could not prepare a suggestion. Try again with more context.");
+        return { text: text.slice(0, 12000) };
+      }),
     }),
     publicSubject: publicProcedure.input(publicIdInput).query(async ({ input }) => {
       const subject = await db.getPublicSubjectById(input.publicId);

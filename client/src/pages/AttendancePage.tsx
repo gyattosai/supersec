@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useRoute } from "wouter";
 
-const statusOptions = ["PRESENT", "ABSENT", "NOT_SET"] as const;
+const statusOptions = ["PRESENT", "ABSENT", "EXCUSED", "NOT_SET"] as const;
 const statusFilters = ["ALL", ...statusOptions] as const;
 const localDateTimeValue = (date = new Date()) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
@@ -25,6 +25,8 @@ export default function AttendancePage() {
   const [rawNames, setRawNames] = useState("");
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("ALL");
+  const [editingExcuseId, setEditingExcuseId] = useState<number | null>(null);
+  const [excuseDrafts, setExcuseDrafts] = useState<Record<number, string>>({});
   const [captureAt, setCaptureAt] = useState(() => localDateTimeValue());
   const suggestions = trpc.attendance.suggestionsForSession.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
 
@@ -60,6 +62,7 @@ export default function AttendancePage() {
     () => ({
       present: records.data?.filter(row => row.status === "PRESENT").length ?? 0,
       absent: records.data?.filter(row => row.status === "ABSENT").length ?? 0,
+      excused: records.data?.filter(row => row.status === "EXCUSED").length ?? 0,
       unset: records.data?.filter(row => row.status === "NOT_SET").length ?? 0,
     }),
     [records.data],
@@ -95,9 +98,10 @@ export default function AttendancePage() {
           </>}
         />
 
-        <div className="mt-7 grid grid-cols-3 gap-3">
+        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Summary label="Present" count={totals.present} tone="text-emerald-300" />
           <Summary label="Absent" count={totals.absent} tone="text-red-300" />
+          <Summary label="Excused" count={totals.excused} tone="text-sky-300" />
           <Summary label="Not set" count={totals.unset} tone="text-amber-300" />
         </div>
 
@@ -143,14 +147,15 @@ export default function AttendancePage() {
           </div></section>
 
           <section className="rounded-[28px] border border-border bg-card p-5">
-            <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Student status</h2><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
+            <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">Student status</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Excused is an official status and needs a private reason. The reason is never published.</p></div><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
             <div className="mt-4 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filter Students by Attendance status">{statusFilters.map(filter => <button key={filter} type="button" aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className={`min-h-11 shrink-0 rounded-xl px-3 text-xs font-semibold ${statusFilter === filter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{filter === "ALL" ? "All" : filter.replace("_", " ")}</button>)}</div>
             <div className="mt-4 space-y-2">
               {records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}
               {filteredRecords.map(record => (
-                <div key={record.recordId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary p-3">
-                  <div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}{record.hasScheduleConflict ? " · Schedule conflict default" : ""}</p></div>
-                  <div className="flex gap-1">{statusOptions.map(status => <button key={status} onClick={() => setStatus.mutate({ recordId: record.recordId, status })} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div>
+                <div key={record.recordId} className="rounded-xl bg-secondary p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{record.canonicalName}</p><p className="mt-1 text-xs text-muted-foreground">{record.publishState === "published" ? `Published · version ${record.version}` : "Draft"}{record.hasScheduleConflict ? " · Schedule conflict default" : ""}</p>{record.status === "EXCUSED" && record.excuseReason ? <p className="mt-2 rounded-lg border border-sky-300/20 bg-sky-300/10 px-2.5 py-2 text-xs leading-5 text-sky-100"><span className="font-semibold">Private excuse reason:</span> {record.excuseReason}</p> : null}</div>
+                  <div className="flex flex-wrap gap-1">{statusOptions.map(status => <button key={status} onClick={() => { if (status === "EXCUSED") { setEditingExcuseId(record.recordId); setExcuseDrafts(current => ({ ...current, [record.recordId]: current[record.recordId] ?? record.excuseReason ?? "" })); } else setStatus.mutate({ recordId: record.recordId, status }); }} className={`min-h-10 rounded-lg px-2 text-xs font-semibold ${record.status === status ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground ring-1 ring-border"}`}>{status.replace("_", " ")}</button>)}</div></div>
+                  {editingExcuseId === record.recordId ? <div className="mt-3 rounded-xl border border-sky-300/25 bg-card p-3"><label htmlFor={`excuse-reason-${record.recordId}`} className="text-sm font-semibold">Excuse reason <span className="text-sky-300">required</span></label><Textarea id={`excuse-reason-${record.recordId}`} value={excuseDrafts[record.recordId] ?? ""} onChange={event => setExcuseDrafts(current => ({ ...current, [record.recordId]: event.target.value }))} placeholder="For example: documented medical appointment" className="mt-2 min-h-24" /><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" disabled={setStatus.isPending || !(excuseDrafts[record.recordId] ?? "").trim()} onClick={() => setStatus.mutate({ recordId: record.recordId, status: "EXCUSED", excuseReason: excuseDrafts[record.recordId]?.trim() ?? "" }, { onSuccess: () => { setEditingExcuseId(null); toast.success("Attendance marked Excused"); } })}>Save Excused status</Button><Button type="button" size="sm" variant="outline" onClick={() => setEditingExcuseId(null)}>Cancel</Button></div></div> : null}
                 </div>
               ))}
               {!records.isLoading && !records.data?.length ? <p className="py-8 text-center text-sm leading-6 text-muted-foreground">Add Students to the Subject before managing Attendance.</p> : null}

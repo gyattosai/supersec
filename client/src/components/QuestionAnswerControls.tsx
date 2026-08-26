@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AiTextAssist } from "@/components/AiTextAssist";
 
 type QuestionAnswerControlsProps = {
   answer: string;
@@ -26,6 +27,7 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
           onChange={event => onAnswerChange(event.target.value)}
           placeholder="Write a clear answer classmates can reuse."
         />
+        <div className="mt-2 flex items-center justify-between gap-3"><p className="text-xs leading-5 text-muted-foreground">AI suggestions stay private until you review, edit, and save this answer.</p><AiTextAssist value={answer} onApply={onAnswerChange} target="question_answer" context={tagsText ? `Suggested topics: ${tagsText}` : "Answer a repeated class question clearly and respectfully."} /></div>
       </div>
       <div>
         <label htmlFor="question-tags" className="text-sm font-medium text-foreground">Tags <span className="text-muted-foreground">(optional)</span></label>

@@ -5,6 +5,7 @@ import { classSessions, historyEntries, subjectMeetingDays, subjectStudents, sub
 import { getDb } from "../db";
 import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
+import { invokeLLM } from "../_core/llm";
 
 const meetingDayInput = z.object({ weekday: z.number().int().min(0).max(6), startTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(), endTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional() });
 const subjectInput = z.object({
@@ -15,22 +16,76 @@ const subjectInput = z.object({
   meetingDays: z.array(meetingDayInput).min(1).max(7),
 });
 
-export function parseBulkStudentNames(value: string) {
-  const names: string[] = [];
+export type StudentNameInput = { firstName: string; middleName: string; lastName: string; privateNotes?: string | null };
+const studentNameInput = z.object({ firstName: z.string().trim().min(1).max(120), middleName: z.string().trim().max(120).optional().default(""), lastName: z.string().trim().min(1).max(120), privateNotes: z.string().trim().max(8000).nullable().optional() });
+
+function normalizeStudentNamePart(value: string) { return value.trim().replace(/\s+/g, " "); }
+function removeSectionPrefix(value: string) { return normalizeStudentNamePart(value).replace(/^[A-Z]{2,10}\d{0,6}_/i, ""); }
+export function studentDisplayName({ firstName, middleName, lastName }: StudentNameInput) { return `${normalizeStudentNamePart(lastName)}, ${normalizeStudentNamePart(firstName)}${normalizeStudentNamePart(middleName) ? ` ${normalizeStudentNamePart(middleName)}` : ""}`; }
+export function studentNameKey({ firstName, middleName, lastName }: StudentNameInput) { return [lastName, firstName, middleName].map(value => normalizeStudentNamePart(value).toLocaleUpperCase()).join("|"); }
+
+function splitDelimitedLine(line: string) {
+  const delimiter = line.includes("\t") ? "\t" : ",";
+  const cells: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (char === '"' && line[index + 1] === '"') { value += '"'; index += 1; }
+    else if (char === '"') quoted = !quoted;
+    else if (char === delimiter && !quoted) { cells.push(normalizeStudentNamePart(value)); value = ""; }
+    else value += char;
+  }
+  cells.push(normalizeStudentNamePart(value));
+  return cells;
+}
+
+function fromSingleName(value: string): StudentNameInput | null {
+  const [rawLast, rawRest] = value.split(/,(.+)/).map(part => normalizeStudentNamePart(part));
+  if (!rawLast || !rawRest) return null;
+  const [firstName = "", ...middleParts] = rawRest.split(/\s+/);
+  const lastName = removeSectionPrefix(rawLast);
+  return firstName && lastName ? { firstName, middleName: middleParts.join(" "), lastName } : null;
+}
+
+export function parseStudentImportText(value: string) {
+  const rows = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean).slice(0, 250);
+  const candidates: StudentNameInput[] = [];
   const seen = new Set<string>();
   let skipped = 0;
-  for (const line of value.split(/\r?\n/).slice(0, 250)) {
-    const canonicalName = line.trim().replace(/\s+/g, " ");
-    if (!canonicalName) continue;
-    const key = canonicalName.toLocaleUpperCase();
-    if (canonicalName.length < 3 || canonicalName.length > 255 || seen.has(key)) {
+  const firstCells = rows[0] ? splitDelimitedLine(rows[0]) : [];
+  const header = firstCells.map(cell => cell.toLocaleLowerCase().replace(/[^a-z]/g, ""));
+  const hasHeader = header.some(cell => ["firstname", "middlename", "lastname", "surname"].includes(cell));
+  const headerIndex = (names: string[]) => header.findIndex(cell => names.includes(cell));
+  const firstIndex = headerIndex(["firstname", "givenname", "first"]);
+  const middleIndex = headerIndex(["middlename", "middle"]);
+  const lastIndex = headerIndex(["lastname", "surname", "last"]);
+  for (let index = 0; index < rows.length; index += 1) {
+    const line = rows[index];
+    if (hasHeader && index === 0) continue;
+    const cells = splitDelimitedLine(line);
+    const candidate = hasHeader
+      ? { firstName: firstIndex >= 0 ? cells[firstIndex] ?? "" : "", middleName: middleIndex >= 0 ? cells[middleIndex] ?? "" : "", lastName: lastIndex >= 0 ? removeSectionPrefix(cells[lastIndex] ?? "") : "" }
+      : cells.length >= 2
+        ? (() => { const [firstName = "", ...middleParts] = normalizeStudentNamePart(cells[1] ?? "").split(/\s+/); return { firstName, middleName: cells[2] ?? middleParts.join(" "), lastName: removeSectionPrefix(cells[0] ?? "") }; })()
+        : fromSingleName(line);
+    if (!candidate || !candidate.firstName || !candidate.lastName || candidate.firstName.length > 120 || candidate.middleName.length > 120 || candidate.lastName.length > 120) {
       skipped += 1;
       continue;
     }
+    const normalized: StudentNameInput = { firstName: normalizeStudentNamePart(candidate.firstName), middleName: normalizeStudentNamePart(candidate.middleName), lastName: normalizeStudentNamePart(candidate.lastName) };
+    const key = studentNameKey(normalized);
+    if (seen.has(key)) { skipped += 1; continue; }
     seen.add(key);
-    names.push(canonicalName);
+    candidates.push(normalized);
   }
-  return { names, skipped };
+  return { candidates, skipped, sourceRows: rows.length };
+}
+
+/** Legacy test helper preserved while structured import callers use parseStudentImportText. */
+export function parseBulkStudentNames(value: string) {
+  const parsed = parseStudentImportText(value);
+  return { names: parsed.candidates.map(studentDisplayName), skipped: parsed.skipped };
 }
 
 async function databaseOrThrow() {
@@ -108,31 +163,48 @@ export const subjectsRouter = router({
     list: ownerProcedure.input(z.object({ subjectId: z.number().int().positive() })).query(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       await ownerSubject(database, ctx.user.id, input.subjectId);
-      return database.select({ membershipId: subjectStudents.id, state: subjectStudents.membershipState, hasScheduleConflict: subjectStudents.hasScheduleConflict, displayOrder: subjectStudents.displayOrder, studentId: students.id, canonicalName: students.canonicalName, aliasesText: students.aliasesText }).from(subjectStudents).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(subjectStudents.subjectId, input.subjectId)).orderBy(asc(subjectStudents.displayOrder), asc(students.canonicalName));
+      return database.select({ membershipId: subjectStudents.id, state: subjectStudents.membershipState, hasScheduleConflict: subjectStudents.hasScheduleConflict, displayOrder: subjectStudents.displayOrder, studentId: students.id, canonicalName: students.canonicalName, firstName: students.firstName, middleName: students.middleName, lastName: students.lastName, privateNotes: students.privateNotes, aliasesText: students.aliasesText }).from(subjectStudents).innerJoin(students, eq(subjectStudents.studentId, students.id)).where(eq(subjectStudents.subjectId, input.subjectId)).orderBy(asc(students.lastName), asc(students.firstName), asc(students.middleName), asc(subjectStudents.displayOrder));
     }),
-    add: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), canonicalName: z.string().trim().min(3).max(255), aliasesText: z.string().max(1000).nullable().optional() })).mutation(async ({ ctx, input }) => {
+    add: ownerProcedure.input(z.union([z.object({ subjectId: z.number().int().positive(), student: studentNameInput }), z.object({ subjectId: z.number().int().positive(), canonicalName: z.string().trim().min(3).max(255) })])).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       await ownerSubject(database, ctx.user.id, input.subjectId);
-      const existing = await database.select().from(students).where(and(eq(students.ownerId, ctx.user.id), eq(students.canonicalName, input.canonicalName))).limit(1);
-      const student = existing[0] ?? (await database.insert(students).values({ ownerId: ctx.user.id, canonicalName: input.canonicalName, aliasesText: input.aliasesText ?? null }).$returningId()).map(row => ({ id: row.id }))[0];
+      const legacyCandidate = "canonicalName" in input ? fromSingleName(input.canonicalName) : null;
+      const candidate = "student" in input ? { ...input.student, privateNotes: input.student.privateNotes?.trim() || null } : legacyCandidate;
+      if (!candidate) throw new Error("Use separate first and last name fields for this Student");
+      const existing = await database.select({ id: students.id, firstName: students.firstName, middleName: students.middleName, lastName: students.lastName }).from(students).where(eq(students.ownerId, ctx.user.id));
+      const student = existing.find(item => studentNameKey(item) === studentNameKey(candidate)) ?? (await database.insert(students).values({ ownerId: ctx.user.id, canonicalName: studentDisplayName(candidate), firstName: candidate.firstName, middleName: candidate.middleName, lastName: candidate.lastName, privateNotes: candidate.privateNotes, aliasesText: null }).$returningId()).map(row => ({ id: row.id }))[0];
       await database.insert(subjectStudents).values({ subjectId: input.subjectId, studentId: student.id, membershipState: "active" }).onDuplicateKeyUpdate({ set: { membershipState: "active", removedAt: null } });
       return { success: true as const };
     }),
-    addBulk: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), namesText: z.string().trim().min(1).max(12000) })).mutation(async ({ ctx, input }) => {
+    reviewBulkImport: ownerProcedure.input(z.object({ sourceText: z.string().trim().min(1).max(12000) })).mutation(async ({ input }) => {
+      const parsed = parseStudentImportText(input.sourceText);
+      try {
+        const result = await invokeLLM({ model: "gpt-5-mini", maxTokens: 3000, messages: [{ role: "system", content: "Extract a student roster from pasted text. Return only firstName, middleName, and lastName for rows that clearly identify a person. Remove class or section codes from lastName. Do not invent names or notes. This is a private secretary review; output remains advisory." }, { role: "user", content: input.sourceText }], outputSchema: { name: "student_import_review", strict: true, schema: { type: "object", properties: { students: { type: "array", items: { type: "object", properties: { firstName: { type: "string" }, middleName: { type: "string" }, lastName: { type: "string" } }, required: ["firstName", "middleName", "lastName"], additionalProperties: false } } }, required: ["students"], additionalProperties: false } } });
+        const content = result.choices[0]?.message.content;
+        const aiStudents = typeof content === "string" ? JSON.parse(content) as { students: StudentNameInput[] } : null;
+        if (aiStudents?.students?.length) {
+          const cleaned = aiStudents.students.slice(0, 250).map(student => ({ firstName: normalizeStudentNamePart(student.firstName), middleName: normalizeStudentNamePart(student.middleName), lastName: removeSectionPrefix(student.lastName) })).filter(student => student.firstName && student.lastName && student.firstName.length <= 120 && student.middleName.length <= 120 && student.lastName.length <= 120);
+          const deduped = Array.from(new Map(cleaned.map(student => [studentNameKey(student), student])).values());
+          return { candidates: deduped, skipped: Math.max(0, parsed.sourceRows - deduped.length), sourceRows: parsed.sourceRows, aiUsed: true as const };
+        }
+      } catch { /* Deterministic parsing keeps private intake usable if the advisory service is unavailable. */ }
+      return { ...parsed, aiUsed: false as const };
+    }),
+    addBulk: ownerProcedure.input(z.union([z.object({ subjectId: z.number().int().positive(), students: z.array(studentNameInput).min(1).max(250) }), z.object({ subjectId: z.number().int().positive(), namesText: z.string().trim().min(1).max(12000) })])).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       await ownerSubject(database, ctx.user.id, input.subjectId);
-      const parsed = parseBulkStudentNames(input.namesText);
-      const ownerStudents = await database.select({ id: students.id, canonicalName: students.canonicalName }).from(students).where(eq(students.ownerId, ctx.user.id));
-      const studentByName = new Map(ownerStudents.map(student => [student.canonicalName.trim().replace(/\s+/g, " ").toLocaleUpperCase(), student]));
+      const importStudents = "students" in input ? input.students : parseStudentImportText(input.namesText).candidates;
+      const ownerStudents = await database.select({ id: students.id, firstName: students.firstName, middleName: students.middleName, lastName: students.lastName }).from(students).where(eq(students.ownerId, ctx.user.id));
+      const studentByName = new Map(ownerStudents.map(student => [studentNameKey(student), student]));
       let added = 0;
       let reactivated = 0;
-      let skipped = parsed.skipped;
-      for (const canonicalName of parsed.names) {
-        const key = canonicalName.toLocaleUpperCase();
+      let skipped = 0;
+      for (const candidate of importStudents) {
+        const key = studentNameKey(candidate);
         let student = studentByName.get(key);
         if (!student) {
-          const [created] = await database.insert(students).values({ ownerId: ctx.user.id, canonicalName, aliasesText: null }).$returningId();
-          student = { id: created.id, canonicalName };
+          const [created] = await database.insert(students).values({ ownerId: ctx.user.id, canonicalName: studentDisplayName(candidate), firstName: candidate.firstName, middleName: candidate.middleName, lastName: candidate.lastName, privateNotes: candidate.privateNotes?.trim() || null, aliasesText: null }).$returningId();
+          student = { id: created.id, firstName: candidate.firstName, middleName: candidate.middleName, lastName: candidate.lastName };
           studentByName.set(key, student);
         }
         const membership = await database.select({ id: subjectStudents.id, state: subjectStudents.membershipState }).from(subjectStudents).where(and(eq(subjectStudents.subjectId, input.subjectId), eq(subjectStudents.studentId, student.id))).limit(1);
@@ -146,7 +218,16 @@ export const subjectsRouter = router({
           skipped += 1;
         }
       }
-      return { added, reactivated, skipped, processed: parsed.names.length };
+      return { added, reactivated, skipped, processed: importStudents.length };
+    }),
+    update: ownerProcedure.input(z.object({ membershipId: z.number().int().positive(), student: studentNameInput })).mutation(async ({ ctx, input }) => {
+      const database = await databaseOrThrow();
+      const membership = await database.select({ subjectId: subjectStudents.subjectId, studentId: subjectStudents.studentId }).from(subjectStudents).where(eq(subjectStudents.id, input.membershipId)).limit(1);
+      if (!membership[0]) throw new Error("Student membership not found");
+      await ownerSubject(database, ctx.user.id, membership[0].subjectId);
+      const candidate = { ...input.student, privateNotes: input.student.privateNotes?.trim() || null };
+      await database.update(students).set({ canonicalName: studentDisplayName(candidate), firstName: candidate.firstName, middleName: candidate.middleName, lastName: candidate.lastName, privateNotes: candidate.privateNotes }).where(eq(students.id, membership[0].studentId));
+      return { success: true as const };
     }),
     setScheduleConflict: ownerProcedure.input(z.object({ membershipId: z.number().int().positive(), hasScheduleConflict: z.boolean() })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();

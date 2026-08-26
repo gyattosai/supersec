@@ -1,4 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
+import { AiTextAssist } from "@/components/AiTextAssist";
 import { Bold, Heading2, Italic, Link2, List, ListOrdered, Quote } from "lucide-react";
 import * as React from "react";
 
@@ -6,10 +7,18 @@ type AnnouncementEditorProps = {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  id?: string;
+  label?: string;
+  placeholder?: string;
+  helperText?: string;
+  minHeightClassName?: string;
+  aiTarget?: "student_note" | "announcement" | "resource_description" | "question_answer" | "excuse_reason";
+  aiContext?: string;
 };
 
-export function AnnouncementEditor({ value, onChange, required }: AnnouncementEditorProps) {
+export function AnnouncementEditor({ value, onChange, required, id = "announcement-body", label = "Announcement content", placeholder = "Write the announcement", helperText = "Use the formatting controls for headings, emphasis, lists, quotes, and links. The shared page renders these safely and does not accept raw HTML.", minHeightClassName = "min-h-56", aiTarget, aiContext }: AnnouncementEditorProps) {
   const editorRef = React.useRef<HTMLTextAreaElement>(null);
+  const resolvedAiTarget = aiTarget ?? (label === "Private Student note" ? "student_note" : undefined);
 
   const placeSelection = (start: number, selectionLength: number) => {
     requestAnimationFrame(() => {
@@ -49,8 +58,9 @@ export function AnnouncementEditor({ value, onChange, required }: AnnouncementEd
   );
 
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-input bg-background">
-      <div className="flex flex-wrap gap-1 border-b border-border p-2" role="toolbar" aria-label="Announcement formatting">
+    <div className="mt-3 overflow-hidden rounded-2xl border border-input bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/20 p-2">
+      <div className="flex flex-wrap gap-1" role="toolbar" aria-label={`${label} formatting`}>
         {tool("Bold", () => wrapSelection("**"), <Bold className="h-4 w-4" />)}
         {tool("Italic", () => wrapSelection("*"), <Italic className="h-4 w-4" />)}
         {tool("Heading", () => prefixCurrentLine("## "), <Heading2 className="h-4 w-4" />)}
@@ -59,17 +69,19 @@ export function AnnouncementEditor({ value, onChange, required }: AnnouncementEd
         {tool("Quote", () => prefixCurrentLine("> "), <Quote className="h-4 w-4" />)}
         {tool("Link", () => wrapSelection("[", "](https://)"), <Link2 className="h-4 w-4" />)}
       </div>
-      <label htmlFor="announcement-body" className="sr-only">Announcement content</label>
+      {resolvedAiTarget ? <AiTextAssist value={value} onApply={onChange} target={resolvedAiTarget} context={aiContext} /> : null}
+      </div>
+      <label htmlFor={id} className="sr-only">{label}</label>
       <Textarea
         ref={editorRef}
-        id="announcement-body"
+        id={id}
         required={required}
-        className="min-h-56 rounded-none border-0 shadow-none focus-visible:ring-0"
+        className={`${minHeightClassName} rounded-none border-0 bg-transparent px-4 py-4 leading-7 shadow-none focus-visible:ring-0`}
         value={value}
         onChange={event => onChange(event.target.value)}
-        placeholder="Write the announcement"
+        placeholder={placeholder}
       />
-      <p className="px-3 pb-3 text-xs leading-5 text-muted-foreground">Use the formatting controls for headings, emphasis, lists, quotes, and links. The shared page renders these safely and does not accept raw HTML.</p>
+      <p className="border-t border-border/70 px-4 py-3 text-xs leading-5 text-muted-foreground">{helperText}</p>
     </div>
   );
 }

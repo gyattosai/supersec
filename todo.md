@@ -28,6 +28,22 @@
 - [x] Redesign view-only public share surfaces with a restrained premium reader experience.
 - [x] Convert the remaining private Content list and edit workflow to a focused one-column default while retaining dedicated creation routes.
 - [x] Deepen Announcement, Resource, and Question & Answer authoring controls with clearer property-field structure and evidence-backed editor usability refinement.
+- [x] Replace redundant single-string Student naming with first, middle, and last name fields that support master-list sorting and preserve existing roster records.
+- [x] Rename the Subject roster experience to Students (Master List) and add private Student notes for secretary reference.
+- [x] Add AI-assisted bulk Student intake from pasted lists, CSV, spreadsheet, or Google Sheets exports with clear review feedback before enrollment.
+- [x] Add private secretary-controlled AI improve and autofill actions for suitable Student, note, and content text fields without automatic save or publication.
+- [x] Add EXCUSED Attendance with a required reason across Attendance review, reports, and safe public views.
+- [x] Strengthen functional button and link affordances across the refined Student and content workflows.
+- [x] Extend safe rich-text editing and viewer spacing for description and private-note fields where formatted content is appropriate.
+- [x] Redesign the public Subject Home with a premium mobile-first layout while preserving its view-only safe data boundary.
+- [x] Apply and verify a dedicated functional-action affordance pass across the Students (Master List) and focused content workflows, including primary/secondary hierarchy, inline links, and loading or disabled feedback.
+- [x] Extend safe rich-text editing and rendering to Resource descriptions, then align private preview and public view-only spacing without allowing raw HTML.
+- [x] Apply a documented workflow-specific action hierarchy and feedback pass to Students (Master List) and focused content, including explicit pending-state labels.
+- [x] Capture fresh mobile and desktop screenshots of Students (Master List) and focused content list/editor routes after the action-hierarchy pass.
+- [x] Add explicit per-action pending labels to Students (Master List) and focused content row controls, then verify their non-pending layout remains clear.
+- [x] Replace the generic disabled-button pending fallback with action-specific pending labels bound to each Student and focused content row mutation, then revalidate the workflows.
+- [x] Replace shared-button pending heuristics with true Student and content row mutation-scoped labels and safe active-state validation evidence.
+- [x] Replace temporary module-level content action tracking with component-local mutation state and capture safe active-label evidence before checkpointing.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
 - [x] Produce a current PRD compliance matrix and convert any confirmed implementation gaps into tracked development tasks.
 - [x] Initialize the Manus full-stack project with database, server, and owner authentication support.

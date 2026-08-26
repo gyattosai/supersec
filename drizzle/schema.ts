@@ -67,8 +67,13 @@ export const students = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     ownerId: int("ownerId").notNull().references(() => users.id, { onDelete: "cascade" }),
-    /** Expected display format: SECTION_LAST NAME, FIRST NAME + MIDDLE NAME. */
+    /** Legacy display value retained for existing Attendance and public History references. */
     canonicalName: varchar("canonicalName", { length: 255 }).notNull(),
+    firstName: varchar("firstName", { length: 120 }).default("").notNull(),
+    middleName: varchar("middleName", { length: 120 }).default("").notNull(),
+    lastName: varchar("lastName", { length: 120 }).default("").notNull(),
+    /** Secretary-only reference notes. This field is never selected by public procedures. */
+    privateNotes: text("privateNotes"),
     aliasesText: text("aliasesText"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -155,7 +160,9 @@ export const attendanceRecords = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     classSessionId: int("classSessionId").notNull().references(() => classSessions.id, { onDelete: "cascade" }),
     subjectStudentId: int("subjectStudentId").notNull().references(() => subjectStudents.id, { onDelete: "cascade" }),
-    attendanceStatus: mysqlEnum("attendanceStatus", ["PRESENT", "ABSENT", "NOT_SET"]).default("NOT_SET").notNull(),
+    attendanceStatus: mysqlEnum("attendanceStatus", ["PRESENT", "ABSENT", "EXCUSED", "NOT_SET"]).default("NOT_SET").notNull(),
+    /** Secretary-only reason required when the official status is EXCUSED. */
+    excuseReason: varchar("excuseReason", { length: 500 }),
     hasScheduleConflict: boolean("hasScheduleConflict").default(false).notNull(),
     publishState: mysqlEnum("publishState", ["draft", "published"]).default("draft").notNull(),
     publishedVersion: int("publishedVersion").default(0).notNull(),

@@ -3,6 +3,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
 import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, PublicReportPage, PublicResourcePage, PublicSubjectPage, PublicSubjectQuestionsPage } from "@/pages/PublicPages";
+import { PremiumPublicSubjectHome } from "@/pages/PremiumPublicSubjectHome";
+import { PremiumPublicResourcePage } from "@/pages/PremiumPublicResourcePage";
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
 import { SubjectCreatePage, SubjectDetailsPage, SubjectOverviewPage, SubjectSchedulePage, SubjectSharingPage, SubjectStudentsPage } from "@/pages/SubjectPages";
@@ -38,9 +40,9 @@ function Router() {
       <Route path="/app/archive" component={ArchivePage} />
       <Route path="/app/settings" component={SecretarySettingsPage} />
       <Route path="/s/:publicId/questions" component={PublicSubjectQuestionsPage} />
-      <Route path="/s/:publicId" component={PublicSubjectPage} />
+      <Route path="/s/:publicId" component={PremiumPublicSubjectHome} />
       <Route path="/a/:publicId" component={PublicAnnouncementPage} />
-      <Route path="/r/:publicId" component={PublicResourcePage} />
+      <Route path="/r/:publicId" component={PremiumPublicResourcePage} />
       <Route path="/q/:publicId" component={PublicQuestionPage} />
       <Route path="/attendance/:publicId" component={PublicAttendancePage} />
       <Route path="/reports/:publicId" component={PublicReportPage} />
