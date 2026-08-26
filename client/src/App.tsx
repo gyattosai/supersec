@@ -7,7 +7,7 @@ import { PremiumPublicSubjectHome } from "@/pages/PremiumPublicSubjectHome";
 import { PremiumPublicResourcePage } from "@/pages/PremiumPublicResourcePage";
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
-import { SubjectCreatePage, SubjectDetailsPage, SubjectOverviewPage, SubjectSchedulePage, SubjectSharingPage, SubjectStudentsPage } from "@/pages/SubjectPages";
+import { SubjectCreatePage, SubjectDetailsPage, SubjectOverviewPage, SubjectSharingPage } from "@/pages/SubjectPages";
 import { FocusedStudentsPage } from "@/pages/FocusedStudentsPage";
 import { FocusedSchedulePage } from "@/pages/FocusedSchedulePage";
 import AttendancePage from "@/pages/AttendancePage";

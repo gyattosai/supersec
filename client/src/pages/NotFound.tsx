@@ -12,7 +12,7 @@ export default function NotFound() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-5 text-foreground">
-      <Card className="apple-surface w-full max-w-lg rounded-[28px]">
+      <Card className="signal-panel w-full max-w-lg border-t-2 border-primary">
         <CardContent className="pt-8 pb-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="relative">
@@ -21,7 +21,7 @@ export default function NotFound() {
             </div>
           </div>
 
-          <h1 className="apple-title text-4xl">404</h1>
+          <h1 className="signal-title text-4xl">404</h1>
 
           <h2 className="mt-2 text-xl font-semibold">
             Page Not Found

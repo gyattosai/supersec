@@ -2,11 +2,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { Router } from "wouter";
-import { LocalContentList } from "../client/src/pages/FocusedContentPage";
+import { SignalContentList } from "../client/src/pages/FocusedContentPage";
 
 describe("focused content row pending labels", () => {
   it("labels only the targeted published Resource as Archiving during its active mutation", () => {
-    const html = renderToStaticMarkup(createElement(Router, { ssrPath: "/" }, createElement(LocalContentList, {
+    const html = renderToStaticMarkup(createElement(Router, { ssrPath: "/" }, createElement(SignalContentList, {
       kind: "resources",
       subjectId: 1,
       loading: false,

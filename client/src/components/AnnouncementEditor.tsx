@@ -16,7 +16,7 @@ type AnnouncementEditorProps = {
   aiContext?: string;
 };
 
-export function AnnouncementEditor({ value, onChange, required, id = "announcement-body", label = "Announcement content", placeholder = "Write the announcement", helperText = "Use the formatting controls for headings, emphasis, lists, quotes, and links. The shared page renders these safely and does not accept raw HTML.", minHeightClassName = "min-h-56", aiTarget, aiContext }: AnnouncementEditorProps) {
+export function AnnouncementEditor({ value, onChange, required, id = "announcement-body", label = "Announcement content", placeholder = "Write the announcement", helperText = "Use formatting for headings, lists, quotes, and links.", minHeightClassName = "min-h-56", aiTarget, aiContext }: AnnouncementEditorProps) {
   const editorRef = React.useRef<HTMLTextAreaElement>(null);
   const resolvedAiTarget = aiTarget ?? (label === "Private Student note" ? "student_note" : undefined);
 

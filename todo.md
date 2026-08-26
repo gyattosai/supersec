@@ -1,5 +1,17 @@
 # Project TODO
 
+- [x] Replace the current reused visual direction with a distinct dark-first tropical-orange Class Signalboard design system and remove Linear/Apple compatibility styling.
+- [x] Rebuild the private product frame, dashboard, Subject collection, and subject workspace around a new next-class operational model rather than repeated generic panels.
+- [x] Rebuild focused roster, schedule, attendance, content, report, and archive workflows as purpose-specific tropical-orange operational surfaces.
+- [x] Rebuild public Subject, content, Attendance, and Report readers as a reader-first tropical-orange view-only system while preserving safe projections and SSR metadata.
+- [x] Validate the tropical-orange from-scratch rebuild with responsive captures, keyboard/focus and contrast checks, TypeScript, tests, production build, and public/private safety regression evidence.
+- [x] Remove residual oversized-radius and unreachable compatibility branches from Subject, Schedule, and Content routes.
+- [x] Replace the temporary untyped Subject query workaround with explicit loading and unavailable handling.
+- [x] Reverify final keyboard focus and representative Announcement, Q&A, Attendance, and Report SSR metadata after the last reader changes.
+- [ ] Run the anti-generic UI finish gate on the routed Class Signalboard screens and correct any product-specific hierarchy or state gaps it finds.
+- [ ] Reduce visible clutter and replace AI-sounding explanatory copy with concise, task-specific language across the private and public Class Signalboard routes.
+- [ ] Capture post-cleanup responsive reviews for every primary private and public route before closing the anti-generic UI finish gate.
+
 - [ ] Conduct a product-design audit and align implemented Class Management System screens to the dark-first Apple-inspired design system.
 - [x] Publish a design-system alignment brief with prioritized shared-component and screen refinements.
 - [x] Redesign the secretary dashboard so feature areas are not visually compressed on mobile or desktop.
@@ -54,6 +66,12 @@
 - [ ] Rebuild public sharing and reader layouts around the Linear-inspired system while preserving safe view-only projections and SSR social metadata.
 - [ ] Validate the Linear-inspired rebuild at mobile and desktop widths with accessibility fundamentals, TypeScript, tests, production builds, and public/private safety checks.
 - [ ] Apply true page-level Linear-inspired layout refactors to remaining high-use focused private workflows rather than relying on global legacy-surface overrides.
+- [ ] Complete the true Linear-inspired page-level refactor for focused content authoring create and edit states, then remove their dependency on legacy Apple-era surface classes.
+- [x] Validate a representative focused content edit route after the Linear authoring-shell refactor.
+- [x] Refactor nested focused-content authoring sections that retain legacy Apple-era surfaces, including preview and media controls.
+- [x] Re-run mobile and desktop screenshots for both focused content creation and edit routes after nested-surface cleanup.
+- [ ] Refactor remaining high-use focused private pages that still depend on global legacy surface overrides, then reduce or remove the broad class-fragment override selectors.
+- [ ] Re-run responsive reviews for fully refactored focused private list and authoring routes after removing their legacy-override dependency.
 - [ ] Finish the Linear-inspired rebuild across the remaining public sharing routes, then reverify SSR/social metadata on representative published public pages.
 - [ ] Re-run desktop/mobile, accessibility, and explicit safe-public-projection validation after the remaining Linear private and public rebuild work.
 - [ ] Complete remaining PRD-aligned implementation and release-quality work identified by the attached PRD reconciliation.
