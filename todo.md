@@ -13,6 +13,12 @@
 - [ ] Capture post-cleanup responsive reviews for every primary private and public route before closing the anti-generic UI finish gate.
 - [x] Improve private workspace, server-backed workflow states, and view-only reader layouts through an autonomous product-design refinement cycle.
 - [x] Refine the private dashboard greeting into a durable class-workspace title that does not depend on a casual account-name prompt.
+- [ ] Remove duplicate-looking divider lines across shared private and public layouts, retaining only purposeful structural boundaries.
+- [ ] Audit shared private layout components and high-traffic private pages for redundant divider lines, replacing them with spacing or a single purposeful boundary.
+- [x] Audit the shared DashboardLayout and WorkspacePageHeader boundary patterns, then remove or justify repeated divider treatments.
+- [ ] Review and refine additional high-traffic private layouts beyond focused content before closing the cross-layout divider task.
+- [ ] Audit Attendance, Reports, Archive, and generic public-reader layouts for redundant divider combinations before closing the cross-layout cleanup.
+- [x] Complete a direct Attendance divider audit and retain only the separators required for private Zoom review and Student-status grouping.
 
 - [ ] Conduct a product-design audit and align implemented Class Management System screens to the dark-first Apple-inspired design system.
 - [x] Publish a design-system alignment brief with prioritized shared-component and screen refinements.

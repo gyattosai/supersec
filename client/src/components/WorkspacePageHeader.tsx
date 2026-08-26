@@ -12,7 +12,7 @@ type WorkspacePageHeaderProps = {
 
 export function WorkspacePageHeader({ eyebrow, title, description, back, action, className }: WorkspacePageHeaderProps) {
   return (
-    <header className={cn("border-b border-border pb-7", className)}>
+    <header className={cn("pb-3 sm:pb-4", className)}>
       {back ? <div className="mb-5">{back}</div> : null}
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-3xl">
