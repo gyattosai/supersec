@@ -9,7 +9,7 @@
 - [x] Refine high-use private form shells so preparation context and primary actions remain clear on mobile and desktop.
 - [x] Refine Subject destination cards so private content workspaces scan as clear operational choices.
 - [x] Refine the public share-page shell for calm, reader-focused navigation and content framing.
-- [ ] Refine Archive record cards so retained context and the restore action scan in a durable record hierarchy.
+- [x] Refine Archive record cards so retained context and the restore action scan in a durable record hierarchy.
 - [x] Refine Settings subject navigation cards so private configuration destinations scan consistently with the workspace.
 - [x] Compact the private Reports summary metrics so the mobile review flow prioritizes report actions and saved records.
 - [x] Compact the private Attendance summary metrics so Zoom review and Student status controls appear sooner on mobile.
