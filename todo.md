@@ -2,7 +2,7 @@
 
 ## Current release and real-data verification
 
-- [ ] Audit the current build for high-value missing workflows, then implement and validate the strongest privacy-safe additions.
+- [x] Audit the current build for high-value missing workflows, then implement and validate the strongest privacy-safe additions.
 - [x] Add a secretary-only bulk draft-status action for Attendance that never bypasses Zoom-suggestion review or publishes records automatically.
 - [x] Add a secretary-only class-attendance CSV export that includes official statuses but never private excuse reasons, raw Zoom data, suggestions, or publishing controls.
 - [x] Add a secretary-only aggregate Attendance summary copy action for professor or Messenger updates that never includes student names, reasons, raw Zoom data, or suggestions.
