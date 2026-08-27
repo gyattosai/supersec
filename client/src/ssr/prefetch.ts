@@ -7,14 +7,23 @@ export type SsrPrefetch = { publicSubject: (publicId: string) => Promise<any>; p
 const site = "supersec";
 const fallback = "A class secretary management system for private class operations and published class updates.";
 const seed = (qc: QueryClient, key: unknown, value: unknown) => qc.setQueryData(key as any, value);
+const socialTitleLimit = 70;
+
+export function messengerPostTitle(title: string, version: number) {
+  const suffix = ` · Version ${version} · ${site}`;
+  const normalizedTitle = title.replace(/\s+/g, " ").trim() || "Published post";
+  const availableTitleLength = Math.max(1, socialTitleLimit - suffix.length);
+  const visibleTitle = normalizedTitle.length > availableTitleLength ? `${normalizedTitle.slice(0, Math.max(1, availableTitleLength - 1)).trimEnd()}…` : normalizedTitle;
+  return `${visibleTitle}${suffix}`;
+}
 
 export async function prefetchForPath(url: string, queryClient: QueryClient, caller: SsrPrefetch): Promise<HeadMeta> {
   const path = (url.split("?")[0].replace(/\/+$/, "") || "/");
   if (path === "/") return { title: site, description: fallback, canonicalPath: "/" };
   const subject = path.match(/^\/s\/([^/]+)$/); if (subject) { const data = await caller.publicSubject(subject[1]); await seed(queryClient, getQueryKey(trpc.foundation.publicSubject, { publicId: subject[1] }, "query"), data); return data.available ? { title: `${data.subject.name} · ${site}`, description: `${data.subject.code} · ${data.subject.professorName}`, canonicalPath: path } : { title: site, description: fallback, notFound: true }; }
-  const attendance = path.match(/^\/attendance\/([^/]+)$/); if (attendance) { const data = await caller.publicAttendance(attendance[1]); await seed(queryClient, getQueryKey(trpc.foundation.publicAttendance, { publicId: attendance[1] }, "query"), data); return data.available ? { title: `${data.attendance.subject.name} Attendance · ${site}`, description: "Published class-session Attendance. Private Zoom source and review data are not shared.", canonicalPath: path } : { title: site, description: fallback, notFound: true }; }
-  const item = path.match(/^\/(a|r|q)\/([^/]+)$/); if (item) { const kind = item[1] === "a" ? "announcement" : item[1] === "r" ? "resource" : "question"; const data = await caller.publicItem({ kind, publicId: item[2] }); await seed(queryClient, getQueryKey(trpc.foundation.publicItem, { kind, publicId: item[2] }, "query"), data); if (!data.available) return { title: site, description: fallback, notFound: true }; const visual = data.item.media ?? data.item.socialPreviewMedia; return { title: `${data.item.title} · ${site}`, description: data.item.body.slice(0, 180), canonicalPath: path, ogType: "article", ogImage: visual?.url, ogImageAlt: visual?.altText ?? data.item.title, publishedTime: data.item.publishedAt ? new Date(data.item.publishedAt).toISOString() : undefined }; }
-  const report = path.match(/^\/reports\/([^/]+)$/); if (report) { const data = await caller.publicReport(report[1]); await seed(queryClient, getQueryKey(trpc.foundation.publicReport, { publicId: report[1] }, "query"), data); return data.available ? { title: `${data.report.title} · ${site}`, description: "Published aggregate Attendance report.", canonicalPath: path } : { title: site, description: fallback, notFound: true }; }
+  const attendance = path.match(/^\/attendance\/([^/]+)$/); if (attendance) { const data = await caller.publicAttendance(attendance[1]); await seed(queryClient, getQueryKey(trpc.foundation.publicAttendance, { publicId: attendance[1] }, "query"), data); return data.available ? { title: messengerPostTitle(`${data.attendance.subject.name} Attendance`, data.attendance.version), description: "Published class-session Attendance. Private Zoom source and review data are not shared.", canonicalPath: path } : { title: site, description: fallback, notFound: true }; }
+  const item = path.match(/^\/(a|r|q)\/([^/]+)$/); if (item) { const kind = item[1] === "a" ? "announcement" : item[1] === "r" ? "resource" : "question"; const data = await caller.publicItem({ kind, publicId: item[2] }); await seed(queryClient, getQueryKey(trpc.foundation.publicItem, { kind, publicId: item[2] }, "query"), data); if (!data.available) return { title: site, description: fallback, notFound: true }; const visual = data.item.media ?? data.item.socialPreviewMedia; return { title: messengerPostTitle(data.item.title, data.item.version), description: data.item.body.slice(0, 180), canonicalPath: path, ogType: "article", ogImage: visual?.url, ogImageAlt: visual?.altText ?? data.item.title, publishedTime: data.item.publishedAt ? new Date(data.item.publishedAt).toISOString() : undefined }; }
+  const report = path.match(/^\/reports\/([^/]+)$/); if (report) { const data = await caller.publicReport(report[1]); await seed(queryClient, getQueryKey(trpc.foundation.publicReport, { publicId: report[1] }, "query"), data); return data.available ? { title: messengerPostTitle(data.report.title, data.report.version), description: "Published aggregate Attendance report.", canonicalPath: path } : { title: site, description: fallback, notFound: true }; }
   if (path === "/app" || path.startsWith("/app/")) return { title: site, description: fallback, noindex: true };
   return { title: site, description: fallback, notFound: true };
 }
