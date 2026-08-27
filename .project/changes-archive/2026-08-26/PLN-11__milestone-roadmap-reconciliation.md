@@ -1,3 +1,11 @@
+# Change PLN-11 — Milestone roadmap reconciliation
+
+- **Operation:** plan-milestone
+- **Target file(s):** `/home/ubuntu/class-management-system/docs/unified-milestone-build-plan.md`, `/home/ubuntu/class-management-system/docs/build-milestones.md`, `/home/ubuntu/class-management-system/docs/remaining-work-build-plan.md`
+- **Summary:** Consolidate duplicated milestone documents into one current roadmap and mark implemented milestones complete without retaining superseded design directions.
+- **Content:** Replace `docs/unified-milestone-build-plan.md` with the following current roadmap. Replace `docs/build-milestones.md` and `docs/remaining-work-build-plan.md` with a short notice linking to the unified roadmap as the sole current milestone source.
+
+```markdown
 # Class Management System — Current Milestone Roadmap
 
 ## Product baseline
@@ -33,3 +41,9 @@ The shipped working baseline is **Class Signalboard**: a dark-first, tropical-or
 ## Verification protocol
 
 Before any release checkpoint, run TypeScript, Vitest, client/SSR production builds, whitespace checks, representative mobile and desktop captures, and safe-public metadata checks. Record production-only checks only when real records and a canonical published domain exist.
+```
+
+- **Reason:** `docs/build-milestones.md`, `docs/unified-milestone-build-plan.md`, and `docs/remaining-work-build-plan.md` currently overlap and retain already superseded Apple/Linear milestone language. A single updated roadmap makes status and remaining work legible.
+- **Source task:** Current Class Management System task.
+- **Follow-up:** Apply PLN-10 first, then this roadmap update; retain prior roadmap files only as pointer pages so existing links do not break.
+- **Status:** applied

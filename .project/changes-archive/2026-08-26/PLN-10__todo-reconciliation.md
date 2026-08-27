@@ -1,3 +1,11 @@
+# Change PLN-10 — Project TODO reconciliation
+
+- **Operation:** plan-task
+- **Target file(s):** `/home/ubuntu/class-management-system/todo.md`
+- **Summary:** Replace accumulated historical implementation entries with a short list of genuine release and real-data verification work.
+- **Content:** Replace the full current `todo.md` with:
+
+```markdown
 # Project TODO
 
 ## Current release and real-data verification
@@ -12,3 +20,9 @@
 ## Deferred by intent
 
 - [ ] Capture additional automated evidence for both published Q&A states and a custom History entry only if a future regression requires it.
+```
+
+- **Reason:** The tracker now contains completed work from superseded Apple and Linear visual directions, completed tropical-orange rebuild tasks, duplicate verification prompts, and long-finished milestone tasks. The proposed tracker preserves only work that needs genuine live data, canonical publication, or a future regression trigger.
+- **Source task:** Current Class Management System task.
+- **Follow-up:** Update the milestone roadmap to use the current tropical-orange Class Signalboard direction and the same remaining release gates.
+- **Status:** applied
