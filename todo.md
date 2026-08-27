@@ -13,6 +13,10 @@
 - [x] Re-run focused validation after the true final copy pass and capture all materially changed private and public routes.
 - [x] Combine Schedule and No Class into the Attendance workflow and remove the separate Subject task entry.
 - [x] Improve the mobile-first view-only shared pages with clearer hierarchy, navigation, and safe content presentation.
+- [x] Redesign private and view-only Subject homes around a focused Subject-to-task-to-record-to-share funnel using one-column card flows.
+- [x] Audit remaining high-traffic private and shared record lists, including Students and shared readers, and convert row-style records to distinct cards.
+- [x] Validate the remaining record-list surfaces after the complete card conversion pass.
+- [x] Brighten the tropical-orange primary palette and use white primary-action labels for stronger contrast.
 - [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
 - [x] Retire the user-approved input-dependent release verification items without representing them as completed or verified.
 - [x] Rename visible app branding and metadata to supersec — a class secretary management system while preserving the existing security boundaries and visual system.

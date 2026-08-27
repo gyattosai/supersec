@@ -42,8 +42,8 @@
   --card-foreground: #191a1d;
   --popover: #ffffff;
   --popover-foreground: #191a1d;
-  --primary: #b84300;
-  --primary-foreground: #fffaf7;
+  --primary: #c95000;
+  --primary-foreground: #ffffff;
   --secondary: #f0f1f3;
   --secondary-foreground: #292c31;
   --muted: #f0f1f3;
@@ -54,7 +54,7 @@
   --destructive-foreground: #ffffff;
   --border: #d9dde3;
   --input: #7d858f;
-  --ring: #df651f;
+  --ring: #f58a45;
   --sidebar: #ffffff;
   --sidebar-foreground: #191a1d;
   --sidebar-accent: #f0f1f3;
@@ -69,8 +69,8 @@
   --card-foreground: #f7f8f8;
   --popover: #18191a;
   --popover-foreground: #f7f8f8;
-  --primary: #cf5a16;
-  --primary-foreground: #160804;
+  --primary: #c95000;
+  --primary-foreground: #ffffff;
   --secondary: #141516;
   --secondary-foreground: #f7f8f8;
   --muted: #18191a;
@@ -81,7 +81,7 @@
   --destructive-foreground: #2b0e08;
   --border: #23252a;
   --input: #62666d;
-  --ring: #ff9b69;
+  --ring: #ffb07c;
   --sidebar: #0f1011;
   --sidebar-foreground: #f7f8f8;
   --sidebar-accent: #18191a;
@@ -110,6 +110,16 @@
   .signal-kicker { color: var(--primary); font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.11em; line-height: 1.2; text-transform: uppercase; }
   .signal-panel { background: var(--card); border: 1px solid var(--border); border-radius: 1.25rem; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035); }
   .signal-inset { background: var(--secondary); border: 1px solid var(--border); border-radius: 0.875rem; }
+  .signal-card-shell { padding: 1px; border-radius: 1.3rem; background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 38%, var(--border)), var(--border) 42%, color-mix(in srgb, var(--card) 88%, var(--border))); }
+  .signal-record-card { min-width: 0; border-radius: calc(1.3rem - 1px); background: linear-gradient(145deg, color-mix(in srgb, var(--card) 96%, white 4%), var(--card)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06); transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1), background-color 220ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .signal-record-card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--card) 94%, var(--primary) 6%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 18px 40px rgb(0 0 0 / 0.14); }
+  .signal-funnel-step { position: relative; min-width: 0; }
+  .signal-funnel-step::before { content: ""; position: absolute; left: 1.35rem; top: -1rem; bottom: calc(100% - 0.35rem); width: 1px; background: color-mix(in srgb, var(--primary) 42%, transparent); }
+  .signal-funnel-step:first-child::before { display: none; }
+  section:has(#student-sort) > .divide-y { display: grid; gap: 0.75rem; border: 0; }
+  section:has(#student-sort) > .divide-y > article { border: 1px solid var(--border); border-radius: 1.15rem; background: var(--card); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05); padding: 1.25rem; }
+  article:has(> .signal-kicker) > .mt-7.divide-y, .signal-panel > .mt-4.divide-y { display: grid; gap: 0.75rem; border: 0; }
+  article:has(> .signal-kicker) > .mt-7.divide-y > div, .signal-panel > .mt-4.divide-y > a { border: 1px solid var(--border); border-radius: 1rem; background: var(--secondary); padding: 0.875rem 1rem; }
   .signal-divider { border-color: var(--border); }
   .signal-action { border-radius: 0.625rem; transition: transform 150ms cubic-bezier(0.2, 0.75, 0.2, 1), background-color 150ms cubic-bezier(0.2, 0.75, 0.2, 1), color 150ms cubic-bezier(0.2, 0.75, 0.2, 1), border-color 150ms cubic-bezier(0.2, 0.75, 0.2, 1); }
   .signal-action:active { transform: translateY(1px) scale(0.985); }
