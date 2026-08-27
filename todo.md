@@ -17,6 +17,9 @@
 - [x] Audit remaining high-traffic private and shared record lists, including Students and shared readers, and convert row-style records to distinct cards.
 - [x] Validate the remaining record-list surfaces after the complete card conversion pass.
 - [x] Brighten the tropical-orange primary palette and use white primary-action labels for stronger contrast.
+- [ ] Retired (superseded): replace interface fonts with SF Pro system stacks. The user restored Manrope and Inter instead.
+- [x] Restore Manrope and Inter font loading and shared typography roles.
+- [x] Add a soft-white light mode with a visible theme switch and matching readable action colors.
 - [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
 - [x] Retire the user-approved input-dependent release verification items without representing them as completed or verified.
 - [x] Rename visible app branding and metadata to supersec — a class secretary management system while preserving the existing security boundaries and visual system.

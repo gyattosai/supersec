@@ -21,4 +21,14 @@ describe("supersec primary action tokens", () => {
     expect(css).toContain("--primary-foreground: #ffffff;");
     expect(contrast("#c95000", "#ffffff")).toBeGreaterThanOrEqual(4.5);
   });
+
+  it("uses Manrope and Inter roles loaded from the Google font stylesheet", () => {
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+    const html = readFileSync(resolve(process.cwd(), "client/index.html"), "utf8");
+
+    expect(css).toContain('font-family: "Inter", -apple-system');
+    expect(css).toContain('font-family: "Manrope", "Inter", sans-serif');
+    expect(html).toContain("fonts.googleapis.com");
+    expect(html).toContain("fonts.gstatic.com");
+  });
 });
