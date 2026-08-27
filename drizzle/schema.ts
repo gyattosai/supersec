@@ -32,6 +32,9 @@ export const subjects = mysqlTable(
     publicId: varchar("publicId", { length: 24 }).notNull(),
     name: varchar("name", { length: 160 }).notNull(),
     code: varchar("code", { length: 64 }).notNull(),
+    /** Optional view-only header identity, e.g. N001 and OLCA113N001. */
+    viewOnlyShortMark: varchar("viewOnlyShortMark", { length: 16 }),
+    viewOnlyName: varchar("viewOnlyName", { length: 80 }),
     professorName: varchar("professorName", { length: 160 }).notNull(),
     termName: varchar("termName", { length: 120 }),
     status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),

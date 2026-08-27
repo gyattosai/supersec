@@ -71,6 +71,13 @@
       "when": 1787830354553,
       "tag": "0009_motionless_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1787831697242,
+      "tag": "0010_bumpy_zaran",
+      "breakpoints": true
     }
   ]
 }

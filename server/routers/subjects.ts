@@ -11,6 +11,8 @@ const meetingDayInput = z.object({ weekday: z.number().int().min(0).max(6), star
 const subjectInput = z.object({
   name: z.string().trim().min(2).max(160),
   code: z.string().trim().min(2).max(64),
+  viewOnlyShortMark: z.string().trim().min(1).max(16).nullable().optional(),
+  viewOnlyName: z.string().trim().min(2).max(80).nullable().optional(),
   professorName: z.string().trim().min(2).max(160),
   termName: z.string().trim().max(120).nullable().optional(),
   meetingDays: z.array(meetingDayInput).min(1).max(7),
@@ -127,6 +129,8 @@ export const subjectsRouter = router({
       publicId,
       name: input.name,
       code: input.code,
+      viewOnlyShortMark: input.viewOnlyShortMark ?? null,
+      viewOnlyName: input.viewOnlyName ?? null,
       professorName: input.professorName,
       termName: input.termName ?? null,
       status: "active",
@@ -138,7 +142,7 @@ export const subjectsRouter = router({
   update: ownerProcedure.input(z.object({ subjectId: z.number().int().positive(), ...subjectInput.shape })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow();
     await ownerSubject(database, ctx.user.id, input.subjectId);
-    await database.update(subjects).set({ name: input.name, code: input.code, professorName: input.professorName, termName: input.termName ?? null }).where(eq(subjects.id, input.subjectId));
+    await database.update(subjects).set({ name: input.name, code: input.code, viewOnlyShortMark: input.viewOnlyShortMark ?? null, viewOnlyName: input.viewOnlyName ?? null, professorName: input.professorName, termName: input.termName ?? null }).where(eq(subjects.id, input.subjectId));
     await database.delete(subjectMeetingDays).where(eq(subjectMeetingDays.subjectId, input.subjectId));
     await database.insert(subjectMeetingDays).values(input.meetingDays.map((day, sortOrder) => ({ subjectId: input.subjectId, weekday: day.weekday, startTime: day.startTime ?? null, endTime: day.endTime ?? null, sortOrder })));
     return { success: true as const };

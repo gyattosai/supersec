@@ -74,6 +74,8 @@ export type PublicSubjectPayload = {
   publicId: string;
   name: string;
   code: string;
+  viewOnlyShortMark: string | null;
+  viewOnlyName: string | null;
   professorName: string;
   meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }>;
   noClass: { startsAt: Date; reason: string } | null;
@@ -99,6 +101,8 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
       publicId: subjects.publicId,
       name: subjects.name,
       code: subjects.code,
+      viewOnlyShortMark: subjects.viewOnlyShortMark,
+      viewOnlyName: subjects.viewOnlyName,
       professorName: subjects.professorName,
     })
     .from(subjects)
@@ -145,6 +149,8 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     publicId: subject.publicId,
     name: subject.name,
     code: subject.code,
+    viewOnlyShortMark: subject.viewOnlyShortMark,
+    viewOnlyName: subject.viewOnlyName,
     professorName: subject.professorName,
     meetingDays,
     noClass: noClass && noClass.reason ? { startsAt: noClass.startsAt, reason: noClass.reason } : null,
@@ -157,7 +163,7 @@ export async function getPublicQuestionsBySubjectId(publicId: string, query?: st
   const db = await getDb();
   if (!db) return null;
   const subjectRows = await db
-    .select({ id: subjects.id, publicId: subjects.publicId, name: subjects.name, code: subjects.code })
+    .select({ id: subjects.id, publicId: subjects.publicId, name: subjects.name, code: subjects.code, viewOnlyShortMark: subjects.viewOnlyShortMark, viewOnlyName: subjects.viewOnlyName })
     .from(subjects)
     .where(and(eq(subjects.publicId, publicId), eq(subjects.status, "active"), eq(subjects.publishState, "published")))
     .limit(1);
@@ -173,7 +179,7 @@ export async function getPublicQuestionsBySubjectId(publicId: string, query?: st
   const questions = normalizedQuery
     ? rows.filter(row => `${row.question} ${row.answer} ${row.tagsText ?? ""}`.toLocaleLowerCase().includes(normalizedQuery))
     : rows;
-  return { subject: { publicId: subject.publicId, name: subject.name, code: subject.code }, questions };
+  return { subject: { publicId: subject.publicId, name: subject.name, code: subject.code, viewOnlyShortMark: subject.viewOnlyShortMark, viewOnlyName: subject.viewOnlyName }, questions };
 }
 
 export async function getPublicHistory(entityType: string, entityId: number) {
@@ -193,7 +199,7 @@ export type PublicContentPayload = {
   body: string;
   version: number;
   publishedAt: Date | null;
-  subject: { publicId: string; name: string; code: string; professorName: string };
+  subject: { publicId: string; name: string; code: string; viewOnlyShortMark: string | null; viewOnlyName: string | null; professorName: string };
   destinationUrl?: string;
   category?: string;
   resourceType?: string;
@@ -211,18 +217,18 @@ export async function getPublicContentItem(kind: PublicContentPayload["kind"], p
   if (!db) return null;
   const publishedSubject = and(eq(subjects.status, "active"), eq(subjects.publishState, "published"));
   if (kind === "announcement") {
-    const rows = await db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, version: announcements.version, publishedAt: announcements.publishedAt, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(announcements.mediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(announcements.publicId, publicId), eq(announcements.publishState, "published"), publishedSubject)).limit(1);
-    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+    const rows = await db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, version: announcements.version, publishedAt: announcements.publishedAt, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, professorName: subjects.professorName }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(announcements.mediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(announcements.publicId, publicId), eq(announcements.publishState, "published"), publishedSubject)).limit(1);
+    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, viewOnlyShortMark: row.subjectViewOnlyShortMark, viewOnlyName: row.subjectViewOnlyName, professorName: row.professorName } } : null;
   }
   if (kind === "resource") {
-    const rows = await db.select({ id: resources.id, publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
+    const rows = await db.select({ id: resources.id, publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
     const row = rows[0];
     if (!row) return null;
     const attachments = await db.select({ id: mediaAssets.id, url: mediaAssets.servedUrl, originalName: mediaAssets.originalName, mimeType: mediaAssets.mimeType, byteSize: mediaAssets.byteSize, altText: mediaAssets.altText }).from(resourceAttachments).innerJoin(mediaAssets, eq(resourceAttachments.mediaAssetId, mediaAssets.id)).where(and(eq(resourceAttachments.resourceId, row.id), eq(mediaAssets.publicUse, true))).orderBy(asc(resourceAttachments.displayOrder));
-    return { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, attachments, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } };
+    return { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, attachments, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, viewOnlyShortMark: row.subjectViewOnlyShortMark, viewOnlyName: row.subjectViewOnlyName, professorName: row.professorName } };
   }
-  const rows = await db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, body: questionsAnswers.answer, version: questionsAnswers.version, publishedAt: questionsAnswers.publishedAt, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(questionsAnswers.socialPreviewMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(questionsAnswers.publicId, publicId), eq(questionsAnswers.publishState, "published"), publishedSubject)).limit(1);
-  const row = rows[0]; return row ? { kind, publicId: row.publicId, title: `${row.isOfficial ? "Official" : "Unofficial"} answer — ${row.title}`, body: row.body, version: row.version, publishedAt: row.publishedAt, tagsText: row.tagsText, isOfficial: row.isOfficial, socialPreviewMedia: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+  const rows = await db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, body: questionsAnswers.answer, version: questionsAnswers.version, publishedAt: questionsAnswers.publishedAt, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, professorName: subjects.professorName }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(questionsAnswers.socialPreviewMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(questionsAnswers.publicId, publicId), eq(questionsAnswers.publishState, "published"), publishedSubject)).limit(1);
+  const row = rows[0]; return row ? { kind, publicId: row.publicId, title: `${row.isOfficial ? "Official" : "Unofficial"} answer — ${row.title}`, body: row.body, version: row.version, publishedAt: row.publishedAt, tagsText: row.tagsText, isOfficial: row.isOfficial, socialPreviewMedia: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, viewOnlyShortMark: row.subjectViewOnlyShortMark, viewOnlyName: row.subjectViewOnlyName, professorName: row.professorName } } : null;
 }
 
 /** Public History requires a published public ID; numeric entity IDs never become an anonymous API contract. */
@@ -242,7 +248,7 @@ export type PublicAttendancePayload = {
   publicId: string;
   startsAt: Date;
   version: number;
-  subject: { publicId: string; name: string; code: string; professorName: string };
+  subject: { publicId: string; name: string; code: string; viewOnlyShortMark: string | null; viewOnlyName: string | null; professorName: string };
   records: Array<{ canonicalName: string; status: "PRESENT" | "ABSENT" | "EXCUSED" | "NOT_SET" }>;
   history: Awaited<ReturnType<typeof getPublicHistory>>;
 };
@@ -256,7 +262,7 @@ export async function getPublicAttendanceById(publicId: string): Promise<PublicA
   const db = await getDb();
   if (!db) return null;
   const rows = await db
-    .select({ id: classSessions.id, publicId: classSessions.publicId, startsAt: classSessions.startsAt, version: attendanceRecords.publishedVersion, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName })
+    .select({ id: classSessions.id, publicId: classSessions.publicId, startsAt: classSessions.startsAt, version: attendanceRecords.publishedVersion, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, professorName: subjects.professorName })
     .from(classSessions)
     .innerJoin(subjects, eq(classSessions.subjectId, subjects.id))
     .leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id))
@@ -277,7 +283,7 @@ export async function getPublicAttendanceById(publicId: string): Promise<PublicA
     publicId: session.publicId,
     startsAt: session.startsAt,
     version: session.version ?? 0,
-    subject: { publicId: session.subjectPublicId, name: session.subjectName, code: session.subjectCode, professorName: session.professorName },
+    subject: { publicId: session.subjectPublicId, name: session.subjectName, code: session.subjectCode, viewOnlyShortMark: session.subjectViewOnlyShortMark, viewOnlyName: session.subjectViewOnlyName, professorName: session.professorName },
     records,
     history,
   };

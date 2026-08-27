@@ -1,8 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Router } from "wouter";
 import { ThemeProvider } from "../client/src/contexts/ThemeContext";
+
+vi.mock("@/components/ViewOnlyHeader", () => ({
+  ViewOnlyHeader: () => createElement("header", null, "VIEW ONLY"),
+}));
+
 import { PublicShell } from "../client/src/pages/PublicPages";
 
 describe("shared reader frame", () => {

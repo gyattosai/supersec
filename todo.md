@@ -54,3 +54,9 @@
 
 - [x] Refine Subject-home and shared record-card surfaces to remove awkward layered treatment while retaining clear card hierarchy.
 - [x] Replace unstable hover effects with deliberate desktop-only card feedback and touch-safe active states across private and shared pages.
+
+## View-only section identity
+
+- [x] Add editable per-Subject short-mark and full-name fields for the view-only header identity.
+- [x] Render the configured section mark and full name across Subject-scoped view-only pages on first render while preserving safe fallback branding.
+- [x] Verify a configured `N001` / `OLCA113N001` identity on a full Subject home page and a related view-only page without modifying real class data.

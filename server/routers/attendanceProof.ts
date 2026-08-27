@@ -43,7 +43,7 @@ async function databaseOrThrow() {
 
 async function getPublishedSession(database: Awaited<ReturnType<typeof databaseOrThrow>>, publicId: string) {
   const rows = await database
-    .select({ id: classSessions.id, subjectId: classSessions.subjectId, startsAt: classSessions.startsAt, ownerId: subjects.ownerId, subjectName: subjects.name, subjectCode: subjects.code })
+    .select({ id: classSessions.id, subjectId: classSessions.subjectId, startsAt: classSessions.startsAt, ownerId: subjects.ownerId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, subjectPublicId: subjects.publicId })
     .from(classSessions)
     .innerJoin(subjects, eq(classSessions.subjectId, subjects.id))
     .where(and(eq(classSessions.publicId, publicId), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"), eq(subjects.status, "active")))
@@ -138,7 +138,7 @@ export const attendanceProofRouter = router({
   publicSession: publicProcedure.input(publicSessionInput).query(async ({ input }) => {
     const database = await databaseOrThrow();
     const session = await getPublishedSession(database, input.publicId);
-    return session ? { available: true as const, session: { publicId: input.publicId, startsAt: session.startsAt, subject: { name: session.subjectName, code: session.subjectCode } } } : { available: false as const };
+    return session ? { available: true as const, session: { publicId: input.publicId, startsAt: session.startsAt, subject: { publicId: session.subjectPublicId, name: session.subjectName, code: session.subjectCode, viewOnlyShortMark: session.subjectViewOnlyShortMark, viewOnlyName: session.subjectViewOnlyName } } } : { available: false as const };
   }),
   submit: publicProcedure.input(proofUploadInput).mutation(async ({ input }) => {
     const database = await databaseOrThrow();
