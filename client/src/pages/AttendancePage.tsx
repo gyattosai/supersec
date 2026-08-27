@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { sortAttendance, type AttendanceSortMode } from "@shared/attendanceSorting";
 import { ArrowLeft, ChartNoAxesCombined, Check, ClipboardPaste, Copy, ExternalLink, Sparkles, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export default function AttendancePage() {
   const [rawNames, setRawNames] = useState("");
   const [candidateSelections, setCandidateSelections] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("ALL");
+  const [attendanceSort, setAttendanceSort] = useState<AttendanceSortMode>("name");
   const [editingExcuseId, setEditingExcuseId] = useState<number | null>(null);
   const [excuseDrafts, setExcuseDrafts] = useState<Record<number, string>>({});
   const [captureAt, setCaptureAt] = useState(() => localDateTimeValue());
@@ -74,7 +76,7 @@ export default function AttendancePage() {
     }),
     [records.data],
   );
-  const filteredRecords = useMemo(() => records.data?.filter(record => statusFilter === "ALL" || record.status === statusFilter) ?? [], [records.data, statusFilter]);
+  const filteredRecords = useMemo(() => sortAttendance(records.data?.filter(record => statusFilter === "ALL" || record.status === statusFilter) ?? [], attendanceSort), [attendanceSort, records.data, statusFilter]);
   const unresolvedSuggestionCount = suggestions.data?.filter(item => item.reviewState !== "confirmed").length ?? 0;
   const pastedNameCount = useMemo(() => rawNames.split(/\r?\n/).map(name => name.trim()).filter(Boolean).length, [rawNames]);
   const copyPublicAttendance = async () => {
@@ -155,7 +157,7 @@ export default function AttendancePage() {
           <section className="signal-panel p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">Student status</h2><p className="mt-1 text-xs text-muted-foreground">Excused requires a private reason.</p></div><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
             <div className="mt-4 flex flex-wrap items-center gap-2 text-xs"><span className="mr-1 font-semibold text-muted-foreground">Set all drafts:</span>{(["PRESENT", "ABSENT", "NOT_SET"] as const).map(status => <button key={status} type="button" disabled={bulkSetDraftStatus.isPending || !records.data?.length} onClick={() => bulkSetDraftStatus.mutate({ sessionId, status })} className="signal-action min-h-11 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50">{bulkSetDraftStatus.isPending ? "Updating…" : status === "NOT_SET" ? "Not set" : status[0] + status.slice(1).toLowerCase()}</button>)}</div>
-            <div className="signal-inset mt-4 flex gap-1 overflow-x-auto p-1" role="group" aria-label="Filter Students by Attendance status">{statusFilters.map(filter => <button key={filter} type="button" aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className={`signal-action min-h-11 shrink-0 rounded-[10px] px-3 text-xs font-semibold ${statusFilter === filter ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>{filter === "ALL" ? "All" : filter.replace("_", " ")}</button>)}</div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><div className="signal-inset flex min-w-0 flex-1 gap-1 overflow-x-auto p-1" role="group" aria-label="Filter Students by Attendance status">{statusFilters.map(filter => <button key={filter} type="button" aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className={`signal-action min-h-11 shrink-0 rounded-[10px] px-3 text-xs font-semibold ${statusFilter === filter ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>{filter === "ALL" ? "All" : filter.replace("_", " ")}</button>)}</div><label className="flex min-h-11 items-center gap-2 text-xs font-semibold text-muted-foreground">Sort<select value={attendanceSort} onChange={event => setAttendanceSort(event.target.value as AttendanceSortMode)} className="min-h-10 rounded-xl border border-input bg-card px-3 text-sm text-foreground" aria-label="Sort Attendance records"><option value="name">Name</option><option value="status">Status</option><option value="conflict">Schedule conflict</option></select></label></div>
             <div className="mt-4 space-y-2">
               {records.isLoading ? <p className="text-sm text-muted-foreground">Loading Attendance…</p> : null}
               {filteredRecords.map(record => (

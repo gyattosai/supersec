@@ -6,6 +6,9 @@
 - [x] Remove the legacy grouped-content route so independent workspaces are the only reachable Announcements, Resources, and Q&A flow.
 - [x] Improve resource file and image attachments with safe uploads, clear attachment states, and premium private/public previews.
 - [x] Show each published post's title and current version in Messenger-ready social metadata for relevant shared features.
+- [x] Export per-Subject reports as PDFs and generate a compiled PDF for selected Subjects.
+- [x] Apply the one-column default rule to Subject home and present feature entry points as list cards.
+- [x] Add clear sorting controls to Students (Master List) and Attendance.
 - [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
 - [x] Retire the user-approved input-dependent release verification items without representing them as completed or verified.
 - [x] Rename visible app branding and metadata to supersec — a class secretary management system while preserving the existing security boundaries and visual system.
