@@ -2,6 +2,7 @@
 
 ## Current release and real-data verification
 
+- [x] Recalibrate the shared dark palette toward Linear-inspired near-black and cool-neutral surfaces while retaining tropical orange for primary actions and focus, using autonomous internal checks only.
 - [x] Audit the current build for high-value missing workflows, then implement and validate the strongest privacy-safe additions.
 - [x] Add a secretary-only bulk draft-status action for Attendance that never bypasses Zoom-suggestion review or publishes records automatically.
 - [x] Add a secretary-only class-attendance CSV export that includes official statuses but never private excuse reasons, raw Zoom data, suggestions, or publishing controls.
