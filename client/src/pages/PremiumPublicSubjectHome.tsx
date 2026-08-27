@@ -31,7 +31,7 @@ export function PremiumPublicSubjectHome() {
 
   return <PublicFrame subject={subject}>
     <article className="signal-card-shell">
-      <div className="signal-record-card p-5 sm:p-7">
+      <div className="signal-record-card signal-hero-surface p-5 sm:p-7">
         <div className="flex flex-col gap-6">
           <div>
             <Badge className="rounded-full bg-primary px-3 py-1 text-primary-foreground">{subject.code}</Badge>

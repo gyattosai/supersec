@@ -64,3 +64,7 @@
 ## Dark-grey theme refinement
 
 - [x] Deepen the dark-mode canvas and surface palette toward dark grey while preserving readable foreground text, tropical-orange contrast, and light mode.
+
+## Gradient enhancement
+
+- [x] Extend restrained gradient accents to priority page and reusable component surfaces without weakening content contrast or the focused card hierarchy.

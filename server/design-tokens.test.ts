@@ -51,6 +51,13 @@ describe("supersec primary action tokens", () => {
     expect(css).toContain(".signal-header-surface");
     expect(css).toContain(".signal-sidebar-surface");
     expect(css).toContain(".signal-editor-shell");
+    expect(css).toContain(".signal-landing-hero");
+    expect(css).toContain(".signal-hero-surface");
+    expect(css).toContain(".signal-gradient-tile");
+    expect(css).toContain(".signal-editor-toolbar");
+    expect(css).toContain(".signal-panel.border-l-2.border-l-primary");
+    expect(css).toContain(".signal-card-shell > form.signal-record-card");
+    expect(css).toContain(".signal-panel > .bg-secondary\\/65");
     expect(css).toContain("radial-gradient");
     expect(css).toContain("linear-gradient");
   });
