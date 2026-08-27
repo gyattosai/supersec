@@ -58,8 +58,8 @@ export function AnnouncementEditor({ value, onChange, required, id = "announceme
   );
 
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-input bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/20 p-2">
+    <div className="signal-editor-shell mt-3 overflow-hidden rounded-2xl border border-input shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-secondary/25 p-2">
       <div className="flex flex-wrap gap-1" role="toolbar" aria-label={`${label} formatting`}>
         {tool("Bold", () => wrapSelection("**"), <Bold className="h-4 w-4" />)}
         {tool("Italic", () => wrapSelection("*"), <Italic className="h-4 w-4" />)}

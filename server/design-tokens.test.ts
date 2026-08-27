@@ -31,4 +31,17 @@ describe("supersec primary action tokens", () => {
     expect(html).toContain("fonts.googleapis.com");
     expect(html).toContain("fonts.gstatic.com");
   });
+
+  it("uses restrained gradient tokens for canvas, elevated surfaces, and editor chrome", () => {
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+
+    expect(css).toContain("--signal-glow-primary:");
+    expect(css).toContain("--signal-glow-secondary:");
+    expect(css).toContain(".signal-canvas");
+    expect(css).toContain(".signal-header-surface");
+    expect(css).toContain(".signal-sidebar-surface");
+    expect(css).toContain(".signal-editor-shell");
+    expect(css).toContain("radial-gradient");
+    expect(css).toContain("linear-gradient");
+  });
 });

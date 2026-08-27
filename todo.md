@@ -17,7 +17,7 @@
 - [x] Audit remaining high-traffic private and shared record lists, including Students and shared readers, and convert row-style records to distinct cards.
 - [x] Validate the remaining record-list surfaces after the complete card conversion pass.
 - [x] Brighten the tropical-orange primary palette and use white primary-action labels for stronger contrast.
-- [ ] Retired (superseded): replace interface fonts with SF Pro system stacks. The user restored Manrope and Inter instead.
+- [x] Retired (superseded): replace interface fonts with SF Pro system stacks. The user restored Manrope and Inter instead.
 - [x] Restore Manrope and Inter font loading and shared typography roles.
 - [x] Add a soft-white light mode with a visible theme switch and matching readable action colors.
 - [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
@@ -37,3 +37,7 @@
 - [x] Skipped by user: canonical-domain Messenger/social-card verification in a real conversation was not run.
 - [x] Skipped by user: real class-data end-to-end verification was not run.
 - [x] Skipped by user: additional automated Q&A state and custom History evidence was not captured.
+
+## Visual refinement
+
+- [x] Add restrained, accessible gradient effects to the dark and soft-white product surfaces without weakening tropical-orange actions or text contrast.
