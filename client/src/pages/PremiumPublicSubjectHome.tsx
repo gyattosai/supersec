@@ -47,9 +47,8 @@ export function PremiumPublicSubjectHome() {
       </div>
     </article>
     {subject.noClass ? <div className="signal-card-shell mt-4"><section className="signal-record-card border-l-2 border-l-amber-300 bg-amber-300/10 p-4"><div className="flex gap-3"><CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-300" /><div><p className="font-semibold">No Class · {new Date(subject.noClass.startsAt).toLocaleDateString()}</p><p className="mt-1 text-sm text-muted-foreground">{subject.noClass.reason}</p></div></div></section></div> : null}
-    <section className="mt-6">
-      <div><p className="signal-kicker">Class updates</p><h2 className="signal-heading mt-2">See what is shared.</h2></div>
-      <div className="mt-5 space-y-3">
+    <section className="mt-7">
+      <div className="space-y-3">
         <RecordList icon={ClipboardCheck} eyebrow="Attendance" title="Class Attendance" items={latest.attendance.map(item => ({ ...item, title: new Date(item.startsAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }))} hrefPrefix="/attendance/" empty="No Attendance published." />
         <RecordList icon={BellRing} eyebrow="Updates" title="Announcements" items={latest.announcements} hrefPrefix="/a/" empty="No announcements published." />
         <RecordList icon={BookOpen} eyebrow="Resources" title="Class resources" items={latest.resources} hrefPrefix="/r/" empty="No resources published." />

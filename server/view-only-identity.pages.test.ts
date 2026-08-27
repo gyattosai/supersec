@@ -36,6 +36,8 @@ describe("configured view-only identity pages", () => {
 
     expect(markup).toContain(">N001<");
     expect(markup).toContain(">OLCA113N001<");
+    expect(markup).not.toContain("Class updates");
+    expect(markup).not.toContain("See what is shared.");
   });
 
   it("renders the configured identity in a related public Resource page", () => {

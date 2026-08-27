@@ -68,3 +68,7 @@
 ## Gradient enhancement
 
 - [x] Extend restrained gradient accents to priority page and reusable component surfaces without weakening content contrast or the focused card hierarchy.
+
+## View-only copy cleanup
+
+- [x] Remove the redundant “Class updates” and “See what is shared.” heading from the view-only Subject home.
