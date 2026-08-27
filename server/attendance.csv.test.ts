@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { buildClassAttendanceCsv, classAttendanceCsvFilename } from "../shared/attendanceCsv";
+
+describe("private class-attendance CSV export", () => {
+  it("exports only Student and official Status columns, safely escaping a comma in the student name", () => {
+    const csv = buildClassAttendanceCsv([
+      { canonicalName: "SECTION_LAST NAME, FIRST NAME", status: "EXCUSED" },
+      { canonicalName: "SECOND STUDENT", status: "NOT_SET" },
+    ]);
+
+    expect(csv).toBe("Student,Status\r\n\"SECTION_LAST NAME, FIRST NAME\",EXCUSED\r\nSECOND STUDENT,NOT_SET");
+    expect(csv.split("\r\n")[0]?.split(",")).toHaveLength(2);
+    expect(csv).not.toContain("excuseReason");
+    expect(csv).not.toContain("zoom");
+  });
+
+  it("uses a portable filename based on the Subject code and session date", () => {
+    expect(classAttendanceCsvFilename("CMS 101", new Date("2026-08-27T00:00:00.000Z"))).toBe("cms-101-attendance-2026-08-27.csv");
+  });
+});

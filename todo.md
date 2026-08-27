@@ -4,6 +4,7 @@
 
 - [ ] Audit the current build for high-value missing workflows, then implement and validate the strongest privacy-safe additions.
 - [x] Add a secretary-only bulk draft-status action for Attendance that never bypasses Zoom-suggestion review or publishes records automatically.
+- [x] Add a secretary-only class-attendance CSV export that includes official statuses but never private excuse reasons, raw Zoom data, suggestions, or publishing controls.
 - [ ] Verify representative Google Drive, Google Forms, Facebook, image, Zoom, and generic external Resource links, including thumbnail fallback and public History.
 - [ ] Verify a real archived Subject appears in Archive, restores as a draft, and is removed from the Archive list end to end.
 - [ ] Verify archived Announcements, Resources, and Questions & Answers each restore from Archive and update the list end to end.
