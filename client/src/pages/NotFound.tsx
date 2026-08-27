@@ -24,13 +24,11 @@ export default function NotFound() {
           <h1 className="signal-title text-4xl">404</h1>
 
           <h2 className="mt-2 text-xl font-semibold">
-            Page Not Found
+            Page not found
           </h2>
 
           <p className="mb-8 mt-4 leading-relaxed text-muted-foreground">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
+            This link is unavailable or has moved.
           </p>
 
           <div
@@ -42,7 +40,7 @@ export default function NotFound() {
               className="px-6"
             >
               <Home className="w-4 h-4 mr-2" />
-              Go Home
+              Go home
             </Button>
           </div>
         </CardContent>

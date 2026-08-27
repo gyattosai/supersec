@@ -9,6 +9,10 @@
 - [x] Export per-Subject reports as PDFs and generate a compiled PDF for selected Subjects.
 - [x] Apply the one-column default rule to Subject home and present feature entry points as list cards.
 - [x] Add clear sorting controls to Students (Master List) and Attendance.
+- [x] Complete a page-by-page UI-copy audit across all remaining private and shared pages and simplify any verbose labels, helper text, and empty states.
+- [x] Re-run focused validation after the true final copy pass and capture all materially changed private and public routes.
+- [x] Combine Schedule and No Class into the Attendance workflow and remove the separate Subject task entry.
+- [x] Improve the mobile-first view-only shared pages with clearer hierarchy, navigation, and safe content presentation.
 - [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
 - [x] Retire the user-approved input-dependent release verification items without representing them as completed or verified.
 - [x] Rename visible app branding and metadata to supersec — a class secretary management system while preserving the existing security boundaries and visual system.

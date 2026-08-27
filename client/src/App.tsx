@@ -10,7 +10,7 @@ import SubjectsPage from "@/pages/SubjectsPage";
 import { SubjectCreatePage, SubjectDetailsPage, SubjectSharingPage } from "@/pages/SubjectPages";
 import IndependentSubjectWorkspacePage, { LegacyContentRedirect } from "@/pages/IndependentSubjectWorkspacePage";
 import { FocusedStudentsPage } from "@/pages/FocusedStudentsPage";
-import { FocusedSchedulePage } from "@/pages/FocusedSchedulePage";
+import { FocusedAttendancePage, LegacyScheduleRedirect } from "@/pages/FocusedSchedulePage";
 import AttendancePage from "@/pages/AttendancePage";
 import FocusedContentPage from "@/pages/FocusedContentPage";
 import ReportsPage from "@/pages/ReportsPage";
@@ -28,7 +28,8 @@ function Router() {
       <Route path="/app/subjects/new" component={SubjectCreatePage} />
       <Route path="/app/subjects/:subjectId/details" component={SubjectDetailsPage} />
       <Route path="/app/subjects/:subjectId/students" component={FocusedStudentsPage} />
-      <Route path="/app/subjects/:subjectId/schedule" component={FocusedSchedulePage} />
+      <Route path="/app/subjects/:subjectId/attendance" component={FocusedAttendancePage} />
+      <Route path="/app/subjects/:subjectId/schedule" component={LegacyScheduleRedirect} />
       <Route path="/app/subjects/:subjectId/sharing" component={SubjectSharingPage} />
       <Route path="/app/subjects/:subjectId/:kind/edit/:itemId" component={FocusedContentPage} />
       <Route path="/app/subjects/:subjectId/:kind/new" component={FocusedContentPage} />

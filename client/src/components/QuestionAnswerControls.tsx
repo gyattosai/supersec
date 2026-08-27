@@ -26,15 +26,15 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
           onChange={onAnswerChange}
           aiTarget="question_answer"
           aiContext={tagsText ? `Suggested topics: ${tagsText}` : "Answer a repeated class question clearly and respectfully."}
-          placeholder="Write a clear answer classmates can reuse."
-          helperText="Use headings, emphasis, lists, quotes, and links to make the answer easy to reuse. Shared pages render this formatting safely."
+          placeholder="Write the answer classmates need."
+          helperText="Use formatting to make the answer easy to scan."
           minHeightClassName="min-h-48"
         />
       </div>
       <div>
         <label htmlFor="question-tags" className="text-sm font-medium text-foreground">Tags <span className="text-muted-foreground">(optional)</span></label>
         <Input id="question-tags" value={tagsText} onChange={event => onTagsTextChange(event.target.value)} className="mt-2" placeholder="For example, deadline, enrollment, Zoom" />
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">Separate tags with commas. They help classmates recognize the topic on the shared answer.</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">Use commas to separate topics.</p>
       </div>
       <div className="rounded-2xl border border-border bg-secondary/40 p-3">
         <label htmlFor="question-official" className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-foreground">
@@ -47,7 +47,7 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
           />
           Mark as an official answer
         </label>
-        <p id="question-official-help" className="mt-1 pl-7 text-xs leading-5 text-muted-foreground">This public status is shown on the individual share page.</p>
+        <p id="question-official-help" className="mt-1 pl-7 text-xs leading-5 text-muted-foreground">Shown on the shared page.</p>
         {showChangeSummary ? (
           <div className="mt-3">
             <label htmlFor="question-change-summary" className="text-sm font-medium text-foreground">Public change summary</label>
@@ -58,7 +58,7 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
               className="mt-2"
               placeholder="For example, clarified the deadline"
             />
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">This appears in the public version History. Leave blank to use the standard update summary.</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Shown in public History. Leave blank for the standard message.</p>
           </div>
         ) : null}
       </div>
