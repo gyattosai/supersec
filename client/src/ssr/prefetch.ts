@@ -4,8 +4,8 @@ import { trpc } from "@/lib/trpc";
 
 export type HeadMeta = { title: string; description: string; canonicalPath?: string; ogImage?: string; ogImageAlt?: string; ogType?: "website" | "article"; publishedTime?: string; noindex?: boolean; notFound?: boolean };
 export type SsrPrefetch = { publicSubject: (publicId: string) => Promise<any>; publicAttendance: (publicId: string) => Promise<any>; publicItem: (input: { kind: "announcement" | "resource" | "question"; publicId: string }) => Promise<any>; publicReport: (publicId: string) => Promise<any> };
-const site = "Class Management";
-const fallback = "A secure, shareable class workspace for published information.";
+const site = "supersec";
+const fallback = "A class secretary management system for private class operations and published class updates.";
 const seed = (qc: QueryClient, key: unknown, value: unknown) => qc.setQueryData(key as any, value);
 
 export async function prefetchForPath(url: string, queryClient: QueryClient, caller: SsrPrefetch): Promise<HeadMeta> {
