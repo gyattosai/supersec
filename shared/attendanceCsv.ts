@@ -18,3 +18,19 @@ export function classAttendanceCsvFilename(subjectCode: string, startsAt: Date) 
   const date = startsAt.toISOString().slice(0, 10);
   return `${safeSubjectCode}-attendance-${date}.csv`;
 }
+
+export function buildClassAttendanceSummary(input: {
+  subjectCode: string;
+  subjectName: string;
+  startsAt: Date;
+  present: number;
+  absent: number;
+  excused: number;
+  notSet: number;
+}) {
+  return [
+    `${input.subjectCode} · ${input.subjectName}`,
+    `Class attendance · ${input.startsAt.toLocaleString()}`,
+    `Present: ${input.present} · Absent: ${input.absent} · Excused: ${input.excused} · Not set: ${input.notSet}`,
+  ].join("\n");
+}
