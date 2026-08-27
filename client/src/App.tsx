@@ -7,11 +7,11 @@ import { PremiumPublicSubjectHome } from "@/pages/PremiumPublicSubjectHome";
 import { PremiumPublicResourcePage } from "@/pages/PremiumPublicResourcePage";
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
-import { SubjectCreatePage, SubjectDetailsPage, SubjectOverviewPage, SubjectSharingPage } from "@/pages/SubjectPages";
+import { SubjectCreatePage, SubjectDetailsPage, SubjectSharingPage } from "@/pages/SubjectPages";
+import IndependentSubjectWorkspacePage, { LegacyContentRedirect } from "@/pages/IndependentSubjectWorkspacePage";
 import { FocusedStudentsPage } from "@/pages/FocusedStudentsPage";
 import { FocusedSchedulePage } from "@/pages/FocusedSchedulePage";
 import AttendancePage from "@/pages/AttendancePage";
-import ContentPage from "@/pages/ContentPage";
 import FocusedContentPage from "@/pages/FocusedContentPage";
 import ReportsPage from "@/pages/ReportsPage";
 import ArchivePage from "@/pages/ArchivePage";
@@ -33,9 +33,9 @@ function Router() {
       <Route path="/app/subjects/:subjectId/:kind/edit/:itemId" component={FocusedContentPage} />
       <Route path="/app/subjects/:subjectId/:kind/new" component={FocusedContentPage} />
       <Route path="/app/subjects/:subjectId/:kind" component={FocusedContentPage} />
-      <Route path="/app/subjects/:subjectId" component={SubjectOverviewPage} />
+      <Route path="/app/subjects/:subjectId" component={IndependentSubjectWorkspacePage} />
       <Route path="/app/attendance/:sessionId" component={AttendancePage} />
-      <Route path="/app/content/:subjectId/:kind" component={ContentPage} />
+      <Route path="/app/content/:subjectId/:kind" component={LegacyContentRedirect} />
       <Route path="/app/reports" component={ReportsPage} />
       <Route path="/app/archive" component={ArchivePage} />
       <Route path="/app/settings" component={SecretarySettingsPage} />
