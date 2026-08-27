@@ -76,3 +76,8 @@
 ## Cross-page copy cleanup
 
 - [x] Audit high-traffic private and view-only pages for repeated headings, duplicate helper text, and redundant framing; remove only copy that does not add task guidance.
+
+## Subject creation reliability
+
+- [x] Diagnose and fix the Subject-creation request that returns HTML instead of a valid JSON/tRPC response.
+- [x] Re-run the authenticated New Subject form after the managed-port change; verify its JSON response and clean up the temporary record without changing existing class data.

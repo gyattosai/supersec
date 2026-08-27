@@ -2,6 +2,30 @@
 
 <!-- Newest session blocks at top. Each session = exactly one ## section with ### per attempt. Cross-linked to errors.md / challenges.md. -->
 
+## Session 2026-08-27 — Subject-creation JSON reliability closure
+- **Summary:** The strict managed-port listener correction completed an authenticated post-fix browser mutation, and the evidence records were reconciled after one stale-context patch mismatch.
+
+### Validate the managed-port correction through a disposable Subject submission
+- **Problem:** New Subject could receive an HTML document where the tRPC client expected JSON, causing `Unexpected token '<'`.
+- **Attempt:** Removed alternate-port fallback, validated the configured `PORT`, restarted the managed server on port 3000, then submitted an explicitly user-approved temporary Subject through the authenticated New Subject form.
+- **Result:** worked
+- **Evidence:** `/api/trpc/subjects.create?batch=1` returned HTTP 200 with `content-type: application/json`; the UI displayed “Subject created” and navigated to Subject ID 60001. The record was immediately deleted by exact ID/name/code, and no matching row remained.
+- **Follow-up:** done
+
+### Apply an exact-context update after the staged evidence patch mismatch
+- **Problem:** Combined evidence-record patch did not match the current LOG-54 cleanup text.
+- **Attempt:** Read the current staged reliability record and applied a one-file patch using its exact current wording.
+- **Result:** worked
+- **Evidence:** LOG-54 now records the post-fix request result, temporary-record cleanup, and resolved status without modifying application behavior.
+- **Follow-up:** done
+
+### Restrict the browser-error regression check to the post-fix log window
+- **Problem:** Final browser-error check included historical pre-fix entries.
+- **Attempt:** Re-ran the console assertion against entries written after the authenticated post-fix submission at `2026-08-27T22:30:00`.
+- **Result:** worked
+- **Evidence:** No post-fix `Unexpected token '<'` entry was found; the same command passed `server/server.port.test.ts` (2 tests), `tsc --noEmit`, and `git diff --check`, while retaining the recorded HTTP 200 `application/json` mutation evidence.
+- **Follow-up:** done
+
 ## Session 2026-08-26 — Bulk Student and conflict Attendance refinement
 - **Summary:** The targeted blank-line parser correction passed; isolated private route captures resolved both the Attendance and focused Content multi-route blank frames; structured Student input migrated behind temporary caller compatibility.
 
