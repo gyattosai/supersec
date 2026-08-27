@@ -7,6 +7,7 @@ import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
 
 type ZoomNormalizationFlag = "reordered" | "missing_section" | "missing_comma" | "ambiguous_delimiters";
+export const bulkDraftStatuses = ["PRESENT", "ABSENT", "NOT_SET"] as const;
 type ZoomNameNormalization = {
   sourceName: string;
   normalizedCandidate: string | null;
@@ -132,6 +133,13 @@ export const attendanceRouter = router({
     const record = await database.select({ id: attendanceRecords.id, sessionId: attendanceRecords.classSessionId }).from(attendanceRecords).where(eq(attendanceRecords.id, input.recordId)).limit(1);
     if (!record[0]) throw new Error("Attendance record not found"); await ownerSession(database, ctx.user.id, record[0].sessionId);
     await database.update(attendanceRecords).set({ attendanceStatus: input.status, excuseReason: input.status === "EXCUSED" ? input.excuseReason?.trim() ?? null : null, publishState: "draft" }).where(eq(attendanceRecords.id, input.recordId)); return { success: true as const };
+  }),
+  bulkSetDraftStatus: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), status: z.enum(bulkDraftStatuses) })).mutation(async ({ ctx, input }) => {
+    const database = await databaseOrThrow();
+    const session = await ownerSession(database, ctx.user.id, input.sessionId);
+    await ensureRecords(database, session.id, session.subjectId);
+    await database.update(attendanceRecords).set({ attendanceStatus: input.status, excuseReason: null, publishState: "draft" }).where(eq(attendanceRecords.classSessionId, session.id));
+    return { success: true as const };
   }),
   importZoomNames: ownerProcedure.input(z.object({ sessionId: z.number().int().positive(), rawNamesText: z.string().trim().min(1).max(12000), captureAt: z.coerce.date() })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow(); const session = await ownerSession(database, ctx.user.id, input.sessionId); await ensureRecords(database, session.id, session.subjectId);

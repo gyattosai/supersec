@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { attendanceDefaultForMembership, normalizeZoomDisplayName, normalizeZoomParticipantName, parseParticipantLines } from "./routers/attendance";
+import { attendanceDefaultForMembership, bulkDraftStatuses, normalizeZoomDisplayName, normalizeZoomParticipantName, parseParticipantLines } from "./routers/attendance";
 
 describe("Attendance defaults", () => {
   it("keeps schedule conflict separate from the official statuses and defaults a conflict-designated Student to PRESENT", () => {
     expect(attendanceDefaultForMembership(true)).toEqual({ attendanceStatus: "PRESENT", hasScheduleConflict: true });
     expect(attendanceDefaultForMembership(false)).toEqual({ attendanceStatus: "NOT_SET", hasScheduleConflict: false });
+  });
+
+  it("limits bulk draft updates to statuses that do not require an individual private reason", () => {
+    expect(bulkDraftStatuses).toEqual(["PRESENT", "ABSENT", "NOT_SET"]);
+    expect(bulkDraftStatuses).not.toContain("EXCUSED");
   });
 });
 
