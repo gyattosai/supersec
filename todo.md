@@ -2,6 +2,7 @@
 
 ## Current release and real-data verification
 
+- [x] Add rich-text editing for private Q&A authoring while preserving public view-only safety, publication controls, and version history.
 - [x] Retire the user-approved input-dependent release verification items without representing them as completed or verified.
 - [x] Rename visible app branding and metadata to supersec — a class secretary management system while preserving the existing security boundaries and visual system.
 - [x] Recalibrate the shared dark palette toward Linear-inspired near-black and cool-neutral surfaces while retaining tropical orange for primary actions and focus, using autonomous internal checks only.

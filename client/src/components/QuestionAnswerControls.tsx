@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { AiTextAssist } from "@/components/AiTextAssist";
+import { AnnouncementEditor } from "@/components/AnnouncementEditor";
 
 type QuestionAnswerControlsProps = {
   answer: string;
@@ -18,16 +17,19 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <label htmlFor="question-answer" className="text-sm font-medium text-foreground">Answer</label>
-        <Textarea
+        <label className="text-sm font-medium text-foreground">Answer</label>
+        <AnnouncementEditor
           id="question-answer"
+          label="Answer"
           required
-          className="mt-2 min-h-48"
           value={answer}
-          onChange={event => onAnswerChange(event.target.value)}
+          onChange={onAnswerChange}
+          aiTarget="question_answer"
+          aiContext={tagsText ? `Suggested topics: ${tagsText}` : "Answer a repeated class question clearly and respectfully."}
           placeholder="Write a clear answer classmates can reuse."
+          helperText="Use headings, emphasis, lists, quotes, and links to make the answer easy to reuse. Shared pages render this formatting safely."
+          minHeightClassName="min-h-48"
         />
-        <div className="mt-2 flex items-center justify-between gap-3"><p className="text-xs leading-5 text-muted-foreground">AI suggestions stay private until you review, edit, and save this answer.</p><AiTextAssist value={answer} onApply={onAnswerChange} target="question_answer" context={tagsText ? `Suggested topics: ${tagsText}` : "Answer a repeated class question clearly and respectfully."} /></div>
       </div>
       <div>
         <label htmlFor="question-tags" className="text-sm font-medium text-foreground">Tags <span className="text-muted-foreground">(optional)</span></label>
