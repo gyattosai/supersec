@@ -9,6 +9,7 @@ import { subjectsRouter } from "./routers/subjects";
 import { attendanceRouter } from "./routers/attendance";
 import { contentRouter } from "./routers/content";
 import { reportsRouter } from "./routers/reports";
+import { attendanceProofRouter } from "./routers/attendanceProof";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import { isSupportedPublicUploadMimeType, MAX_PUBLIC_UPLOAD_BYTES } from "@shared/mediaPolicy";
@@ -104,6 +105,7 @@ export const appRouter = router({
   }),
   subjects: subjectsRouter,
   attendance: attendanceRouter,
+  attendanceProof: attendanceProofRouter,
   content: contentRouter,
   reports: reportsRouter,
 });

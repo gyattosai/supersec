@@ -175,6 +175,30 @@ export const attendanceRecords = mysqlTable(
   ],
 );
 
+/** Anonymous classmates can submit a Zoom screenshot to correct a missed published Attendance entry. Proof files and AI review details stay private. */
+export const attendanceProofSubmissions = mysqlTable(
+  "attendanceProofSubmissions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    classSessionId: int("classSessionId").notNull().references(() => classSessions.id, { onDelete: "cascade" }),
+    submittedName: varchar("submittedName", { length: 255 }).notNull(),
+    proofStorageKey: varchar("proofStorageKey", { length: 512 }).notNull(),
+    proofUrl: varchar("proofUrl", { length: 768 }).notNull(),
+    proofOriginalName: varchar("proofOriginalName", { length: 255 }).notNull(),
+    proofMimeType: varchar("proofMimeType", { length: 128 }).notNull(),
+    proofByteSize: int("proofByteSize").notNull(),
+    reviewState: mysqlEnum("reviewState", ["accepted", "needs_review", "rejected"]).default("needs_review").notNull(),
+    matchedSubjectStudentId: int("matchedSubjectStudentId").references(() => subjectStudents.id, { onDelete: "set null" }),
+    reviewSummary: varchar("reviewSummary", { length: 500 }),
+    reviewedAt: timestamp("reviewedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("attendance_proof_session_state_idx").on(table.classSessionId, table.reviewState, table.createdAt),
+    index("attendance_proof_student_idx").on(table.matchedSubjectStudentId),
+  ],
+);
+
 /** File bytes are stored in managed object storage; this table keeps safe metadata and references only. */
 export const mediaAssets = mysqlTable(
   "mediaAssets",
@@ -334,6 +358,7 @@ export type Subject = typeof subjects.$inferSelect;
 export type Student = typeof students.$inferSelect;
 export type ClassSession = typeof classSessions.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
+export type AttendanceProofSubmission = typeof attendanceProofSubmissions.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type ResourceAttachment = typeof resourceAttachments.$inferSelect;

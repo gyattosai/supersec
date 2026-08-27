@@ -5,6 +5,7 @@ import NotFound from "@/pages/NotFound";
 import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, PublicReportPage, PublicSubjectPage, PublicSubjectQuestionsPage } from "@/pages/PublicPages";
 import { PremiumPublicSubjectHome } from "@/pages/PremiumPublicSubjectHome";
 import { PremiumPublicResourcePage } from "@/pages/PremiumPublicResourcePage";
+import { AttendanceProofPage } from "@/pages/AttendanceProofPage";
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";
 import SubjectsPage from "@/pages/SubjectsPage";
 import { SubjectCreatePage, SubjectDetailsPage, SubjectSharingPage } from "@/pages/SubjectPages";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/a/:publicId" component={PublicAnnouncementPage} />
       <Route path="/r/:publicId" component={PremiumPublicResourcePage} />
       <Route path="/q/:publicId" component={PublicQuestionPage} />
+      <Route path="/attendance/:publicId/proof" component={AttendanceProofPage} />
       <Route path="/attendance/:publicId" component={PublicAttendancePage} />
       <Route path="/reports/:publicId" component={PublicReportPage} />
       <Route path="/404" component={NotFound} />

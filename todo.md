@@ -41,3 +41,11 @@
 ## Visual refinement
 
 - [x] Add restrained, accessible gradient effects to the dark and soft-white product surfaces without weakening tropical-orange actions or text contrast.
+
+## Attendance proof submissions
+
+- [x] Add an easy-to-find public page for classmates to submit a Zoom attendance proof when their name is missing from a class session.
+- [x] Store attendance-proof uploads safely, run an AI-assisted identity and session review, and update only the matching published attendance record when evidence is sufficient.
+- [x] Show a clear public submission outcome without exposing the roster, private notes, raw Zoom data, or secretary controls.
+- [x] Not run: a real classmate Zoom screenshot and live AI acceptance/update were not fabricated; the public route, upload control, privacy notice, decision safeguards, and unclear-proof fallback were verified instead.
+- [x] Verify that uncertain AI proof decisions persist as private secretary-review submissions without entering the automatic Attendance update path.

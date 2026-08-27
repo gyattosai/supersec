@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { attendanceWorkspacePath } from "@/lib/attendanceWorkspace";
 import { trpc } from "@/lib/trpc";
 import { sortAttendance, type AttendanceSortMode } from "@shared/attendanceSorting";
-import { ArrowLeft, ChartNoAxesCombined, Check, ClipboardPaste, Copy, ExternalLink, Sparkles, Upload } from "lucide-react";
+import { ArrowLeft, BadgeCheck, ChartNoAxesCombined, Check, ClipboardPaste, Copy, ExternalLink, Sparkles, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useRoute } from "wouter";
@@ -32,6 +32,7 @@ export default function AttendancePage() {
   const [excuseDrafts, setExcuseDrafts] = useState<Record<number, string>>({});
   const [captureAt, setCaptureAt] = useState(() => localDateTimeValue());
   const suggestions = trpc.attendance.suggestionsForSession.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
+  const proofSubmissions = trpc.attendanceProof.listForSession.useQuery({ sessionId }, { enabled: Number.isFinite(sessionId) && sessionId > 0 });
 
   const importNames = trpc.attendance.importZoomNames.useMutation({
     onSuccess: output => {
@@ -65,6 +66,14 @@ export default function AttendancePage() {
       utils.attendance.list.invalidate({ sessionId });
       utils.attendance.session.invalidate({ sessionId });
       toast.success(`Attendance published as version ${output.version}`);
+    },
+    onError: error => toast.error(error.message),
+  });
+  const resolveProof = trpc.attendanceProof.resolve.useMutation({
+    onSuccess: output => {
+      utils.attendanceProof.listForSession.invalidate({ sessionId });
+      utils.attendance.list.invalidate({ sessionId });
+      toast.success(output.outcome === "updated" ? "Attendance proof accepted and marked Present" : output.outcome === "already_present" ? "Student was already marked Present" : "Proof reviewed");
     },
     onError: error => toast.error(error.message),
   });
@@ -154,6 +163,8 @@ export default function AttendancePage() {
               </div>
             ) : null}
           </section>
+
+          {session.data?.publishState === "published" ? <section className="signal-panel p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><BadgeCheck className="size-5" /></span><div><p className="signal-kicker">Attendance proofs</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Classmate submissions</h2></div></div><Badge variant="secondary" className="rounded-full">{proofSubmissions.data?.length ?? 0} received</Badge></div><p className="mt-3 text-sm text-muted-foreground">Clear Zoom screenshots update Attendance automatically. Review only the submissions that need help.</p><div className="mt-5 space-y-3">{proofSubmissions.data?.map(proof => <div key={proof.id} className="signal-inset p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{proof.submittedName}</p><RecordStatusBadge tone={proof.reviewState === "accepted" ? "confirmed" : proof.reviewState === "rejected" ? "attention" : "private"}>{proof.reviewState === "accepted" ? "Accepted" : proof.reviewState === "rejected" ? "Reviewed" : "Needs review"}</RecordStatusBadge></div><p className="mt-1 text-xs text-muted-foreground">{proof.proofOriginalName} · {new Date(proof.createdAt).toLocaleString()}</p>{proof.reviewSummary ? <p className="mt-2 text-sm text-muted-foreground">{proof.reviewSummary}</p> : null}{proof.matchedName ? <p className="mt-2 text-xs font-semibold text-foreground">Matched Student: {proof.matchedName}</p> : null}</div><a href={proof.proofUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card px-3 text-sm font-semibold text-primary hover:bg-secondary">View proof</a></div>{proof.reviewState === "needs_review" ? <div className="mt-4 flex flex-col gap-2 sm:flex-row"><select aria-label={`Student for ${proof.submittedName}'s proof`} defaultValue={proof.matchedSubjectStudentId ? String(proof.matchedSubjectStudentId) : ""} onChange={event => { const value = event.target.value; if (value) resolveProof.mutate({ proofId: proof.id, decision: "accepted", membershipId: Number(value) }); }} className="min-h-11 min-w-0 flex-1 rounded-xl border border-input bg-card px-3 text-sm text-foreground"><option value="">Mark Present for Student…</option>{records.data?.map(record => <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>)}</select><Button variant="outline" className="min-h-11" disabled={resolveProof.isPending} onClick={() => resolveProof.mutate({ proofId: proof.id, decision: "rejected" })}>Mark reviewed</Button></div> : null}</div>)}{!proofSubmissions.isLoading && !proofSubmissions.data?.length ? <div className="signal-inset p-4 text-sm text-muted-foreground">No classmate proof submissions yet.</div> : null}</div></section> : null}
 
           <section className="signal-panel p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">Student status</h2><p className="mt-1 text-xs text-muted-foreground">Add a private reason for Excused.</p></div><Badge variant="secondary" className="rounded-full">{records.data?.length ?? 0} Students</Badge></div>
