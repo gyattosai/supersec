@@ -44,4 +44,13 @@ describe("supersec primary action tokens", () => {
     expect(css).toContain("radial-gradient");
     expect(css).toContain("linear-gradient");
   });
+
+  it("keeps shared card hover feedback stable and limited to precise hover devices", () => {
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+
+    expect(css).toContain("@media (hover: hover) and (pointer: fine)");
+    expect(css).toContain(".signal-card-shell:has(.signal-card-interactive:hover)");
+    expect(css).toContain(".signal-card-interactive:hover { background-color:");
+    expect(css).not.toContain(".signal-card-interactive:hover { transform:");
+  });
 });

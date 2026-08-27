@@ -49,3 +49,8 @@
 - [x] Show a clear public submission outcome without exposing the roster, private notes, raw Zoom data, or secretary controls.
 - [x] Not run: a real classmate Zoom screenshot and live AI acceptance/update were not fabricated; the public route, upload control, privacy notice, decision safeguards, and unclear-proof fallback were verified instead.
 - [x] Verify that uncertain AI proof decisions persist as private secretary-review submissions without entering the automatic Attendance update path.
+
+## Card-system refinement
+
+- [x] Refine Subject-home and shared record-card surfaces to remove awkward layered treatment while retaining clear card hierarchy.
+- [x] Replace unstable hover effects with deliberate desktop-only card feedback and touch-safe active states across private and shared pages.
