@@ -64,6 +64,4 @@ function RecordList({ icon: Icon, eyebrow, title, items, hrefPrefix, empty, allH
 
 function EmptySurface({ label }: { label: string }) { return <div className="signal-inset mt-4 px-4 py-4 text-sm text-muted-foreground">{label}</div>; }
 
-function PublicFrame({ children, subject }: { children: React.ReactNode; subject?: ViewOnlySubject }) {
-  return <main className="signal-canvas min-h-screen px-5 py-5 text-foreground sm:px-8 sm:py-9"><div className="mx-auto max-w-5xl"><ViewOnlyHeader subject={subject} /><div className="pb-8">{children}</div><footer className="mt-2 text-center text-xs text-muted-foreground">Shared class page</footer></div></main>;
-}
+function PublicFrame({ children, subject }: { children: React.ReactNode; subject?: ViewOnlySubject }) { return <main className="signal-canvas min-h-screen px-5 py-5 text-foreground sm:px-8 sm:py-9"><div className="mx-auto max-w-5xl"><ViewOnlyHeader subject={subject} /><div className="pb-8">{children}</div></div></main>; }

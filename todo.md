@@ -72,3 +72,7 @@
 ## View-only copy cleanup
 
 - [x] Remove the redundant “Class updates” and “See what is shared.” heading from the view-only Subject home.
+
+## Cross-page copy cleanup
+
+- [x] Audit high-traffic private and view-only pages for repeated headings, duplicate helper text, and redundant framing; remove only copy that does not add task guidance.

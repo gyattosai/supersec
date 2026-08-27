@@ -20,7 +20,7 @@ describe("shared reader frame", () => {
     const markup = renderToStaticMarkup(tree);
 
     expect(markup).toContain("VIEW ONLY");
-    expect(markup).toContain("Shared class page");
+    expect(markup).not.toContain("Shared class page");
     expect(markup).not.toContain("Secretary workspace");
   });
 });
