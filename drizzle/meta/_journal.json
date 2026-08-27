@@ -57,6 +57,13 @@
       "when": 1787732773293,
       "tag": "0007_perpetual_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1787823235033,
+      "tag": "0008_misty_charles_xavier",
+      "breakpoints": true
     }
   ]
 }

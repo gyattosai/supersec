@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
-import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, PublicReportPage, PublicResourcePage, PublicSubjectPage, PublicSubjectQuestionsPage } from "@/pages/PublicPages";
+import { PublicAnnouncementPage, PublicAttendancePage, PublicQuestionPage, PublicReportPage, PublicSubjectPage, PublicSubjectQuestionsPage } from "@/pages/PublicPages";
 import { PremiumPublicSubjectHome } from "@/pages/PremiumPublicSubjectHome";
 import { PremiumPublicResourcePage } from "@/pages/PremiumPublicResourcePage";
 import { SecretaryDashboard, SecretarySettingsPage } from "@/pages/SecretaryPages";

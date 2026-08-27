@@ -246,6 +246,22 @@ export const resources = mysqlTable(
   ],
 );
 
+/** Ordered public-use files attached to a Resource, such as PDFs, documents, spreadsheets, slides, or supporting images. */
+export const resourceAttachments = mysqlTable(
+  "resourceAttachments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    resourceId: int("resourceId").notNull().references(() => resources.id, { onDelete: "cascade" }),
+    mediaAssetId: int("mediaAssetId").notNull().references(() => mediaAssets.id, { onDelete: "cascade" }),
+    displayOrder: int("displayOrder").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("resource_attachments_resource_media_unique").on(table.resourceId, table.mediaAssetId),
+    index("resource_attachments_resource_order_idx").on(table.resourceId, table.displayOrder),
+  ],
+);
+
 export const questionsAnswers = mysqlTable(
   "questionsAnswers",
   {
@@ -320,6 +336,7 @@ export type ClassSession = typeof classSessions.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
+export type ResourceAttachment = typeof resourceAttachments.$inferSelect;
 export type QuestionAnswer = typeof questionsAnswers.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type HistoryEntry = typeof historyEntries.$inferSelect;

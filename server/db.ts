@@ -8,6 +8,7 @@ import {
   InsertUser,
   mediaAssets,
   questionsAnswers,
+  resourceAttachments,
   reports,
   resources,
   subjectMeetingDays,
@@ -201,6 +202,7 @@ export type PublicContentPayload = {
   isOfficial?: boolean;
   media?: { url: string; altText: string | null } | null;
   socialPreviewMedia?: { url: string; altText: string | null } | null;
+  attachments?: Array<{ id: number; url: string; originalName: string; mimeType: string; byteSize: number; altText: string | null }>;
 };
 
 /** Selects only an explicitly published item and its published subject context. */
@@ -213,8 +215,11 @@ export async function getPublicContentItem(kind: PublicContentPayload["kind"], p
     const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
   }
   if (kind === "resource") {
-    const rows = await db.select({ publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
-    const row = rows[0]; return row ? { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
+    const rows = await db.select({ id: resources.id, publicId: resources.publicId, title: resources.title, body: resources.description, version: resources.version, publishedAt: resources.publishedAt, destinationUrl: resources.destinationUrl, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.publicId, publicId), eq(resources.publishState, "published"), publishedSubject)).limit(1);
+    const row = rows[0];
+    if (!row) return null;
+    const attachments = await db.select({ id: mediaAssets.id, url: mediaAssets.servedUrl, originalName: mediaAssets.originalName, mimeType: mediaAssets.mimeType, byteSize: mediaAssets.byteSize, altText: mediaAssets.altText }).from(resourceAttachments).innerJoin(mediaAssets, eq(resourceAttachments.mediaAssetId, mediaAssets.id)).where(and(eq(resourceAttachments.resourceId, row.id), eq(mediaAssets.publicUse, true))).orderBy(asc(resourceAttachments.displayOrder));
+    return { kind, publicId: row.publicId, title: row.title, body: row.body, version: row.version, publishedAt: row.publishedAt, destinationUrl: row.destinationUrl, category: row.category, resourceType: row.resourceType, sourceDomain: row.sourceDomain, media: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, attachments, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } };
   }
   const rows = await db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, body: questionsAnswers.answer, version: questionsAnswers.version, publishedAt: questionsAnswers.publishedAt, tagsText: questionsAnswers.tagsText, isOfficial: questionsAnswers.isOfficial, mediaUrl: mediaAssets.servedUrl, mediaAltText: mediaAssets.altText, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, professorName: subjects.professorName }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).leftJoin(mediaAssets, and(eq(questionsAnswers.socialPreviewMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(questionsAnswers.publicId, publicId), eq(questionsAnswers.publishState, "published"), publishedSubject)).limit(1);
   const row = rows[0]; return row ? { kind, publicId: row.publicId, title: `${row.isOfficial ? "Official" : "Unofficial"} answer — ${row.title}`, body: row.body, version: row.version, publishedAt: row.publishedAt, tagsText: row.tagsText, isOfficial: row.isOfficial, socialPreviewMedia: row.mediaUrl ? { url: row.mediaUrl, altText: row.mediaAltText } : null, subject: { publicId: row.subjectPublicId, name: row.subjectName, code: row.subjectCode, professorName: row.professorName } } : null;
