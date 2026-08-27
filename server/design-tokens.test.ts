@@ -22,6 +22,16 @@ describe("supersec primary action tokens", () => {
     expect(contrast("#c95000", "#ffffff")).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("uses a charcoal-grey dark surface ladder while retaining a light readable foreground", () => {
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+
+    expect(css).toContain("--background: #151619;");
+    expect(css).toContain("--card: #1c1e22;");
+    expect(css).toContain("--secondary: #24262b;");
+    expect(css).toContain("--foreground: #f1f1f0;");
+    expect(css).not.toContain("--background: #010102;");
+  });
+
   it("uses Manrope and Inter roles loaded from the Google font stylesheet", () => {
     const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
     const html = readFileSync(resolve(process.cwd(), "client/index.html"), "utf8");

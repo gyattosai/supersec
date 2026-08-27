@@ -60,3 +60,7 @@
 - [x] Add editable per-Subject short-mark and full-name fields for the view-only header identity.
 - [x] Render the configured section mark and full name across Subject-scoped view-only pages on first render while preserving safe fallback branding.
 - [x] Verify a configured `N001` / `OLCA113N001` identity on a full Subject home page and a related view-only page without modifying real class data.
+
+## Dark-grey theme refinement
+
+- [x] Deepen the dark-mode canvas and surface palette toward dark grey while preserving readable foreground text, tropical-orange contrast, and light mode.
