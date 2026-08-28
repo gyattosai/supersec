@@ -81,3 +81,16 @@
 
 - [x] Diagnose and fix the Subject-creation request that returns HTML instead of a valid JSON/tRPC response.
 - [x] Re-run the authenticated New Subject form after the managed-port change; verify its JSON response and clean up the temporary record without changing existing class data.
+
+## Time format refinement
+
+- [x] Replace military-time inputs and displayed class times with 12-hour AM/PM formatting across private and view-only Subject surfaces.
+- [x] Add or update time-format tests and validate the affected forms and readers.
+
+---
+
+### Remaining time-format evidence
+
+- [x] Validate the private Reports and Archive routes after the 12-hour conversion.
+- [x] Verify generated report-export timestamps use the 12-hour formatter.
+- [x] Validate Attendance proof submission timestamps or add focused coverage for that display.

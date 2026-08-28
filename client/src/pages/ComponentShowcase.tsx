@@ -84,6 +84,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Time12HourInput } from "@/components/TimeInputs";
 import { Input } from "@/components/ui/input";
 import {
   InputOTP,
@@ -482,7 +483,7 @@ export default function ComponentsShowcase() {
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {datePickerDate ? (
-                          format(datePickerDate, "PPP HH:mm", { locale: zhCN })
+                          format(datePickerDate, "PPP h:mm a", { locale: zhCN })
                         ) : (
                           <span>Select date and time</span>
                         )}
@@ -501,21 +502,15 @@ export default function ComponentsShowcase() {
                             Time
                           </Label>
                           <div className="flex gap-2">
-                            <Input
-                              type="time"
-                              value={
-                                datePickerDate
-                                  ? format(datePickerDate, "HH:mm")
-                                  : "00:00"
-                              }
-                              onChange={e => {
-                                const [hours, minutes] =
-                                  e.target.value.split(":");
-                                const newDate = datePickerDate
-                                  ? new Date(datePickerDate)
-                                  : new Date();
-                                newDate.setHours(parseInt(hours));
-                                newDate.setMinutes(parseInt(minutes));
+                            <Time12HourInput
+                              ariaLabel="Showcase time"
+                              value={datePickerDate ? format(datePickerDate, "HH:mm") : ""}
+                              onChange={value => {
+                                if (!value) return;
+                                const [hours, minutes] = value.split(":");
+                                const newDate = datePickerDate ? new Date(datePickerDate) : new Date();
+                                newDate.setHours(Number(hours));
+                                newDate.setMinutes(Number(minutes));
                                 setDatePickerDate(newDate);
                               }}
                             />
@@ -527,7 +522,7 @@ export default function ComponentsShowcase() {
                   {datePickerDate && (
                     <p className="text-sm text-muted-foreground">
                       Selected:{" "}
-                      {format(datePickerDate, "yyyy/MM/dd  HH:mm", {
+                      {format(datePickerDate, "yyyy/MM/dd h:mm a", {
                         locale: zhCN,
                       })}
                     </p>

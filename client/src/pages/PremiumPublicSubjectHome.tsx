@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { ViewOnlyHeader } from "@/components/ViewOnlyHeader";
+import { formatTimeRange12Hour } from "@/lib/time";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowRight,
@@ -26,7 +27,7 @@ export function PremiumPublicSubjectHome() {
 
   const { latest, ...subject } = query.data.subject;
   const schedule = subject.meetingDays.length
-    ? subject.meetingDays.map(day => `${dayNames[day.weekday]}${day.startTime ? ` · ${day.startTime}${day.endTime ? `–${day.endTime}` : ""}` : ""}`).join(" · ")
+    ? subject.meetingDays.map(day => `${dayNames[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ")
     : "Schedule pending";
 
   return <PublicFrame subject={subject}>

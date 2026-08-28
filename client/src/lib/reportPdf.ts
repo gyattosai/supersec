@@ -1,5 +1,7 @@
 import { classAttendancePdfFilename, compiledAttendancePdfFilename, subjectAttendancePdfFilename, type ClassAttendancePdfData, type SubjectAttendancePdfData } from "@shared/reportPdf";
 
+import { formatDateTime12Hour } from "@/lib/time";
+
 async function createPdf() {
   const [{ jsPDF }, autoTableModule] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   return { document: new jsPDF({ format: "a4", unit: "pt" }), autoTable: autoTableModule.default };
@@ -22,7 +24,8 @@ function drawHeader(document: Awaited<ReturnType<typeof createPdf>>["document"],
 }
 
 function summaryRows(data: { present: number; absent: number; excused: number; notSet: number }) { return [["Present", String(data.present)], ["Absent", String(data.absent)], ["Excused", String(data.excused)], ["Not set", String(data.notSet)]]; }
-function generatedAt() { return `Prepared ${new Date().toLocaleString()} · supersec`; }
+export function formatReportTimestamp(value: Date | string | number) { return formatDateTime12Hour(value); }
+function generatedAt() { return `Prepared ${formatReportTimestamp(new Date())} · supersec`; }
 function tableFinalY(document: Awaited<ReturnType<typeof createPdf>>["document"]) { return (document as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 136; }
 
 export async function downloadSubjectAttendancePdf(data: SubjectAttendancePdfData) {
@@ -48,7 +51,7 @@ export async function downloadCompiledAttendancePdf(subjects: SubjectAttendanceP
 export async function downloadClassAttendancePdf(data: ClassAttendancePdfData) {
   const { document, autoTable } = await createPdf();
   const sessionDate = new Date(data.startsAt);
-  drawHeader(document, "Private class attendance", data.subjectName, `${data.subjectCode} · ${Number.isNaN(sessionDate.getTime()) ? "Class session" : sessionDate.toLocaleString()} · ${generatedAt()}`);
+  drawHeader(document, "Private class attendance", data.subjectName, `${data.subjectCode} · ${Number.isNaN(sessionDate.getTime()) ? "Class session" : formatReportTimestamp(sessionDate)} · ${generatedAt()}`);
   autoTable(document, { startY: 136, head: [["Official status", "Total"]], body: summaryRows(data), theme: "grid", headStyles: { fillColor: [207, 90, 22], textColor: [22, 8, 4] }, styles: { fontSize: 10, cellPadding: 8 } });
   autoTable(document, { startY: tableFinalY(document) + 32, head: [["Student", "Official status"]], body: data.students.map(student => [student.canonicalName, student.status.replace("_", " ")]), theme: "striped", headStyles: { fillColor: [15, 16, 17], textColor: [255, 255, 255] }, styles: { fontSize: 9, cellPadding: 7 } });
   document.setTextColor(74, 80, 87);
