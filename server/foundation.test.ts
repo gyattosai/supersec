@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import { ENV } from "./_core/env";
+import { isWorkspaceOwner } from "./routers/guards";
 import type { TrpcContext } from "./_core/context";
 
 function contextFor(openId: string): TrpcContext {
@@ -38,6 +39,11 @@ describe("Milestone 2 foundation access", () => {
     await expect(caller.subjects.sessions.createNoClass({ subjectId: 1, startsAt: new Date(), reason: "Holiday" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.subjects.students.remove({ membershipId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.subjects.update({ subjectId: 1, name: "Research Methods", code: "RM 101", professorName: "Professor Name", termName: null, meetingDays: [{ weekday: 2, startTime: null, endTime: null }] })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("recognizes the configured owner after whitespace normalization and preserves admin access", () => {
+    expect(isWorkspaceOwner({ openId: ` ${ENV.ownerOpenId} ` })).toBe(true);
+    expect(isWorkspaceOwner({ openId: "different-open-id" })).toBe(false);
   });
 
   it("allows the project owner into the secretary context", async () => {

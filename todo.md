@@ -94,3 +94,9 @@
 - [x] Validate the private Reports and Archive routes after the 12-hour conversion.
 - [x] Verify generated report-export timestamps use the 12-hour formatter.
 - [x] Validate Attendance proof submission timestamps or add focused coverage for that display.
+
+## Published access and time-field refinement
+
+- [x] Fix the published-app authorization path so the class secretary/owner can manage the private workspace without weakening public view-only boundaries.
+- [x] Replace the unintuitive time dropdowns with an accessible native time field while preserving the stored HH:mm contract and 12-hour display formatting.
+- [ ] Add focused authorization and time-control tests, then validate the published/private routes responsively.

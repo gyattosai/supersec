@@ -55,8 +55,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
   });
 
-  values.role = user.role ?? (user.openId === ENV.ownerOpenId ? "admin" : "user");
-  updateSet.role = values.role;
+  const isConfiguredOwner = user.openId.trim() === ENV.ownerOpenId.trim() && ENV.ownerOpenId.trim().length > 0;
+  if (user.role !== undefined || isConfiguredOwner) {
+    values.role = user.role ?? "admin";
+    updateSet.role = values.role;
+  }
   values.lastSignedIn = user.lastSignedIn ?? new Date();
   updateSet.lastSignedIn = values.lastSignedIn;
 

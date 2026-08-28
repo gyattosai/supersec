@@ -1,14 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { formatTime12Hour, joinDateTimeLocal, splitDateTimeLocal } from "@/lib/time";
-
-const timeOptions = Array.from({ length: 24 * 60 }, (_, index) => {
-  const hour24 = Math.floor(index / 60);
-  const minute = index % 60;
-  const value = `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  return { value, label: formatTime12Hour(value) };
-});
-
-const selectClassName = "min-h-11 min-w-0 w-full rounded-xl border border-input bg-card px-2.5 text-sm text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/55";
+import { joinDateTimeLocal, splitDateTimeLocal } from "@/lib/time";
 
 type Time12HourInputProps = {
   value: string;
@@ -16,13 +7,15 @@ type Time12HourInputProps = {
   ariaLabel: string;
 };
 
+const timeInputClassName = "min-h-11 min-w-0 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/55";
+
+/**
+ * Uses the browser's native time control. The control presents the user's local
+ * 12-hour or 24-hour clock preference while keeping the HTML time value in the
+ * existing HH:mm format used by the database and server procedures.
+ */
 export function Time12HourInput({ value, onChange, ariaLabel }: Time12HourInputProps) {
-  return (
-    <select aria-label={ariaLabel} value={value || ""} onChange={event => onChange(event.target.value)} className={selectClassName}>
-      <option value="">Select time</option>
-      {timeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-    </select>
-  );
+  return <Input type="time" step={60} aria-label={ariaLabel} value={value || ""} onChange={event => onChange(event.target.value)} className={timeInputClassName} />;
 }
 
 type DateTime12HourInputProps = {

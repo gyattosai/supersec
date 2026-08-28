@@ -31,14 +31,17 @@ describe("12-hour time formatting", () => {
   it("renders the reusable controls with 12-hour options and a date-time group", () => {
     const timeMarkup = renderToStaticMarkup(createElement(Time12HourInput, { ariaLabel: "Start time", value: "23:59", onChange: () => undefined }));
     expect(timeMarkup).toContain('aria-label="Start time"');
+    expect(timeMarkup).toContain('type="time"');
+    expect(timeMarkup).toContain('step="60"');
     expect(timeMarkup).toContain('value="23:59"');
-    expect(timeMarkup).toContain("11:59 PM");
-    expect(timeMarkup).not.toContain(">23:59<");
+    expect(timeMarkup).not.toContain("<select");
 
     const dateTimeMarkup = renderToStaticMarkup(createElement(DateTime12HourInput, { id: "class-at", value: "2026-08-28T07:05", onChange: () => undefined, ariaLabel: "Class date and time" }));
     expect(dateTimeMarkup).toContain('role="group"');
     expect(dateTimeMarkup).toContain('type="date"');
-    expect(dateTimeMarkup).toContain("7:05 AM");
+    expect(dateTimeMarkup).toContain('type="time"');
+    expect(dateTimeMarkup).toContain('step="60"');
+    expect(dateTimeMarkup).toContain('value="07:05"');
 
     const proofMarkup = renderToStaticMarkup(createElement(AttendanceProofTimestamp, { createdAt: new Date("2026-01-15T12:30:00.000Z") }));
     expect(proofMarkup).toContain('dateTime="2026-01-15T12:30:00.000Z"');
