@@ -3,7 +3,7 @@
 <!-- Newest session blocks at top. Each session = exactly one ## section with ### per attempt. Cross-linked to errors.md / challenges.md. -->
 
 ## Session 2026-08-28 — Published secretary access and time field
-- **Summary:** The first normalized owner-identity correction passed local tests but the deployed published API continued to return 403; a redacted runtime diagnostic is being deployed to isolate the mismatch.
+- **Summary:** The first normalized owner-identity correction passed local tests but the deployed published API continued to return 403; explicit admin-role recovery and a safe role-backed owner path are now being deployed for revalidation.
 
 ### Normalize the published owner identity comparison
 - **Problem:** The authenticated published `subjects.list` request returned `FORBIDDEN` with `Only the class secretary can manage this workspace.` even though `auth.me` displayed the project owner account.
@@ -11,6 +11,13 @@
 - **Result:** did not work
 - **Evidence:** After checkpoint `53e946e6`, the published `/api/trpc/subjects.list?batch=1&input=%7B%7D` still returned 403. Local environment metadata matched the stored openId by hash, but the deployed runtime’s effective owner value remained unconfirmed.
 - **Follow-up:** Deploy the redacted runtime diagnostic and compare only presence, length, normalized equality, and role metadata.
+
+### Restore the exact owner’s persisted admin role and accept that trusted role
+- **Problem:** Published `auth.me` identified the exact project owner account but reported `role: "user"`, so the owner-scoped API continued to reject it.
+- **Attempt:** Promoted only the exact existing user row matching id 1, openId `GA3v6HRSc6RDqiKEy2i3SY`, Matthew Balubar, and the project email to `admin`; updated `isWorkspaceOwner` to accept the persisted `admin` role or the normalized configured owner identity. The update was non-destructive to Subjects and public data.
+- **Result:** database repair applied; published outcome pending
+- **Evidence:** The verification query returned the exact owner row with `role: "admin"`. Local authorization and time-control tests passed before this deployment.
+- **Follow-up:** Deploy this source/data repair, then verify `auth.me`, `subjects.list`, private Subject access, and public view-only access on the published domain.
 
 ### Add redacted runtime owner-guard diagnostics
 - **Problem:** The published owner mismatch could not be distinguished between a deployed secret/config mismatch and a different request identity.

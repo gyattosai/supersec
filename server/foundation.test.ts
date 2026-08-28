@@ -4,7 +4,7 @@ import { ENV } from "./_core/env";
 import { isWorkspaceOwner } from "./routers/guards";
 import type { TrpcContext } from "./_core/context";
 
-function contextFor(openId: string): TrpcContext {
+function contextFor(openId: string, role: "user" | "admin" = "admin"): TrpcContext {
   return {
     user: {
       id: 1,
@@ -12,7 +12,7 @@ function contextFor(openId: string): TrpcContext {
       name: "Class Secretary",
       email: "secretary@example.com",
       loginMethod: "manus",
-      role: "admin",
+      role,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
@@ -24,12 +24,12 @@ function contextFor(openId: string): TrpcContext {
 
 describe("Milestone 2 foundation access", () => {
   it("rejects a signed-in non-owner from secretary procedures", async () => {
-    const caller = appRouter.createCaller(contextFor("not-the-project-owner"));
+    const caller = appRouter.createCaller(contextFor("not-the-project-owner", "user"));
     await expect(caller.foundation.owner.getContext()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("rejects a signed-in non-owner from Attendance and report procedures", async () => {
-    const caller = appRouter.createCaller(contextFor("not-the-project-owner"));
+    const caller = appRouter.createCaller(contextFor("not-the-project-owner", "user"));
     await expect(caller.attendance.list({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.attendance.suggestionsForSession({ sessionId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.attendance.confirmSuggestion({ suggestionId: 1, membershipId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -42,8 +42,9 @@ describe("Milestone 2 foundation access", () => {
   });
 
   it("recognizes the configured owner after whitespace normalization and preserves admin access", () => {
-    expect(isWorkspaceOwner({ openId: ` ${ENV.ownerOpenId} ` })).toBe(true);
-    expect(isWorkspaceOwner({ openId: "different-open-id" })).toBe(false);
+    expect(isWorkspaceOwner({ openId: ` ${ENV.ownerOpenId} `, role: "user" })).toBe(true);
+    expect(isWorkspaceOwner({ openId: "different-open-id", role: "admin" })).toBe(true);
+    expect(isWorkspaceOwner({ openId: "different-open-id", role: "user" })).toBe(false);
   });
 
   it("allows the project owner into the secretary context", async () => {

@@ -3,9 +3,9 @@ import { ENV } from "../_core/env";
 import { protectedProcedure } from "../_core/trpc";
 
 /** The first release has one secretary: the Manus project owner. */
-export function isWorkspaceOwner(user: { openId: string }) {
+export function isWorkspaceOwner(user: { openId: string; role: "user" | "admin" }) {
   const configuredOwnerOpenId = ENV.ownerOpenId.trim();
-  return configuredOwnerOpenId.length > 0 && user.openId.trim() === configuredOwnerOpenId;
+  return user.role === "admin" || (configuredOwnerOpenId.length > 0 && user.openId.trim() === configuredOwnerOpenId);
 }
 
 export const ownerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
