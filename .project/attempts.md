@@ -2,6 +2,23 @@
 
 <!-- Newest session blocks at top. Each session = exactly one ## section with ### per attempt. Cross-linked to errors.md / challenges.md. -->
 
+## Session 2026-08-28 — Published secretary access and time field
+- **Summary:** The first normalized owner-identity correction passed local tests but the deployed published API continued to return 403; a redacted runtime diagnostic is being deployed to isolate the mismatch.
+
+### Normalize the published owner identity comparison
+- **Problem:** The authenticated published `subjects.list` request returned `FORBIDDEN` with `Only the class secretary can manage this workspace.` even though `auth.me` displayed the project owner account.
+- **Attempt:** Trimmed `OWNER_OPEN_ID` and the session openId in `server/routers/guards.ts`, preserved owner promotion in `server/db.ts`, and added focused owner/time tests.
+- **Result:** did not work
+- **Evidence:** After checkpoint `53e946e6`, the published `/api/trpc/subjects.list?batch=1&input=%7B%7D` still returned 403. Local environment metadata matched the stored openId by hash, but the deployed runtime’s effective owner value remained unconfirmed.
+- **Follow-up:** Deploy the redacted runtime diagnostic and compare only presence, length, normalized equality, and role metadata.
+
+### Add redacted runtime owner-guard diagnostics
+- **Problem:** The published owner mismatch could not be distinguished between a deployed secret/config mismatch and a different request identity.
+- **Attempt:** Added non-sensitive warning fields to `server/routers/guards.ts`: configured-owner presence/length, session openId length, normalized equality, and persisted role. No identity value is logged and public routes remain unchanged.
+- **Result:** worked locally; published outcome pending
+- **Evidence:** `server/foundation.test.ts` (7) and `server/time.format.test.ts` (4) passed; TypeScript and `git diff --check` passed. The diagnostic is ready for post-deployment runtime-log inspection.
+- **Follow-up:** Deploy, trigger one published `subjects.list` request, inspect runtime metadata, then apply the minimal root-cause fix.
+
 ## Session 2026-08-27 — Subject-creation JSON reliability closure
 - **Summary:** The strict managed-port listener correction completed an authenticated post-fix browser mutation, and the evidence records were reconciled after one stale-context patch mismatch.
 

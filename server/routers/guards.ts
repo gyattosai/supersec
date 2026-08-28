@@ -10,6 +10,13 @@ export function isWorkspaceOwner(user: { openId: string }) {
 
 export const ownerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   if (!isWorkspaceOwner(ctx.user)) {
+    console.warn("[Auth] Workspace owner guard rejected", {
+      configuredOwnerPresent: ENV.ownerOpenId.trim().length > 0,
+      configuredOwnerLength: ENV.ownerOpenId.trim().length,
+      sessionOpenIdLength: ctx.user.openId.trim().length,
+      normalizedOpenIdMatch: ctx.user.openId.trim() === ENV.ownerOpenId.trim(),
+      role: ctx.user.role,
+    });
     throw new TRPCError({ code: "FORBIDDEN", message: "Only the class secretary can manage this workspace." });
   }
   return next({ ctx: { ...ctx, user: ctx.user } });
