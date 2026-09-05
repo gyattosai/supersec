@@ -174,6 +174,66 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   const [modalTargetSubjectIds, setModalTargetSubjectIds] = useState<Array<number | string>>([]);
   const [modalPublishDirectly, setModalPublishDirectly] = useState(true);
 
+  const [notesCount, setNotesCount] = useState<number>(0);
+  const [snippetsCount, setSnippetsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updateCounts = () => {
+      try {
+        const savedNotes = localStorage.getItem("supersec_secretary_notes");
+        const parsedNotes: SecretaryNote[] = savedNotes ? JSON.parse(savedNotes) : INITIAL_SECRETARY_NOTES;
+        const matchingNotes = filterNotes(parsedNotes, {
+          subjectId: currentSubject ? currentSubject.id : subjectId,
+        }).filter(n => {
+          if (!currentSubject && !subjectId) return true;
+          const matchSubId = currentSubject ? String(currentSubject.id) : String(subjectId);
+          const matchCode = currentSubject ? currentSubject.code : String(subjectId);
+          if (n.subjectId && String(n.subjectId) === matchSubId) return true;
+          if (n.subjectCode && (n.subjectCode === matchCode || n.subjectCode === currentSubject?.publicId)) return true;
+          return false;
+        });
+        setNotesCount(matchingNotes.length);
+      } catch {
+        setNotesCount(0);
+      }
+
+      try {
+        const savedTemplates = localStorage.getItem("supersec_custom_message_templates");
+        const hiddenPresets = localStorage.getItem("supersec_hidden_preset_templates");
+        const custom: MessageTemplate[] = savedTemplates ? JSON.parse(savedTemplates) : [];
+        const hidden: string[] = hiddenPresets ? JSON.parse(hiddenPresets) : [];
+        const presets = DEFAULT_PRESET_TEMPLATES.filter(p => !hidden.includes(p.id));
+        const matchingSnippets = filterMessageTemplates([...presets, ...custom], {
+          subjectId: currentSubject ? currentSubject.id : subjectId,
+        });
+        setSnippetsCount(matchingSnippets.length);
+      } catch {
+        setSnippetsCount(0);
+      }
+    };
+
+    updateCounts();
+    window.addEventListener("supersec_notes_updated", updateCounts);
+    window.addEventListener("supersec_snippets_updated", updateCounts);
+    window.addEventListener("storage", updateCounts);
+    return () => {
+      window.removeEventListener("supersec_notes_updated", updateCounts);
+      window.removeEventListener("supersec_snippets_updated", updateCounts);
+      window.removeEventListener("storage", updateCounts);
+    };
+  }, [subjectId, currentSubject]);
+
+  const annoCount = announcements.data?.length ?? 0;
+  const resCount = resources.data?.length ?? 0;
+  const qaCount = questions.data?.length ?? 0;
+  const countByKind: Record<ContentKind, number> = {
+    announcements: annoCount,
+    resources: resCount,
+    questions: qaCount,
+    notes: notesCount,
+    snippets: snippetsCount,
+  };
+
   useEffect(() => {
     if (!isAuthoring || editing) return;
     setTitle(""); setBody(""); setCategory(""); setResourceType("External link"); setDestinationUrl(""); setQuestion(""); setAnswer(""); setTagsText(""); setIsOfficial(true); setChangeSummary(""); setMediaAssetId(null); setSocialPreviewMediaAssetId(null); setSocialAsset(null); setAttachmentAssets([]); setImageAltText(""); setPreviewOpen(false); setSelectedCrossPostSubjectIds([]);
@@ -699,73 +759,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   );
 
 
-  const ContentList = (props: LocalContentListProps) => (
-    <SignalContentList
-      {...props}
-      subjectCode={currentSubject?.code}
-      pendingAction={pendingContentAction ?? { type: "publish", id: -1 }}
-      onDelete={item => setItemToDelete({ id: item.id, title: kind === "questions" ? item.question : item.title })}
-    />
-  );
-  const [notesCount, setNotesCount] = useState<number>(0);
-  const [snippetsCount, setSnippetsCount] = useState<number>(0);
 
-  useEffect(() => {
-    const updateCounts = () => {
-      try {
-        const savedNotes = localStorage.getItem("supersec_secretary_notes");
-        const parsedNotes: SecretaryNote[] = savedNotes ? JSON.parse(savedNotes) : INITIAL_SECRETARY_NOTES;
-        const matchingNotes = filterNotes(parsedNotes, {
-          subjectId: currentSubject ? currentSubject.id : subjectId,
-        }).filter(n => {
-          if (!currentSubject && !subjectId) return true;
-          const matchSubId = currentSubject ? String(currentSubject.id) : String(subjectId);
-          const matchCode = currentSubject ? currentSubject.code : String(subjectId);
-          if (n.subjectId && String(n.subjectId) === matchSubId) return true;
-          if (n.subjectCode && (n.subjectCode === matchCode || n.subjectCode === currentSubject?.publicId)) return true;
-          return false;
-        });
-        setNotesCount(matchingNotes.length);
-      } catch {
-        setNotesCount(0);
-      }
-
-      try {
-        const savedTemplates = localStorage.getItem("supersec_custom_message_templates");
-        const hiddenPresets = localStorage.getItem("supersec_hidden_preset_templates");
-        const custom: MessageTemplate[] = savedTemplates ? JSON.parse(savedTemplates) : [];
-        const hidden: string[] = hiddenPresets ? JSON.parse(hiddenPresets) : [];
-        const presets = DEFAULT_PRESET_TEMPLATES.filter(p => !hidden.includes(p.id));
-        const matchingSnippets = filterMessageTemplates([...presets, ...custom], {
-          subjectId: currentSubject ? currentSubject.id : subjectId,
-        });
-        setSnippetsCount(matchingSnippets.length);
-      } catch {
-        setSnippetsCount(0);
-      }
-    };
-
-    updateCounts();
-    window.addEventListener("supersec_notes_updated", updateCounts);
-    window.addEventListener("supersec_snippets_updated", updateCounts);
-    window.addEventListener("storage", updateCounts);
-    return () => {
-      window.removeEventListener("supersec_notes_updated", updateCounts);
-      window.removeEventListener("supersec_snippets_updated", updateCounts);
-      window.removeEventListener("storage", updateCounts);
-    };
-  }, [subjectId, currentSubject]);
-
-  const annoCount = announcements.data?.length ?? 0;
-  const resCount = resources.data?.length ?? 0;
-  const qaCount = questions.data?.length ?? 0;
-  const countByKind: Record<ContentKind, number> = {
-    announcements: annoCount,
-    resources: resCount,
-    questions: qaCount,
-    notes: notesCount,
-    snippets: snippetsCount,
-  };
 
   return (
     <DashboardLayout>
@@ -864,9 +858,12 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             ) : kind === "snippets" ? (
               <MessageTemplatesCard initialSubjectId={subjectId} embedded />
             ) : (
-              <ContentList
+              <SignalContentList
                 kind={kind}
                 subjectId={subjectId}
+                subjectCode={currentSubject?.code}
+                pendingAction={pendingContentAction ?? { type: "publish", id: -1 }}
+                onDelete={item => setItemToDelete({ id: item.id, title: kind === "questions" ? item.question : item.title })}
                 items={
                   kind === "announcements"
                     ? announcements.data

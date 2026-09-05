@@ -2385,6 +2385,8 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     const doc: any = await resolveContentDoc("questionsAnswers", id);
     if (doc) {
       await appwriteDatabases.deleteDocument(DB_ID, "questionsAnswers", doc.$id);
+    } else {
+      await appwriteDatabases.deleteDocument(DB_ID, "questionsAnswers", id).catch(() => null);
     }
     return { success: true };
   }
