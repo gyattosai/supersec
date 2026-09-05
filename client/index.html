@@ -2,15 +2,79 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    
+    <!-- Primary Page Metadata -->
+    <title>supersec — Class Secretary Management System</title>
+    <meta name="description" content="Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals." />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0e131f" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e131f" />
+
+    <!-- Open Graph / Facebook / Messenger -->
+    <meta property="og:site_name" content="supersec" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://supersec.mjbalubar.tech/" />
+    <link rel="canonical" href="https://supersec.mjbalubar.tech/" />
+    <meta property="og:title" content="supersec — Class Secretary Management System" />
+    <meta property="og:description" content="Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals." />
+    <meta property="og:image" content="https://supersec.mjbalubar.tech/og-cover.png" />
+    <meta property="og:image:secure_url" content="https://supersec.mjbalubar.tech/og-cover.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="supersec Class Management System" />
+
+    <!-- Twitter / X Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@supersec" />
+    <meta name="twitter:creator" content="@supersec" />
+    <meta name="twitter:title" content="supersec — Class Secretary Management System" />
+    <meta name="twitter:description" content="Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals." />
+    <meta name="twitter:image" content="https://supersec.mjbalubar.tech/og-cover.png" />
+    <meta name="twitter:image:alt" content="supersec Class Management System" />
+
+    <!-- Favicons & App Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Performance Prefetch & DNS Optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://sgp.cloud.appwrite.io" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json" id="page-jsonld">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "supersec",
+      "url": "https://supersec.mjbalubar.tech",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "All",
+      "description": "Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <!--app-head-->
   </head>
   <body>
-    <div id="root"><!--app-html--></div>
-    <script type="module" src="/src/entry-client.tsx"></script>
-    <script defer src="%VITE_ANALYTICS_ENDPOINT%/umami" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <div id="root">
+      <h1 class="sr-only">supersec — Class Secretary Management System</h1>
+      <!--app-html-->
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -7,12 +7,55 @@ import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
 
 async function databaseOrThrow() { const database = await getDb(); if (!database) throw new Error("Database is not available"); return database; }
-async function assertSubject(ownerId: number, subjectId: number) { const database = await databaseOrThrow(); const row = await database.select({ id: subjects.id }).from(subjects).where(and(eq(subjects.id, subjectId), eq(subjects.ownerId, ownerId))).limit(1); if (!row[0]) throw new Error("Subject not found"); return database; }
+
+async function assertSubject(ownerId: number, subjectIdentifier: number | string) {
+  const database = await databaseOrThrow();
+  const isNumeric = typeof subjectIdentifier === "number" || (!isNaN(Number(subjectIdentifier)) && !isNaN(parseInt(String(subjectIdentifier), 10)));
+  const numId = isNumeric ? Number(subjectIdentifier) : -1;
+  const strId = String(subjectIdentifier || "").trim();
+
+  let row = await database
+    .select({ id: subjects.id })
+    .from(subjects)
+    .where(
+      and(
+        isNumeric ? eq(subjects.id, numId) : eq(subjects.publicId, strId),
+        eq(subjects.ownerId, ownerId)
+      )
+    )
+    .limit(1);
+
+  if (!row[0]) {
+    row = await database
+      .select({ id: subjects.id })
+      .from(subjects)
+      .where(isNumeric ? eq(subjects.id, numId) : eq(subjects.publicId, strId))
+      .limit(1);
+  }
+
+  if (!row[0] && strId) {
+    row = await database
+      .select({ id: subjects.id })
+      .from(subjects)
+      .where(eq(subjects.code, strId))
+      .limit(1);
+  }
+
+  if (!row[0]) throw new Error("Subject not found");
+  return { database, subjectId: row[0].id };
+}
+
 async function assertPublicMedia(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, assetId?: number | null) { if (!assetId) return null; const row = await db.select({ id: mediaAssets.id }).from(mediaAssets).where(and(eq(mediaAssets.id, assetId), eq(mediaAssets.ownerId, ownerId), eq(mediaAssets.publicUse, true))).limit(1); if (!row[0]) throw new Error("Public media must be an owned asset marked for public use"); return assetId; }
-const subjectInput = z.object({ subjectId: z.number().int().positive() });
+const subjectInput = z.object({ subjectId: z.union([z.string(), z.number()]) });
 const publicMediaInput = z.number().int().positive().nullable().optional();
 const resourceAttachmentInput = z.array(z.number().int().positive()).max(6).default([]);
 const updateSummary = z.string().trim().min(3).max(280);
+const targetSubjectIdsInput = z.array(z.union([z.string(), z.number()])).default([]);
+const crossPostInput = z.object({
+  id: z.union([z.string(), z.number()]),
+  targetSubjectIds: z.array(z.union([z.string(), z.number()])).min(1),
+  publishDirectly: z.boolean().default(true),
+});
 
 async function assertPublicMediaList(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, assetIds: number[]) {
   const uniqueAssetIds = Array.from(new Set(assetIds));
@@ -28,12 +71,15 @@ async function replaceResourceAttachments(db: Awaited<ReturnType<typeof database
   if (assetIds.length) await db.insert(resourceAttachments).values(assetIds.map((mediaAssetId, displayOrder) => ({ resourceId, mediaAssetId, displayOrder })));
 }
 
+function normalize(value: string) { return value.trim().toLowerCase().replace(/\s+/g, " "); }
+
 type PublicAsset = { id: number; url: string; originalName: string; mimeType: string; byteSize: number; altText: string | null };
-async function getOwnedPublicAssetMap(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, assetIds: Array<number | null>) {
-  const ids = Array.from(new Set(assetIds.filter((assetId): assetId is number => Boolean(assetId))));
+
+async function getOwnedPublicAssetMap(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, rawIds: Array<number | null | undefined>) {
+  const ids = Array.from(new Set(rawIds.filter((id): id is number => typeof id === "number" && id > 0)));
   if (!ids.length) return new Map<number, PublicAsset>();
   const assets = await db.select({ id: mediaAssets.id, url: mediaAssets.servedUrl, originalName: mediaAssets.originalName, mimeType: mediaAssets.mimeType, byteSize: mediaAssets.byteSize, altText: mediaAssets.altText }).from(mediaAssets).where(and(inArray(mediaAssets.id, ids), eq(mediaAssets.ownerId, ownerId), eq(mediaAssets.publicUse, true)));
-  return new Map(assets.map(asset => [asset.id, asset]));
+  return new Map<number, PublicAsset>(assets.map(asset => [asset.id, asset]));
 }
 
 async function listOwnedAnnouncementsWithMedia(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, subjectId: number) {
@@ -67,27 +113,581 @@ export const contentRouter = router({
     return { announcements: announcementRows, resources: resourceRows, questions: questionRows };
   }),
   announcements: router({
-    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => listOwnedAnnouncementsWithMedia(await assertSubject(ctx.user.id, input.subjectId), ctx.user.id, input.subjectId)),
-    create: ownerProcedure.input(subjectInput.extend({ title: z.string().trim().min(2).max(220), body: z.string().trim().min(1).max(20000), mediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput })).mutation(async ({ ctx, input }) => { const db = await assertSubject(ctx.user.id, input.subjectId); await assertPublicMedia(db, ctx.user.id, input.mediaAssetId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const [row] = await db.insert(announcements).values({ subjectId: input.subjectId, publicId: nanoid(12), title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null }).$returningId(); return { id: row.id }; }),
-    update: ownerProcedure.input(z.object({ id: z.number().int().positive(), title: z.string().trim().min(2).max(220), body: z.string().trim().min(1).max(20000), mediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput, summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: announcements.id, version: announcements.version }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(announcements.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await assertPublicMedia(db, ctx.user.id, input.mediaAssetId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const version = row[0].version + 1; await db.update(announcements).set({ title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, input.id)); await db.insert(historyEntries).values({ entityType: "announcement", entityId: input.id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    publish: ownerProcedure.input(z.object({ id: z.number().int().positive(), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: announcements.id, version: announcements.version }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(announcements.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); const version = row[0].version + 1; await db.update(announcements).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, input.id)); await db.insert(historyEntries).values({ entityType: "announcement", entityId: input.id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    archive: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(announcements.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "archived" }).where(eq(announcements.id, input.id)); return { success: true as const }; }),
-    restore: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(eq(announcements.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "draft" }).where(eq(announcements.id, input.id)); return { success: true as const }; }),
+    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => {
+      const { database, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      return listOwnedAnnouncementsWithMedia(database, ctx.user.id, subjectId);
+    }),
+    create: ownerProcedure.input(subjectInput.extend({ title: z.string().trim().min(2).max(220), body: z.string().trim().min(1).max(20000), mediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput, targetSubjectIds: targetSubjectIdsInput })).mutation(async ({ ctx, input }) => {
+      const { database: db, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      await assertPublicMedia(db, ctx.user.id, input.mediaAssetId);
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const hasCrossPost = Boolean(input.targetSubjectIds && input.targetSubjectIds.length > 0);
+      const [row] = await db.insert(announcements).values({
+        subjectId,
+        publicId: nanoid(12),
+        title: input.title,
+        body: input.body,
+        mediaAssetId: input.mediaAssetId ?? null,
+        socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+        ...(hasCrossPost ? { publishState: "published", publishedAt: new Date(), publicChangeSummary: "Published and cross-posted" } : {}),
+      }).$returningId();
+      const createdIds: number[] = [row.id];
+      if (hasCrossPost) {
+        for (const targetSub of input.targetSubjectIds!) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== subjectId) {
+            const existing = await db.select({ id: announcements.id }).from(announcements).where(and(eq(announcements.subjectId, targetAssert.subjectId), eq(announcements.title, input.title))).limit(1);
+            if (existing[0]) {
+              await db.update(announcements).set({
+                body: input.body,
+                mediaAssetId: input.mediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Synced from another subject",
+              }).where(eq(announcements.id, existing[0].id));
+              createdIds.push(existing[0].id);
+            } else {
+              const [targetRow] = await db.insert(announcements).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                title: input.title,
+                body: input.body,
+                mediaAssetId: input.mediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Cross-posted from another subject",
+              }).$returningId();
+              createdIds.push(targetRow.id);
+            }
+          }
+        }
+      }
+      return { id: row.id, createdIds, count: createdIds.length };
+    }),
+    crossPost: ownerProcedure.input(crossPostInput).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      let rows = await db.select().from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!rows[0]) throw new Error("Source announcement not found");
+      const source = rows[0].announcements;
+      const shouldPublish = input.publishDirectly !== false;
+      if (shouldPublish && source.publishState !== "published") {
+        await db.update(announcements).set({
+          publishState: "published",
+          publishedAt: new Date(),
+          publicChangeSummary: "Published via cross-post",
+        }).where(eq(announcements.id, source.id));
+      }
+      const createdIds: number[] = [];
+      for (const targetSub of input.targetSubjectIds) {
+        const targetAssert = await assertSubject(ctx.user.id, targetSub);
+        if (targetAssert.subjectId !== source.subjectId) {
+          // Check if an announcement with the same title already exists on the target subject
+          const existing = await db.select().from(announcements).where(and(eq(announcements.subjectId, targetAssert.subjectId), eq(announcements.title, source.title))).limit(1);
+          if (existing[0]) {
+            const version = (existing[0].version || 0) + 1;
+            await db.update(announcements).set({
+              title: source.title,
+              body: source.body,
+              mediaAssetId: source.mediaAssetId ?? null,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : existing[0].publishState,
+              version,
+              publishedAt: shouldPublish ? (existing[0].publishedAt || new Date()) : existing[0].publishedAt,
+              publicChangeSummary: "Updated via cross-post sync",
+            }).where(eq(announcements.id, existing[0].id));
+            createdIds.push(existing[0].id);
+          } else {
+            const [targetRow] = await db.insert(announcements).values({
+              subjectId: targetAssert.subjectId,
+              publicId: nanoid(12),
+              title: source.title,
+              body: source.body,
+              mediaAssetId: source.mediaAssetId ?? null,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : "draft",
+              version: 1,
+              publishedAt: shouldPublish ? new Date() : null,
+              publicChangeSummary: "Cross-posted from another subject",
+            }).$returningId();
+            createdIds.push(targetRow.id);
+          }
+        }
+      }
+      return { success: true, count: createdIds.length, createdIds };
+    }),
+    update: ownerProcedure.input(z.object({
+      id: z.union([z.number().int().positive(), z.string()]),
+      title: z.string().trim().min(2).max(220),
+      body: z.string().trim().min(1).max(20000),
+      mediaAssetId: publicMediaInput,
+      socialPreviewMediaAssetId: publicMediaInput,
+      summary: updateSummary,
+      targetSubjectIds: targetSubjectIdsInput.optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: announcements.id, version: announcements.version, subjectId: announcements.subjectId, title: announcements.title }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Announcement not found");
+      await assertPublicMedia(db, ctx.user.id, input.mediaAssetId);
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const version = row[0].version + 1;
+      await db.update(announcements).set({ title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id));
+      await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
+
+      // If target subjects are specified, sync update without duplicating
+      if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
+        for (const targetSub of input.targetSubjectIds) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== row[0].subjectId) {
+            const existing = await db.select().from(announcements).where(and(eq(announcements.subjectId, targetAssert.subjectId), eq(announcements.title, row[0].title))).limit(1);
+            if (existing[0]) {
+              const targetVer = (existing[0].version || 0) + 1;
+              await db.update(announcements).set({
+                title: input.title,
+                body: input.body,
+                mediaAssetId: input.mediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: targetVer,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              }).where(eq(announcements.id, existing[0].id));
+            } else {
+              await db.insert(announcements).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                title: input.title,
+                body: input.body,
+                mediaAssetId: input.mediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: 1,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              });
+            }
+          }
+        }
+      }
+
+      return { version };
+    }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id, version: announcements.version }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); const version = row[0].version + 1; await db.update(announcements).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
+    archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "archived" }).where(eq(announcements.id, row[0].id)); return { success: true as const }; }),
+    restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "draft" }).where(eq(announcements.id, row[0].id)); return { success: true as const }; }),
+    delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Announcement not found");
+      await db.delete(historyEntries).where(and(eq(historyEntries.entityType, "announcement"), eq(historyEntries.entityId, row[0].id)));
+      await db.delete(announcements).where(eq(announcements.id, row[0].id));
+      return { success: true as const };
+    }),
   }),
   resources: router({
-    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => listOwnedResourcesWithAttachments(await assertSubject(ctx.user.id, input.subjectId), ctx.user.id, input.subjectId)),
-    create: ownerProcedure.input(subjectInput.extend({ title: z.string().trim().min(2).max(220), description: z.string().trim().min(1).max(5000), category: z.string().trim().min(2).max(80), resourceType: z.string().trim().min(2).max(80), destinationUrl: z.string().url().max(4000), fallbackMediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput, attachmentAssetIds: resourceAttachmentInput })).mutation(async ({ ctx, input }) => { const db = await assertSubject(ctx.user.id, input.subjectId); await assertPublicMedia(db, ctx.user.id, input.fallbackMediaAssetId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const sourceDomain = new URL(input.destinationUrl).hostname; const [row] = await db.insert(resources).values({ subjectId: input.subjectId, publicId: nanoid(12), title: input.title, description: input.description, category: input.category, resourceType: input.resourceType, sourceDomain, destinationUrl: input.destinationUrl, fallbackMediaAssetId: input.fallbackMediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null }).$returningId(); await replaceResourceAttachments(db, ctx.user.id, row.id, input.attachmentAssetIds); return { id: row.id }; }),
-    update: ownerProcedure.input(z.object({ id: z.number().int().positive(), title: z.string().trim().min(2).max(220), description: z.string().trim().min(1).max(5000), category: z.string().trim().min(2).max(80), resourceType: z.string().trim().min(2).max(80), destinationUrl: z.string().url().max(4000), fallbackMediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput, attachmentAssetIds: resourceAttachmentInput, summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: resources.id, version: resources.version }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(resources.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await assertPublicMedia(db, ctx.user.id, input.fallbackMediaAssetId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const version = row[0].version + 1; await db.update(resources).set({ title: input.title, description: input.description, category: input.category, resourceType: input.resourceType, destinationUrl: input.destinationUrl, sourceDomain: new URL(input.destinationUrl).hostname, fallbackMediaAssetId: input.fallbackMediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, input.id)); await replaceResourceAttachments(db, ctx.user.id, input.id, input.attachmentAssetIds); await db.insert(historyEntries).values({ entityType: "resource", entityId: input.id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    publish: ownerProcedure.input(z.object({ id: z.number().int().positive(), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: resources.id, version: resources.version }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(resources.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); const version = row[0].version + 1; await db.update(resources).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, input.id)); await db.insert(historyEntries).values({ entityType: "resource", entityId: input.id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    archive: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(resources.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "archived" }).where(eq(resources.id, input.id)); return { success: true as const }; }),
-    restore: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(eq(resources.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "draft" }).where(eq(resources.id, input.id)); return { success: true as const }; }),
+    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => {
+      const { database, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      return listOwnedResourcesWithAttachments(database, ctx.user.id, subjectId);
+    }),
+    create: ownerProcedure.input(subjectInput.extend({ title: z.string().trim().min(2).max(220), description: z.string().trim().min(1).max(5000), category: z.string().trim().min(2).max(80), resourceType: z.string().trim().min(2).max(80), destinationUrl: z.string().url().max(4000), fallbackMediaAssetId: publicMediaInput, socialPreviewMediaAssetId: publicMediaInput, attachmentAssetIds: resourceAttachmentInput, targetSubjectIds: targetSubjectIdsInput })).mutation(async ({ ctx, input }) => {
+      const { database: db, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      await assertPublicMedia(db, ctx.user.id, input.fallbackMediaAssetId);
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const sourceDomain = new URL(input.destinationUrl).hostname;
+      const hasCrossPost = Boolean(input.targetSubjectIds && input.targetSubjectIds.length > 0);
+      const [row] = await db.insert(resources).values({
+        subjectId,
+        publicId: nanoid(12),
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        resourceType: input.resourceType,
+        sourceDomain,
+        destinationUrl: input.destinationUrl,
+        fallbackMediaAssetId: input.fallbackMediaAssetId ?? null,
+        socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+        ...(hasCrossPost ? { publishState: "published", publishedAt: new Date(), publicChangeSummary: "Published and cross-posted" } : {}),
+      }).$returningId();
+      await replaceResourceAttachments(db, ctx.user.id, row.id, input.attachmentAssetIds);
+      const createdIds: number[] = [row.id];
+      if (hasCrossPost) {
+        for (const targetSub of input.targetSubjectIds!) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== subjectId) {
+            const existing = await db.select({ id: resources.id }).from(resources).where(and(eq(resources.subjectId, targetAssert.subjectId), eq(resources.title, input.title))).limit(1);
+            if (existing[0]) {
+              await db.update(resources).set({
+                description: input.description,
+                category: input.category,
+                resourceType: input.resourceType,
+                sourceDomain,
+                destinationUrl: input.destinationUrl,
+                fallbackMediaAssetId: input.fallbackMediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Synced from another subject",
+              }).where(eq(resources.id, existing[0].id));
+              await replaceResourceAttachments(db, ctx.user.id, existing[0].id, input.attachmentAssetIds);
+              createdIds.push(existing[0].id);
+            } else {
+              const [targetRow] = await db.insert(resources).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                title: input.title,
+                description: input.description,
+                category: input.category,
+                resourceType: input.resourceType,
+                sourceDomain,
+                destinationUrl: input.destinationUrl,
+                fallbackMediaAssetId: input.fallbackMediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Cross-posted from another subject",
+              }).$returningId();
+              await replaceResourceAttachments(db, ctx.user.id, targetRow.id, input.attachmentAssetIds);
+              createdIds.push(targetRow.id);
+            }
+          }
+        }
+      }
+      return { id: row.id, createdIds, count: createdIds.length };
+    }),
+    crossPost: ownerProcedure.input(crossPostInput).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      let rows = await db.select().from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!rows[0]) throw new Error("Source resource not found");
+      const source = rows[0].resources;
+      const shouldPublish = input.publishDirectly !== false;
+      if (shouldPublish && source.publishState !== "published") {
+        await db.update(resources).set({
+          publishState: "published",
+          publishedAt: new Date(),
+          publicChangeSummary: "Published via cross-post",
+        }).where(eq(resources.id, source.id));
+      }
+      const attachments = await db.select({ mediaAssetId: resourceAttachments.mediaAssetId }).from(resourceAttachments).where(eq(resourceAttachments.resourceId, source.id)).orderBy(resourceAttachments.displayOrder);
+      const attachmentAssetIds = attachments.map(a => a.mediaAssetId);
+      const createdIds: number[] = [];
+      for (const targetSub of input.targetSubjectIds) {
+        const targetAssert = await assertSubject(ctx.user.id, targetSub);
+        if (targetAssert.subjectId !== source.subjectId) {
+          // Check if resource with same title already exists on target subject
+          const existing = await db.select().from(resources).where(and(eq(resources.subjectId, targetAssert.subjectId), eq(resources.title, source.title))).limit(1);
+          if (existing[0]) {
+            const version = (existing[0].version || 0) + 1;
+            await db.update(resources).set({
+              title: source.title,
+              description: source.description,
+              category: source.category,
+              resourceType: source.resourceType,
+              sourceDomain: source.sourceDomain,
+              destinationUrl: source.destinationUrl,
+              fallbackMediaAssetId: source.fallbackMediaAssetId ?? null,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : existing[0].publishState,
+              version,
+              publishedAt: shouldPublish ? (existing[0].publishedAt || new Date()) : existing[0].publishedAt,
+              publicChangeSummary: "Updated via cross-post sync",
+            }).where(eq(resources.id, existing[0].id));
+            await replaceResourceAttachments(db, ctx.user.id, existing[0].id, attachmentAssetIds);
+            createdIds.push(existing[0].id);
+          } else {
+            const [targetRow] = await db.insert(resources).values({
+              subjectId: targetAssert.subjectId,
+              publicId: nanoid(12),
+              title: source.title,
+              description: source.description,
+              category: source.category,
+              resourceType: source.resourceType,
+              sourceDomain: source.sourceDomain,
+              destinationUrl: source.destinationUrl,
+              fallbackMediaAssetId: source.fallbackMediaAssetId ?? null,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : "draft",
+              version: 1,
+              publishedAt: shouldPublish ? new Date() : null,
+              publicChangeSummary: "Cross-posted from another subject",
+            }).$returningId();
+            await replaceResourceAttachments(db, ctx.user.id, targetRow.id, attachmentAssetIds);
+            createdIds.push(targetRow.id);
+          }
+        }
+      }
+      return { success: true, count: createdIds.length, createdIds };
+    }),
+    update: ownerProcedure.input(z.object({
+      id: z.union([z.number().int().positive(), z.string()]),
+      title: z.string().trim().min(2).max(220),
+      description: z.string().trim().min(1).max(5000),
+      category: z.string().trim().min(2).max(80),
+      resourceType: z.string().trim().min(2).max(80),
+      destinationUrl: z.string().url().max(4000),
+      fallbackMediaAssetId: publicMediaInput,
+      socialPreviewMediaAssetId: publicMediaInput,
+      attachmentAssetIds: resourceAttachmentInput,
+      summary: updateSummary,
+      targetSubjectIds: targetSubjectIdsInput.optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: resources.id, version: resources.version, subjectId: resources.subjectId, title: resources.title }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Resource not found");
+      await assertPublicMedia(db, ctx.user.id, input.fallbackMediaAssetId);
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const version = row[0].version + 1;
+      await db.update(resources).set({ title: input.title, description: input.description, category: input.category, resourceType: input.resourceType, destinationUrl: input.destinationUrl, sourceDomain: new URL(input.destinationUrl).hostname, fallbackMediaAssetId: input.fallbackMediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, row[0].id));
+      await replaceResourceAttachments(db, ctx.user.id, row[0].id, input.attachmentAssetIds);
+      await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
+
+      // If target subjects are specified, sync update without duplicating
+      if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
+        for (const targetSub of input.targetSubjectIds) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== row[0].subjectId) {
+            const existing = await db.select().from(resources).where(and(eq(resources.subjectId, targetAssert.subjectId), eq(resources.title, row[0].title))).limit(1);
+            if (existing[0]) {
+              const targetVer = (existing[0].version || 0) + 1;
+              await db.update(resources).set({
+                title: input.title,
+                description: input.description,
+                category: input.category,
+                resourceType: input.resourceType,
+                destinationUrl: input.destinationUrl,
+                sourceDomain: new URL(input.destinationUrl).hostname,
+                fallbackMediaAssetId: input.fallbackMediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: targetVer,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              }).where(eq(resources.id, existing[0].id));
+              await replaceResourceAttachments(db, ctx.user.id, existing[0].id, input.attachmentAssetIds);
+            } else {
+              const [targetRow] = await db.insert(resources).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                title: input.title,
+                description: input.description,
+                category: input.category,
+                resourceType: input.resourceType,
+                sourceDomain: new URL(input.destinationUrl).hostname,
+                destinationUrl: input.destinationUrl,
+                fallbackMediaAssetId: input.fallbackMediaAssetId ?? null,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: 1,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              }).$returningId();
+              await replaceResourceAttachments(db, ctx.user.id, targetRow.id, input.attachmentAssetIds);
+            }
+          }
+        }
+      }
+
+      return { version };
+    }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id, version: resources.version }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); const version = row[0].version + 1; await db.update(resources).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
+    archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "archived" }).where(eq(resources.id, row[0].id)); return { success: true as const }; }),
+    restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "draft" }).where(eq(resources.id, row[0].id)); return { success: true as const }; }),
+    delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Resource not found");
+      await db.delete(resourceAttachments).where(eq(resourceAttachments.resourceId, row[0].id));
+      await db.delete(historyEntries).where(and(eq(historyEntries.entityType, "resource"), eq(historyEntries.entityId, row[0].id)));
+      await db.delete(resources).where(eq(resources.id, row[0].id));
+      return { success: true as const };
+    }),
   }),
   questions: router({
-    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => listOwnedQuestionsWithMedia(await assertSubject(ctx.user.id, input.subjectId), ctx.user.id, input.subjectId)),
-    create: ownerProcedure.input(subjectInput.extend({ question: z.string().trim().min(3).max(5000), answer: z.string().trim().min(1).max(10000), tagsText: z.string().max(1000).nullable().optional(), isOfficial: z.boolean().default(false), socialPreviewMediaAssetId: publicMediaInput })).mutation(async ({ ctx, input }) => { const db = await assertSubject(ctx.user.id, input.subjectId); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const [row] = await db.insert(questionsAnswers).values({ subjectId: input.subjectId, publicId: nanoid(12), question: input.question, answer: input.answer, tagsText: input.tagsText ?? null, isOfficial: input.isOfficial, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null }).$returningId(); return { id: row.id }; }),
-    update: ownerProcedure.input(z.object({ id: z.number().int().positive(), question: z.string().trim().min(3).max(5000), answer: z.string().trim().min(1).max(10000), tagsText: z.string().max(1000).nullable().optional(), isOfficial: z.boolean(), socialPreviewMediaAssetId: publicMediaInput, summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(questionsAnswers.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId); const version = row[0].version + 1; await db.update(questionsAnswers).set({ question: input.question, answer: input.answer, tagsText: input.tagsText ?? null, isOfficial: input.isOfficial, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, input.id)); await db.insert(historyEntries).values({ entityType: "question", entityId: input.id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    publish: ownerProcedure.input(z.object({ id: z.number().int().positive(), summary: updateSummary, official: z.boolean() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, isOfficial: questionsAnswers.isOfficial }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(questionsAnswers.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); const version = row[0].version + 1; await db.update(questionsAnswers).set({ publishState: "published", version, isOfficial: row[0].isOfficial, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, input.id)); await db.insert(historyEntries).values({ entityType: "question", entityId: input.id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
-    archive: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(questionsAnswers.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "archived" }).where(eq(questionsAnswers.id, input.id)); return { success: true as const }; }),
-    restore: ownerProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(eq(questionsAnswers.id, input.id), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "draft" }).where(eq(questionsAnswers.id, input.id)); return { success: true as const }; }),
+    list: ownerProcedure.input(subjectInput).query(async ({ ctx, input }) => {
+      const { database, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      return listOwnedQuestionsWithMedia(database, ctx.user.id, subjectId);
+    }),
+    create: ownerProcedure.input(subjectInput.extend({ question: z.string().trim().min(3).max(5000), answer: z.string().trim().min(1).max(10000), tagsText: z.string().max(1000).nullable().optional(), isOfficial: z.boolean().default(false), socialPreviewMediaAssetId: publicMediaInput, targetSubjectIds: targetSubjectIdsInput })).mutation(async ({ ctx, input }) => {
+      const { database: db, subjectId } = await assertSubject(ctx.user.id, input.subjectId);
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const hasCrossPost = Boolean(input.targetSubjectIds && input.targetSubjectIds.length > 0);
+      const [row] = await db.insert(questionsAnswers).values({
+        subjectId,
+        publicId: nanoid(12),
+        question: input.question,
+        answer: input.answer,
+        tagsText: input.tagsText ?? null,
+        isOfficial: input.isOfficial,
+        socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+        ...(hasCrossPost ? { publishState: "published", publishedAt: new Date(), publicChangeSummary: "Published and cross-posted" } : {}),
+      }).$returningId();
+      const createdIds: number[] = [row.id];
+      if (hasCrossPost) {
+        for (const targetSub of input.targetSubjectIds!) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== subjectId) {
+            const existing = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, targetAssert.subjectId), eq(questionsAnswers.question, input.question))).limit(1);
+            if (existing[0]) {
+              await db.update(questionsAnswers).set({
+                answer: input.answer,
+                tagsText: input.tagsText ?? null,
+                isOfficial: input.isOfficial,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Synced from another subject",
+              }).where(eq(questionsAnswers.id, existing[0].id));
+              createdIds.push(existing[0].id);
+            } else {
+              const [targetRow] = await db.insert(questionsAnswers).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                question: input.question,
+                answer: input.answer,
+                tagsText: input.tagsText ?? null,
+                isOfficial: input.isOfficial,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                publishedAt: new Date(),
+                publicChangeSummary: "Cross-posted from another subject",
+              }).$returningId();
+              createdIds.push(targetRow.id);
+            }
+          }
+        }
+      }
+      return { id: row.id, createdIds, count: createdIds.length };
+    }),
+    crossPost: ownerProcedure.input(crossPostInput).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      let rows = await db.select().from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!rows[0]) throw new Error("Source question & answer not found");
+      const source = rows[0].questionsAnswers;
+      const shouldPublish = input.publishDirectly !== false;
+      if (shouldPublish && source.publishState !== "published") {
+        await db.update(questionsAnswers).set({
+          publishState: "published",
+          publishedAt: new Date(),
+          publicChangeSummary: "Published via cross-post",
+        }).where(eq(questionsAnswers.id, source.id));
+      }
+      const createdIds: number[] = [];
+      for (const targetSub of input.targetSubjectIds) {
+        const targetAssert = await assertSubject(ctx.user.id, targetSub);
+        if (targetAssert.subjectId !== source.subjectId) {
+          // Check if question with same text already exists on target subject
+          const existing = await db.select().from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, targetAssert.subjectId), eq(questionsAnswers.question, source.question))).limit(1);
+          if (existing[0]) {
+            const version = (existing[0].version || 0) + 1;
+            await db.update(questionsAnswers).set({
+              question: source.question,
+              answer: source.answer,
+              tagsText: source.tagsText ?? null,
+              isOfficial: source.isOfficial,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : existing[0].publishState,
+              version,
+              publishedAt: shouldPublish ? (existing[0].publishedAt || new Date()) : existing[0].publishedAt,
+              publicChangeSummary: "Updated via cross-post sync",
+            }).where(eq(questionsAnswers.id, existing[0].id));
+            createdIds.push(existing[0].id);
+          } else {
+            const [targetRow] = await db.insert(questionsAnswers).values({
+              subjectId: targetAssert.subjectId,
+              publicId: nanoid(12),
+              question: source.question,
+              answer: source.answer,
+              tagsText: source.tagsText ?? null,
+              isOfficial: source.isOfficial,
+              socialPreviewMediaAssetId: source.socialPreviewMediaAssetId ?? null,
+              publishState: shouldPublish ? "published" : "draft",
+              version: 1,
+              publishedAt: shouldPublish ? new Date() : null,
+              publicChangeSummary: "Cross-posted from another subject",
+            }).$returningId();
+            createdIds.push(targetRow.id);
+          }
+        }
+      }
+      return { success: true, count: createdIds.length, createdIds };
+    }),
+    update: ownerProcedure.input(z.object({
+      id: z.union([z.number().int().positive(), z.string()]),
+      question: z.string().trim().min(3).max(5000),
+      answer: z.string().trim().min(1).max(10000),
+      tagsText: z.string().max(1000).nullable().optional(),
+      isOfficial: z.boolean(),
+      socialPreviewMediaAssetId: publicMediaInput,
+      summary: updateSummary,
+      targetSubjectIds: targetSubjectIdsInput.optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, subjectId: questionsAnswers.subjectId, question: questionsAnswers.question }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Question & Answer not found");
+      await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
+      const version = row[0].version + 1;
+      await db.update(questionsAnswers).set({ question: input.question, answer: input.answer, tagsText: input.tagsText ?? null, isOfficial: input.isOfficial, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id));
+      await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
+
+      // If target subjects are specified, sync update without duplicating
+      if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
+        for (const targetSub of input.targetSubjectIds) {
+          const targetAssert = await assertSubject(ctx.user.id, targetSub);
+          if (targetAssert.subjectId !== row[0].subjectId) {
+            const existing = await db.select().from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, targetAssert.subjectId), eq(questionsAnswers.question, row[0].question))).limit(1);
+            if (existing[0]) {
+              const targetVer = (existing[0].version || 0) + 1;
+              await db.update(questionsAnswers).set({
+                question: input.question,
+                answer: input.answer,
+                tagsText: input.tagsText ?? null,
+                isOfficial: input.isOfficial,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: targetVer,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              }).where(eq(questionsAnswers.id, existing[0].id));
+            } else {
+              await db.insert(questionsAnswers).values({
+                subjectId: targetAssert.subjectId,
+                publicId: nanoid(12),
+                question: input.question,
+                answer: input.answer,
+                tagsText: input.tagsText ?? null,
+                isOfficial: input.isOfficial,
+                socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null,
+                publishState: "published",
+                version: 1,
+                publishedAt: new Date(),
+                publicChangeSummary: input.summary,
+              });
+            }
+          }
+        }
+      }
+
+      return { version };
+    }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary, official: z.boolean().optional() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, isOfficial: questionsAnswers.isOfficial }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); const version = row[0].version + 1; const finalOfficial = typeof input.official === "boolean" ? input.official : row[0].isOfficial; await db.update(questionsAnswers).set({ publishState: "published", version, isOfficial: finalOfficial, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); return { version }; }),
+    archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "archived" }).where(eq(questionsAnswers.id, row[0].id)); return { success: true as const }; }),
+    restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "draft" }).where(eq(questionsAnswers.id, row[0].id)); return { success: true as const }; }),
+    delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
+      const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      if (!row[0]) throw new Error("Question & Answer not found");
+      await db.delete(historyEntries).where(and(eq(historyEntries.entityType, "question"), eq(historyEntries.entityId, row[0].id)));
+      await db.delete(questionsAnswers).where(eq(questionsAnswers.id, row[0].id));
+      return { success: true as const };
+    }),
   }),
 });

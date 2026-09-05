@@ -1,0 +1,25 @@
+# Project Brief — supersec (2026-08-30)
+
+- **Objective:** Migrate supersec (class secretary management system) from Manus to Google Antigravity and Appwrite Cloud (Auth, Databases, Storage, and Appwrite Sites hosting).
+- **Success criteria:**
+  - Appwrite Cloud project `supersec` and database `supersec_db` configured with 14 collections.
+  - Sign in, registration, and 1-click secretary access working via Appwrite Account SDK.
+  - Full CRUD for subjects, meeting schedules, attendance records, students, and content functioning with Appwrite Databases.
+  - Zero `<!doctype html>` JSON parse errors on Appwrite Sites CDN edge deployment.
+  - 100% of Vitest test suites (23 test files, 66 tests) passing.
+- **Constraints:**
+  - "i prefer using Appwrite" — use Appwrite Cloud for hosting, auth, and database.
+  - "let's just use the default login with no Google OAuth flow" — no Google OAuth dependency.
+  - Static SPA hosting architecture on Appwrite Sites.
+- **Assumptions:**
+  - Region: Singapore (`sgp.cloud.appwrite.io`).
+  - Production database ID: `supersec_db`.
+- **Decision authority:**
+  - May decide alone: Client adapter design, fetch interceptor structure, test suite configurations.
+  - May decide, must log: Database collection schema mappings, storage bucket policies, auth session flows.
+  - Must escalate: Changes to hosting vendor, project deletion, breaking database schema wipes.
+- **Known state:** Appwrite Cloud setup completed, client adapter live on Appwrite Sites deployment `6a938db8c62e5615246b` (2026-08-30).
+- **Stakeholders & review points:** User sign-off on major architecture changes and deployment releases.
+- **Resources available:** Appwrite MCP server, Appwrite Cloud Project `supersec`, Vitest suite, Drizzle schemas.
+- **Timebox / checkpoints:** Review at completion of setup and feature milestones.
+- **Abort conditions:** Inability to communicate with Appwrite Cloud APIs or critical data loss in `supersec_db`.

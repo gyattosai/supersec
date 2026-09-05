@@ -43,8 +43,9 @@ describe("12-hour time formatting", () => {
     expect(dateTimeMarkup).toContain('step="60"');
     expect(dateTimeMarkup).toContain('value="07:05"');
 
-    const proofMarkup = renderToStaticMarkup(createElement(AttendanceProofTimestamp, { createdAt: new Date("2026-01-15T12:30:00.000Z") }));
-    expect(proofMarkup).toContain('dateTime="2026-01-15T12:30:00.000Z"');
+    const proofDate = new Date(2026, 0, 15, 12, 30);
+    const proofMarkup = renderToStaticMarkup(createElement(AttendanceProofTimestamp, { createdAt: proofDate }));
+    expect(proofMarkup).toContain(`dateTime="${proofDate.toISOString()}"`);
     expect(proofMarkup).toContain("12:30 PM");
   });
 });

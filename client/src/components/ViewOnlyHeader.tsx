@@ -1,10 +1,10 @@
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { SimpleThemeToggle } from "@/components/ThemeToggle";
 import { trpc } from "@/lib/trpc";
-import { ShieldCheck } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
 
-type PublicSubjectIdentity = { publicId: string; viewOnlyShortMark?: string | null; viewOnlyName?: string | null };
+type PublicSubjectIdentity = { publicId: string; viewOnlyShortMark?: string | null; viewOnlyName?: string | null; code?: string };
 
 export function resolveViewOnlyIdentity(subject?: PublicSubjectIdentity | null) {
   return {
@@ -45,5 +45,38 @@ function RouteAwareViewOnlyHeader() {
 function ViewOnlyHeaderSurface({ subject }: { subject?: PublicSubjectIdentity | null }) {
   const identity = resolveViewOnlyIdentity(subject);
 
-  return <header className="signal-header-surface mb-6 flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-border px-3 py-2 sm:px-4"><Link href={identity.subjectHome} aria-label={`${identity.fullName} shared Subject home`} className="signal-action inline-flex min-w-0 items-center gap-2 text-sm font-bold tracking-[-0.03em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary px-1 text-center text-[10px] font-extrabold leading-none text-primary-foreground">{identity.shortMark}</span><span className="truncate">{identity.fullName}</span></Link><div className="flex shrink-0 items-center gap-2"><span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 text-[11px] font-semibold tracking-wide text-primary"><ShieldCheck className="size-3.5" />VIEW ONLY</span><ThemeToggle /></div></header>;
+  return (
+    <header className="glass-header sticky top-0 z-40 mb-6 flex min-h-[3.25rem] items-center justify-between gap-3 rounded-2xl border border-border/70 px-3 py-2 sm:px-5">
+      {/* Brand lockup */}
+      <Link
+        href={identity.subjectHome}
+        aria-label={`${identity.fullName} shared Subject home`}
+        className="signal-action inline-flex min-w-0 items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-primary text-[10px] font-extrabold leading-none text-primary-foreground shadow-sm shadow-primary/30">
+          {identity.shortMark}
+        </span>
+        <span className="flex flex-col leading-none min-w-0 max-w-[140px] xs:max-w-[200px] sm:max-w-[340px] md:max-w-[500px]">
+          <span className="truncate text-[11px] font-extrabold tracking-[-0.02em] text-foreground" title={identity.fullName}>
+            {identity.fullName}
+          </span>
+          <span className="mt-0.5 text-[10px] font-semibold text-muted-foreground">supersec</span>
+        </span>
+      </Link>
+
+      {/* Right side */}
+      <div className="flex shrink-0 items-center gap-2">
+        {subject?.code ? (
+          <span className="hidden min-h-8 items-center rounded-full bg-primary/10 px-3 text-[11px] font-bold text-primary sm:inline-flex">
+            {subject.code}
+          </span>
+        ) : null}
+        <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border bg-secondary/60 px-2.5 text-[11px] font-semibold text-muted-foreground">
+          <Lock className="size-3" />
+          View only
+        </span>
+        <SimpleThemeToggle />
+      </div>
+    </header>
+  );
 }

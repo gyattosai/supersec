@@ -1,5 +1,7 @@
-import { and, asc, desc, eq, gte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { Client, Databases, Query, ID } from "node-appwrite";
+import { compareByLastNameAsc } from "../shared/attendanceSorting";
 import {
   announcements,
   attendanceRecords,
@@ -34,12 +36,62 @@ export async function getDb() {
   return _db;
 }
 
+/** Lazily create Appwrite Databases service */
+export function getAppwriteDb(): { databases: Databases; dbId: string } | null {
+  if (!ENV.appwriteProjectId || !ENV.appwriteApiKey) {
+    return null;
+  }
+  const client = new Client()
+    .setEndpoint(ENV.appwriteEndpoint)
+    .setProject(ENV.appwriteProjectId)
+    .setKey(ENV.appwriteApiKey);
+  return {
+    databases: new Databases(client),
+    dbId: ENV.appwriteDatabaseId,
+  };
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
 
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      const existing = await appwrite.databases.listDocuments(appwrite.dbId, "users", [
+        Query.equal("openId", user.openId),
+        Query.limit(1),
+      ]);
+      const data: Record<string, unknown> = {
+        openId: user.openId,
+        name: user.name ?? "Class Secretary",
+        email: user.email ?? null,
+        loginMethod: user.loginMethod ?? "appwrite",
+        role: user.role ?? "admin",
+        lastSignedIn: (user.lastSignedIn ?? new Date()).toISOString(),
+      };
+      if (existing.documents.length > 0) {
+        await appwrite.databases.updateDocument(
+          appwrite.dbId,
+          "users",
+          existing.documents[0].$id,
+          data
+        );
+      } else {
+        await appwrite.databases.createDocument(
+          appwrite.dbId,
+          "users",
+          ID.unique(),
+          data
+        );
+      }
+      return;
+    } catch (error) {
+      console.warn("[Appwrite DB] User upsert warning:", error);
+    }
+  }
+
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
     return;
   }
 
@@ -67,9 +119,69 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 }
 
 export async function getUserByOpenId(openId: string) {
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      const res = await appwrite.databases.listDocuments(appwrite.dbId, "users", [
+        Query.equal("openId", openId),
+        Query.limit(1),
+      ]);
+      if (res.documents.length > 0) {
+        const doc = res.documents[0];
+        return {
+          id: 1,
+          openId: doc.openId as string,
+          name: (doc.name as string) || null,
+          email: (doc.email as string) || null,
+          loginMethod: (doc.loginMethod as string) || null,
+          role: (doc.role as "user" | "admin") || "user",
+          createdAt: new Date(doc.$createdAt),
+          updatedAt: new Date(doc.$updatedAt),
+          lastSignedIn: doc.lastSignedIn ? new Date(doc.lastSignedIn as string) : new Date(),
+        };
+      }
+    } catch (error) {
+      console.warn("[Appwrite DB] getUserByOpenId error:", error);
+    }
+  }
+
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  return result[0];
+}
+
+export async function getUserByEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      const res = await appwrite.databases.listDocuments(appwrite.dbId, "users", [
+        Query.equal("email", normalized),
+        Query.limit(1),
+      ]);
+      if (res.documents.length > 0) {
+        const doc = res.documents[0];
+        return {
+          id: 1,
+          openId: doc.openId as string,
+          name: (doc.name as string) || null,
+          email: (doc.email as string) || null,
+          loginMethod: (doc.loginMethod as string) || null,
+          role: (doc.role as "user" | "admin") || "user",
+          createdAt: new Date(doc.$createdAt),
+          updatedAt: new Date(doc.$updatedAt),
+          lastSignedIn: doc.lastSignedIn ? new Date(doc.lastSignedIn as string) : new Date(),
+        };
+      }
+    } catch (error) {
+      console.warn("[Appwrite DB] getUserByEmail error:", error);
+    }
+  }
+
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
   return result[0];
 }
 
@@ -142,10 +254,10 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     .limit(1);
 
   const [attendanceRows, announcementRows, resourceRows, questionRows] = await Promise.all([
-    db.select({ publicId: classSessions.publicId, startsAt: classSessions.startsAt }).from(classSessions).where(and(eq(classSessions.subjectId, subject.id), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"))).orderBy(desc(classSessions.startsAt)).limit(3),
-    db.select({ publicId: announcements.publicId, title: announcements.title }).from(announcements).where(and(eq(announcements.subjectId, subject.id), eq(announcements.publishState, "published"))).orderBy(desc(announcements.publishedAt)).limit(3),
-    db.select({ publicId: resources.publicId, title: resources.title, description: resources.description, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, thumbnailUrl: mediaAssets.servedUrl, thumbnailAltText: mediaAssets.altText }).from(resources).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.subjectId, subject.id), eq(resources.publishState, "published"))).orderBy(desc(resources.publishedAt)).limit(3),
-    db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question }).from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, subject.id), eq(questionsAnswers.publishState, "published"), eq(questionsAnswers.isOfficial, true))).orderBy(desc(questionsAnswers.publishedAt)).limit(3),
+    db.select({ publicId: classSessions.publicId, startsAt: classSessions.startsAt, sessionState: classSessions.sessionState, noClassReason: classSessions.noClassReason }).from(classSessions).where(and(eq(classSessions.subjectId, subject.id), eq(classSessions.publishState, "published"))).orderBy(desc(classSessions.startsAt)).limit(50),
+    db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, publishedAt: announcements.publishedAt }).from(announcements).where(and(eq(announcements.subjectId, subject.id), eq(announcements.publishState, "published"))).orderBy(desc(announcements.publishedAt)).limit(50),
+    db.select({ publicId: resources.publicId, title: resources.title, description: resources.description, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, publishedAt: resources.publishedAt, thumbnailUrl: mediaAssets.servedUrl, thumbnailAltText: mediaAssets.altText }).from(resources).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.subjectId, subject.id), eq(resources.publishState, "published"))).orderBy(desc(resources.publishedAt)).limit(50),
+    db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, question: questionsAnswers.question, answer: questionsAnswers.answer, isOfficial: questionsAnswers.isOfficial, tagsText: questionsAnswers.tagsText, publishedAt: questionsAnswers.publishedAt }).from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, subject.id), eq(questionsAnswers.publishState, "published"))).orderBy(desc(questionsAnswers.publishedAt)).limit(50),
   ]);
   const noClass = noClassRows[0];
   return {
@@ -157,7 +269,41 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     professorName: subject.professorName,
     meetingDays,
     noClass: noClass && noClass.reason ? { startsAt: noClass.startsAt, reason: noClass.reason } : null,
-    latest: { attendance: attendanceRows, announcements: announcementRows, resources: resourceRows.map(resource => ({ publicId: resource.publicId, title: resource.title, description: resource.description, category: resource.category, resourceType: resource.resourceType, sourceDomain: resource.sourceDomain, thumbnail: resource.thumbnailUrl ? { url: resource.thumbnailUrl, altText: resource.thumbnailAltText } : null })), questions: questionRows },
+    latest: {
+      attendance: attendanceRows.map(r => ({
+        publicId: r.publicId,
+        startsAt: r.startsAt,
+        sessionState: r.sessionState || "completed",
+        noClassReason: r.noClassReason || null,
+        version: 1,
+        title: `Session on ${new Date(r.startsAt).toLocaleDateString()}`,
+      })),
+      announcements: announcementRows.map(r => ({
+        publicId: r.publicId,
+        title: r.title,
+        body: r.body,
+        publishedAt: r.publishedAt,
+      })),
+      resources: resourceRows.map(resource => ({
+        publicId: resource.publicId,
+        title: resource.title,
+        description: resource.description,
+        category: resource.category,
+        resourceType: resource.resourceType,
+        sourceDomain: resource.sourceDomain,
+        publishedAt: resource.publishedAt,
+        thumbnail: resource.thumbnailUrl ? { url: resource.thumbnailUrl, altText: resource.thumbnailAltText } : null,
+      })),
+      questions: questionRows.map(q => ({
+        publicId: q.publicId,
+        title: q.title || q.question || "",
+        question: q.question,
+        answer: q.answer,
+        isOfficial: Boolean(q.isOfficial),
+        tagsText: q.tagsText,
+        publishedAt: q.publishedAt,
+      })),
+    },
   };
 }
 
@@ -185,13 +331,35 @@ export async function getPublicQuestionsBySubjectId(publicId: string, query?: st
   return { subject: { publicId: subject.publicId, name: subject.name, code: subject.code, viewOnlyShortMark: subject.viewOnlyShortMark, viewOnlyName: subject.viewOnlyName }, questions };
 }
 
-export async function getPublicHistory(entityType: string, entityId: number) {
+export async function getPublicHistory(entityType: string, entityId: number | string) {
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      const res = await appwrite.databases.listDocuments(
+        ENV.appwriteDatabaseHistoryId,
+        "historyEntries",
+        [
+          Query.equal("entityType", entityType),
+          Query.equal("entityId", String(entityId)),
+          Query.orderAsc("version"),
+        ]
+      );
+      return res.documents.map(doc => ({
+        version: (doc.version as number) || 0,
+        action: (doc.action as string) || "",
+        summary: (doc.publicChangeSummary as string) || "",
+        createdAt: new Date(doc.$createdAt),
+      }));
+    } catch {
+      // Fallback
+    }
+  }
   const db = await getDb();
   if (!db) return [];
   return db
     .select({ version: historyEntries.version, action: historyEntries.action, summary: historyEntries.publicChangeSummary, createdAt: historyEntries.createdAt })
     .from(historyEntries)
-    .where(and(eq(historyEntries.entityType, entityType), eq(historyEntries.entityId, entityId)))
+    .where(and(eq(historyEntries.entityType, entityType), eq(historyEntries.entityId, typeof entityId === "number" ? entityId : Number(entityId))))
     .orderBy(asc(historyEntries.version));
 }
 
@@ -252,8 +420,10 @@ export type PublicAttendancePayload = {
   startsAt: Date;
   version: number;
   subject: { publicId: string; name: string; code: string; viewOnlyShortMark: string | null; viewOnlyName: string | null; professorName: string };
-  records: Array<{ canonicalName: string; status: "PRESENT" | "ABSENT" | "EXCUSED" | "NOT_SET" }>;
+  records: Array<{ canonicalName: string; status: "PRESENT" | "ABSENT" | "EXCUSED" | "CONFLICT" | "NOT_SET" }>;
   history: Awaited<ReturnType<typeof getPublicHistory>>;
+  sessionState?: "completed" | "scheduled" | "no_class";
+  noClassReason?: string | null;
 };
 
 /**
@@ -262,32 +432,135 @@ export type PublicAttendancePayload = {
  * never selected for an anonymous caller.
  */
 export async function getPublicAttendanceById(publicId: string): Promise<PublicAttendancePayload | null> {
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      const sessionRes = await appwrite.databases.listDocuments(appwrite.dbId, "classSessions", [
+        Query.equal("publicId", publicId),
+        Query.limit(1),
+      ]);
+      if (sessionRes.documents.length > 0) {
+        const sessionDoc: any = sessionRes.documents[0];
+        const [subjectDoc, recordsRes, historyRes, studentsRes, subjectStudentsRes] = await Promise.all([
+          sessionDoc.subjectId
+            ? (appwrite.databases.getDocument(appwrite.dbId, "subjects", sessionDoc.subjectId).catch(() => null) as Promise<any>)
+            : Promise.resolve(null),
+          appwrite.databases.listDocuments(appwrite.dbId, "attendanceRecords", [
+            Query.equal("classSessionId", sessionDoc.$id),
+            Query.limit(200),
+          ]).catch(() => ({ documents: [] })),
+          appwrite.databases.listDocuments(ENV.appwriteDatabaseHistoryId, "historyEntries", [
+            Query.equal("entityType", "attendance"),
+            Query.equal("entityId", sessionDoc.$id),
+            Query.orderAsc("version"),
+            Query.limit(50),
+          ]).catch(() => ({ documents: [] })),
+          appwrite.databases.listDocuments(appwrite.dbId, "students", [
+            Query.limit(500),
+          ]).catch(() => ({ documents: [] })),
+          sessionDoc.subjectId
+            ? appwrite.databases.listDocuments(appwrite.dbId, "subjectStudents", [
+                Query.equal("subjectId", sessionDoc.subjectId),
+                Query.limit(200),
+              ]).catch(() => ({ documents: [] }))
+            : Promise.resolve({ documents: [] }),
+        ]);
+
+        const studentMap = new Map<string, string>();
+        for (const s of studentsRes.documents) {
+          studentMap.set(s.$id, (s as any).canonicalName || `${(s as any).lastName}, ${(s as any).firstName}`);
+        }
+        const memberToName = new Map<string, string>();
+        for (const m of subjectStudentsRes.documents) {
+          const name = studentMap.get((m as any).studentId);
+          if (name) memberToName.set(m.$id, name);
+        }
+
+        const maxRecVersion = recordsRes.documents.reduce((max: number, r: any) => Math.max(max, r.publishedVersion || 0), 0);
+        const historyMaxVersion = historyRes.documents.reduce((max: number, h: any) => Math.max(max, h.version || 0), 0);
+        const version = historyMaxVersion || maxRecVersion || (sessionDoc.version as number) || 1;
+
+        const history = historyRes.documents.map((doc: any) => ({
+          version: doc.version || 1,
+          action: doc.action || "published",
+          summary: doc.publicChangeSummary || "Attendance updated",
+          createdAt: new Date(doc.$createdAt),
+        }));
+
+        const records = recordsRes.documents
+          .filter((r: any) => r.publishState === "published")
+          .map((r: any) => ({
+            canonicalName: memberToName.get(r.subjectStudentId) || r.canonicalName || "Student",
+            status: (r.attendanceStatus?.toUpperCase() as any) || "NOT_SET",
+          }))
+          .sort(compareByLastNameAsc);
+
+        return {
+          publicId: sessionDoc.publicId,
+          startsAt: new Date(sessionDoc.startsAt),
+          version,
+          sessionState: sessionDoc.sessionState || "completed",
+          noClassReason: sessionDoc.noClassReason || null,
+          subject: subjectDoc ? {
+            publicId: subjectDoc.publicId,
+            name: subjectDoc.name,
+            code: subjectDoc.code,
+            viewOnlyShortMark: subjectDoc.viewOnlyShortMark,
+            viewOnlyName: subjectDoc.viewOnlyName,
+            professorName: subjectDoc.professorName,
+          } : { publicId: "", name: "Class", code: "SUBJ", viewOnlyShortMark: null, viewOnlyName: null, professorName: "Professor" },
+          records,
+          history,
+        };
+      }
+    } catch (err) {
+      console.warn("[Appwrite DB] getPublicAttendanceById error:", err);
+    }
+  }
+
   const db = await getDb();
   if (!db) return null;
   const rows = await db
-    .select({ id: classSessions.id, publicId: classSessions.publicId, startsAt: classSessions.startsAt, version: attendanceRecords.publishedVersion, subjectPublicId: subjects.publicId, subjectName: subjects.name, subjectCode: subjects.code, subjectViewOnlyShortMark: subjects.viewOnlyShortMark, subjectViewOnlyName: subjects.viewOnlyName, professorName: subjects.professorName })
+    .select({
+      id: classSessions.id,
+      publicId: classSessions.publicId,
+      startsAt: classSessions.startsAt,
+      sessionState: classSessions.sessionState,
+      noClassReason: classSessions.noClassReason,
+      version: attendanceRecords.publishedVersion,
+      subjectPublicId: subjects.publicId,
+      subjectName: subjects.name,
+      subjectCode: subjects.code,
+      subjectViewOnlyShortMark: subjects.viewOnlyShortMark,
+      subjectViewOnlyName: subjects.viewOnlyName,
+      professorName: subjects.professorName,
+    })
     .from(classSessions)
     .innerJoin(subjects, eq(classSessions.subjectId, subjects.id))
     .leftJoin(attendanceRecords, eq(attendanceRecords.classSessionId, classSessions.id))
-    .where(and(eq(classSessions.publicId, publicId), eq(classSessions.sessionState, "completed"), eq(classSessions.publishState, "published"), eq(subjects.status, "active")))
+    .where(and(eq(classSessions.publicId, publicId), inArray(classSessions.sessionState, ["completed", "no_class", "scheduled"]), eq(classSessions.publishState, "published"), eq(subjects.status, "active")))
     .orderBy(asc(attendanceRecords.id))
     .limit(1);
   const session = rows[0];
   if (!session) return null;
   const records = await db
-    .select({ canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus })
+    .select({ canonicalName: students.canonicalName, status: attendanceRecords.attendanceStatus, publishedVersion: attendanceRecords.publishedVersion })
     .from(attendanceRecords)
     .innerJoin(subjectStudents, eq(attendanceRecords.subjectStudentId, subjectStudents.id))
     .innerJoin(students, eq(subjectStudents.studentId, students.id))
     .where(and(eq(attendanceRecords.classSessionId, session.id), eq(attendanceRecords.publishState, "published")))
-    .orderBy(asc(students.canonicalName));
+    .orderBy(asc(students.lastName), asc(students.firstName));
   const history = await getPublicHistory("attendance", session.id);
+  const maxVersionFromRecords = records.reduce((max, r) => Math.max(max, r.publishedVersion || 0), 0);
+  const latestVersion = (history[history.length - 1]?.version as number) || maxVersionFromRecords || session.version || 1;
   return {
     publicId: session.publicId,
     startsAt: session.startsAt,
-    version: session.version ?? 0,
+    version: latestVersion,
+    sessionState: session.sessionState || "completed",
+    noClassReason: session.noClassReason || null,
     subject: { publicId: session.subjectPublicId, name: session.subjectName, code: session.subjectCode, viewOnlyShortMark: session.subjectViewOnlyShortMark, viewOnlyName: session.subjectViewOnlyName, professorName: session.professorName },
-    records,
+    records: records.map(r => ({ canonicalName: r.canonicalName, status: r.status })),
     history,
   };
 }
@@ -299,7 +572,7 @@ export type PublicReportPayload = {
   publishedAt: Date | null;
   title: string;
   startsAt?: Date;
-  totals?: { present: number; absent: number; excused: number; notSet: number };
+  totals?: { present: number; absent: number; excused: number; conflict?: number; notSet: number };
   subjects?: Array<{ subjectName: string; subjectCode: string; present: number; absent: number; excused: number; notSet: number }>;
 };
 
@@ -324,15 +597,41 @@ export async function getPublicReportById(publicId: string): Promise<PublicRepor
 
 export async function createPublicHistoryEntry(input: {
   entityType: string;
-  entityId: number;
+  entityId: number | string;
   version: number;
   action: string;
   publicChangeSummary: string;
-  actorUserId: number;
+  actorUserId: number | string;
 }) {
+  const appwrite = getAppwriteDb();
+  if (appwrite) {
+    try {
+      await appwrite.databases.createDocument(
+        ENV.appwriteDatabaseHistoryId,
+        "historyEntries",
+        ID.unique(),
+        {
+          entityType: input.entityType,
+          entityId: String(input.entityId),
+          version: input.version,
+          action: input.action,
+          publicChangeSummary: input.publicChangeSummary,
+          actorUserId: String(input.actorUserId),
+        }
+      );
+      return;
+    } catch (error) {
+      console.warn("[Appwrite DB] createPublicHistoryEntry error:", error);
+    }
+  }
+
   const db = await getDb();
-  if (!db) throw new Error("Database is not available");
-  await db.insert(historyEntries).values(input);
+  if (!db) return;
+  await db.insert(historyEntries).values({
+    ...input,
+    entityId: typeof input.entityId === "number" ? input.entityId : Number(input.entityId),
+    actorUserId: typeof input.actorUserId === "number" ? input.actorUserId : Number(input.actorUserId),
+  });
 }
 
 export async function createMediaReference(input: {

@@ -1,4 +1,4 @@
-export type OfficialAttendanceStatus = "PRESENT" | "ABSENT" | "EXCUSED" | "NOT_SET";
+export type OfficialAttendanceStatus = "PRESENT" | "ABSENT" | "EXCUSED" | "CONFLICT" | "NOT_SET";
 
 export type AttendanceCsvStudent = {
   canonicalName: string;
@@ -26,11 +26,12 @@ export function buildClassAttendanceSummary(input: {
   present: number;
   absent: number;
   excused: number;
+  conflict?: number;
   notSet: number;
 }) {
   return [
     `${input.subjectCode} · ${input.subjectName}`,
     `Class attendance · ${input.startsAt.toLocaleString()}`,
-    `Present: ${input.present} · Absent: ${input.absent} · Excused: ${input.excused} · Not set: ${input.notSet}`,
+    `Present: ${input.present} · Absent: ${input.absent} · Excused: ${input.excused}${input.conflict !== undefined ? ` · Conflict: ${input.conflict}` : ""} · Not set: ${input.notSet}`,
   ].join("\n");
 }

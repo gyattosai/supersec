@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { AnnouncementEditor } from "@/components/AnnouncementEditor";
 
 type QuestionAnswerControlsProps = {
+  question?: string;
   answer: string;
   onAnswerChange: (value: string) => void;
   tagsText: string;
@@ -13,11 +14,27 @@ type QuestionAnswerControlsProps = {
   showChangeSummary: boolean;
 };
 
-export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTagsTextChange, isOfficial, onOfficialChange, changeSummary, onChangeSummaryChange, showChangeSummary }: QuestionAnswerControlsProps) {
+export function QuestionAnswerControls({
+  question,
+  answer,
+  onAnswerChange,
+  tagsText,
+  onTagsTextChange,
+  isOfficial,
+  onOfficialChange,
+  changeSummary,
+  onChangeSummaryChange,
+  showChangeSummary,
+}: QuestionAnswerControlsProps) {
+  const contextDescription = question
+    ? `Question: ${question}${tagsText ? ` · Topics: ${tagsText}` : ""}`
+    : tagsText
+    ? `Topics: ${tagsText}`
+    : "Answer a repeated class question clearly and respectfully.";
+
   return (
     <div className="mt-3 space-y-3">
       <div>
-        <label className="text-sm font-medium text-foreground">Answer</label>
         <AnnouncementEditor
           id="question-answer"
           label="Answer"
@@ -25,7 +42,7 @@ export function QuestionAnswerControls({ answer, onAnswerChange, tagsText, onTag
           value={answer}
           onChange={onAnswerChange}
           aiTarget="question_answer"
-          aiContext={tagsText ? `Suggested topics: ${tagsText}` : "Answer a repeated class question clearly and respectfully."}
+          aiContext={contextDescription}
           placeholder="Write the answer classmates need."
           helperText="Use formatting to make the answer easy to scan."
           minHeightClassName="min-h-48"

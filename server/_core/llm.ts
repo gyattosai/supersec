@@ -212,16 +212,63 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const resolveGeminiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${ENV.geminiApiKey}`;
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is not configured");
   }
 };
+
+function convertContentToParts(content: MessageContent | MessageContent[]): any[] {
+  if (typeof content === "string") return [{ text: content }];
+  if (!Array.isArray(content)) content = [content];
+  return content.map(c => {
+    if (typeof c === "string") return { text: c };
+    if (c.type === "text") return { text: c.text };
+    if (c.type === "image_url") {
+      const url = c.image_url.url;
+      // Handle base64 data URLs
+      if (url.startsWith("data:")) {
+        const match = url.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) return { inlineData: { mimeType: match[1], data: match[2] } };
+      }
+      // Handle regular URLs - use fileData
+      return { fileData: { mimeType: "image/jpeg", fileUri: url } };
+    }
+    if (c.type === "file_url") {
+      return { fileData: { mimeType: c.file_url.mime_type || "application/octet-stream", fileUri: c.file_url.url } };
+    }
+    return { text: JSON.stringify(c) };
+  });
+}
+
+function convertToGeminiSchema(schema: any): any {
+  if (!schema) return schema;
+  const result: any = {};
+  if (schema.type) {
+    if (Array.isArray(schema.type)) {
+      // Handle nullable types like ["integer", "null"]
+      const nonNull = schema.type.filter((t: string) => t !== "null");
+      result.type = nonNull[0]?.toUpperCase() || "STRING";
+      if (schema.type.includes("null")) result.nullable = true;
+    } else {
+      result.type = schema.type.toUpperCase();
+    }
+  }
+  if (schema.properties) {
+    result.properties = {};
+    for (const [key, val] of Object.entries(schema.properties)) {
+      result.properties[key] = convertToGeminiSchema(val);
+    }
+  }
+  if (schema.required) result.required = schema.required;
+  if (schema.items) result.items = convertToGeminiSchema(schema.items);
+  if (schema.enum) result.enum = schema.enum;
+  if (schema.description) result.description = schema.description;
+  return result;
+}
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -339,85 +386,79 @@ const fetchWithBackoff = async (
     : new Error("LLM request failed after exhausting retries");
 };
 
-export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
+export async function invokeLLM(options: InvokeParams): Promise<InvokeResult> {
+  const model = options.model || "gemini-2.5-flash";
   assertApiKey();
-
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format,
-    model,
-    thinking,
-    reasoning,
-    maxTokens,
-    max_tokens,
-  } = params;
-
-  const payload: Record<string, unknown> = {
-    messages: messages.map(normalizeMessage),
-  };
-
-  if (model) {
-    payload.model = model;
+  
+  // Separate system messages from conversation
+  const systemParts: any[] = [];
+  const contents: any[] = [];
+  
+  for (const msg of options.messages) {
+    if (msg.role === "system") {
+      const text = typeof msg.content === "string" ? msg.content : 
+        Array.isArray(msg.content) ? msg.content.filter(c => typeof c === 'string' || c.type === 'text').map(c => typeof c === 'string' ? c : (c as any).text).join('\n') : String(msg.content);
+      systemParts.push({ text });
+    } else {
+      const parts = convertContentToParts(msg.content);
+      contents.push({ role: msg.role === "assistant" ? "model" : "user", parts });
+    }
   }
-
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-
-  const resolvedMaxTokens = max_tokens ?? maxTokens;
-  if (typeof resolvedMaxTokens === "number") {
-    payload.max_tokens = resolvedMaxTokens;
-  }
-
-  if (thinking) {
-    payload.thinking = thinking;
-  }
-  if (reasoning) {
-    payload.reasoning = reasoning;
-  }
-
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema,
+  
+  const generationConfig: any = {};
+  const resolvedMaxTokens = options.max_tokens ?? options.maxTokens;
+  if (resolvedMaxTokens) generationConfig.maxOutputTokens = resolvedMaxTokens;
+  
+  // Handle structured output schema
+  const resolvedFormat = normalizeResponseFormat({
+    responseFormat: options.responseFormat,
+    response_format: options.response_format,
+    outputSchema: options.outputSchema,
+    output_schema: options.output_schema,
   });
-
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
+  if (resolvedFormat?.type === "json_schema" && resolvedFormat.json_schema?.schema) {
+    generationConfig.responseMimeType = "application/json";
+    generationConfig.responseSchema = convertToGeminiSchema(resolvedFormat.json_schema.schema);
+  } else if (resolvedFormat?.type === "json_object") {
+    generationConfig.responseMimeType = "application/json";
   }
-
-  const response = await fetchWithBackoff(resolveApiUrl(), {
+  
+  const body: any = { contents, generationConfig };
+  if (systemParts.length) body.systemInstruction = { parts: systemParts };
+  
+  const url = resolveGeminiUrl(model);
+  const response = await fetchWithBackoff(url, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-
+  
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );
   }
-
-  return (await response.json()) as InvokeResult;
+  
+  const data = await response.json();
+  
+  // Convert Gemini response to OpenAI-compatible format for existing callers
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return {
+    id: data.id || "",
+    created: Date.now(),
+    model: model,
+    choices: [{ 
+      index: 0,
+      message: { content: text, role: "assistant" },
+      finish_reason: "stop"
+    }],
+    usage: {
+      prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
+      completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
+      total_tokens: data.usageMetadata?.totalTokenCount || 0,
+    }
+  } as InvokeResult;
 }
 
 export type ModelInfo = {
@@ -435,12 +476,10 @@ export type ModelsResponse = {
 export async function listLLMModels(): Promise<ModelsResponse> {
   assertApiKey();
 
-  const url = ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/models`
-    : "https://forge.manus.im/v1/models";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${ENV.geminiApiKey}`;
 
   const response = await fetchWithBackoff(url, {
-    headers: { authorization: `Bearer ${ENV.forgeApiKey}` },
+    headers: { "Content-Type": "application/json" },
   });
 
   if (!response.ok) {
@@ -450,5 +489,13 @@ export async function listLLMModels(): Promise<ModelsResponse> {
     );
   }
 
-  return (await response.json()) as ModelsResponse;
+  const data = await response.json();
+  const mapped = (data.models || []).map((m: any) => ({
+    id: m.name.replace("models/", ""),
+    object: "model",
+    created: 0,
+    owned_by: "google",
+  }));
+
+  return { object: "list", data: mapped };
 }

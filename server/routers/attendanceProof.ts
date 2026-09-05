@@ -12,9 +12,11 @@ import { ownerProcedure } from "./guards";
 const publicSessionInput = z.object({ publicId: z.string().min(8).max(24) });
 const proofUploadInput = publicSessionInput.extend({
   submittedName: z.string().trim().min(2).max(255),
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().min(1).max(128),
-  base64Data: z.string().min(1).max(12_000_000),
+  fileName: z.string().trim().min(1).max(255).optional(),
+  mimeType: z.string().trim().min(1).max(128).optional(),
+  base64Data: z.string().min(1).max(12_000_000).optional(),
+  submissionType: z.enum(["zoom_proof", "excuse_letter"]).optional(),
+  excuseReason: z.string().trim().max(1000).optional(),
 });
 
 type ReviewDecision = { verdict: "accepted" | "needs_review"; membershipId: number | null };
@@ -74,7 +76,7 @@ async function rosterForSubject(database: Awaited<ReturnType<typeof databaseOrTh
 async function reviewAttendanceProof(input: { signedProofUrl: string; submittedName: string; session: { subjectName: string; subjectCode: string; startsAt: Date }; roster: Array<{ membershipId: number; canonicalName: string }> }) {
   try {
     const result = await invokeLLM({
-      model: "gpt-5-mini",
+      model: "gemini-2.5-flash",
       maxTokens: 1200,
       messages: [
         {
@@ -134,6 +136,28 @@ async function publishProofCorrection(database: Awaited<ReturnType<typeof databa
   return "updated" as const;
 }
 
+async function publishExcuseCorrection(database: Awaited<ReturnType<typeof databaseOrThrow>>, session: { id: number; ownerId: number }, membershipId: number, excuseReason: string) {
+  const records = await database
+    .select({ id: attendanceRecords.id, status: attendanceRecords.attendanceStatus })
+    .from(attendanceRecords)
+    .where(and(eq(attendanceRecords.classSessionId, session.id), eq(attendanceRecords.subjectStudentId, membershipId)))
+    .limit(1);
+  const record = records[0];
+  if (!record) throw new Error("Attendance record not found for the matched student");
+
+  const latestHistory = await database
+    .select({ version: historyEntries.version })
+    .from(historyEntries)
+    .where(and(eq(historyEntries.entityType, "attendance"), eq(historyEntries.entityId, session.id)))
+    .orderBy(desc(historyEntries.version))
+    .limit(1);
+  const version = (latestHistory[0]?.version ?? 0) + 1;
+  await database.update(attendanceRecords).set({ publishedVersion: version }).where(eq(attendanceRecords.classSessionId, session.id));
+  await database.update(attendanceRecords).set({ attendanceStatus: "EXCUSED", excuseReason, publishState: "published", publishedVersion: version }).where(eq(attendanceRecords.id, record.id));
+  await database.insert(historyEntries).values({ entityType: "attendance", entityId: session.id, version, action: "updated", publicChangeSummary: "Attendance marked Excused after approved excuse letter.", actorUserId: session.ownerId });
+  return "marked_excused" as const;
+}
+
 export const attendanceProofRouter = router({
   publicSession: publicProcedure.input(publicSessionInput).query(async ({ input }) => {
     const database = await databaseOrThrow();
@@ -144,13 +168,67 @@ export const attendanceProofRouter = router({
     const database = await databaseOrThrow();
     const session = await getPublishedSession(database, input.publicId);
     if (!session) throw new Error("This Attendance link is not available for proof submission.");
-    if (!isPublicImageMimeType(input.mimeType)) throw new Error("Upload a Zoom screenshot as a JPG, PNG, WebP, GIF, or AVIF image.");
+
+    const isExcuse = input.submissionType === "excuse_letter" || Boolean(input.excuseReason);
+    const roster = await rosterForSubject(database, session.subjectId);
+
+    // If excuse letter
+    if (isExcuse) {
+      let storedKey = "excuse-letters/" + session.id + "/" + Date.now();
+      let storedUrl = "text-only";
+      let origName = input.fileName || "Excuse Letter";
+      let mime = input.mimeType || "text/plain";
+      let byteLen = 1;
+
+      if (input.base64Data && input.fileName && input.mimeType) {
+        const bytes = Buffer.from(input.base64Data.replace(/^data:[^;]+;base64,/, ""), "base64");
+        if (bytes.length > MAX_PUBLIC_UPLOAD_BYTES) throw new Error("The attached file must be smaller than 8 MB.");
+        const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const stored = await storagePut(`excuse-letters/${session.id}/${Date.now()}-${nanoid(10)}-${safeName}`, bytes, input.mimeType);
+        storedKey = stored.key;
+        storedUrl = stored.url;
+        origName = input.fileName;
+        mime = input.mimeType;
+        byteLen = bytes.length;
+      }
+
+      // Try matching roster by name
+      const cleanInput = input.submittedName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const matched = roster.find(r => {
+        const clean = r.canonicalName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return clean.includes(cleanInput) || cleanInput.includes(clean);
+      });
+
+      const summaryText = `[Excuse Letter] ${input.excuseReason || "Excuse letter submitted for secretary review."}`;
+      const [proof] = await database.insert(attendanceProofSubmissions).values({
+        classSessionId: session.id,
+        submittedName: input.submittedName,
+        proofStorageKey: storedKey,
+        proofUrl: storedUrl,
+        proofOriginalName: origName,
+        proofMimeType: mime,
+        proofByteSize: byteLen,
+        reviewState: "needs_review",
+        matchedSubjectStudentId: matched?.membershipId ?? null,
+        reviewSummary: summaryText.slice(0, 490),
+        reviewedAt: null,
+      }).$returningId();
+
+      return { submissionId: proof.id, outcome: "submitted_for_review" as const, matchedName: matched?.canonicalName || null };
+    }
+
+    // Zoom screenshot proof
+    if (!input.base64Data || !input.fileName || !input.mimeType) {
+      throw new Error("Please upload a Zoom screenshot for attendance verification.");
+    }
+    if (!isPublicImageMimeType(input.mimeType)) {
+      throw new Error("Upload a Zoom screenshot as a JPG, PNG, WebP, GIF, or AVIF image.");
+    }
 
     const bytes = Buffer.from(input.base64Data.replace(/^data:[^;]+;base64,/, ""), "base64");
     if (!bytes.length || bytes.length > MAX_PUBLIC_UPLOAD_BYTES) throw new Error("The screenshot must be between 1 byte and 8 MB.");
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
     const stored = await storagePut(`attendance-proofs/${session.id}/${Date.now()}-${nanoid(10)}-${safeName}`, bytes, input.mimeType);
-    const roster = await rosterForSubject(database, session.subjectId);
     const decision = await reviewAttendanceProof({ signedProofUrl: await storageGetSignedUrl(stored.key), submittedName: input.submittedName, session, roster });
     const membershipId = acceptProofReview(decision, roster.map(student => student.membershipId));
     const reviewState = proofSubmissionState(membershipId);
@@ -170,21 +248,29 @@ export const attendanceProofRouter = router({
     const outcome = membershipId ? await publishProofCorrection(database, session, membershipId) : "needs_review" as const;
     return { submissionId: proof.id, outcome };
   }),
-  listForSession: ownerProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+  listForSession: ownerProcedure.input(z.object({ sessionId: z.coerce.number().int().positive() })).query(async ({ ctx, input }) => {
     const database = await databaseOrThrow();
     await getOwnerSession(database, ctx.user.id, input.sessionId);
-    return database
+    const rows = await database
       .select({ id: attendanceProofSubmissions.id, submittedName: attendanceProofSubmissions.submittedName, proofUrl: attendanceProofSubmissions.proofUrl, proofOriginalName: attendanceProofSubmissions.proofOriginalName, reviewState: attendanceProofSubmissions.reviewState, reviewSummary: attendanceProofSubmissions.reviewSummary, matchedSubjectStudentId: attendanceProofSubmissions.matchedSubjectStudentId, matchedName: students.canonicalName, createdAt: attendanceProofSubmissions.createdAt })
       .from(attendanceProofSubmissions)
       .leftJoin(subjectStudents, eq(attendanceProofSubmissions.matchedSubjectStudentId, subjectStudents.id))
       .leftJoin(students, eq(subjectStudents.studentId, students.id))
       .where(eq(attendanceProofSubmissions.classSessionId, input.sessionId))
       .orderBy(desc(attendanceProofSubmissions.createdAt));
+    return rows.map(row => ({
+      ...row,
+      isExcuseLetter: Boolean(row.reviewSummary?.startsWith("[Excuse Letter]") || row.proofOriginalName === "Excuse Letter" || row.proofUrl === "text-only"),
+    }));
   }),
-  resolve: ownerProcedure.input(z.object({ proofId: z.number().int().positive(), decision: z.enum(["accepted", "rejected"]), membershipId: z.number().int().positive().nullable().optional() })).mutation(async ({ ctx, input }) => {
+  resolve: ownerProcedure.input(z.object({
+    proofId: z.coerce.number().int().positive(),
+    decision: z.enum(["accepted", "accepted_present", "accepted_excused", "rejected"]),
+    membershipId: z.coerce.number().int().positive().nullable().optional(),
+  })).mutation(async ({ ctx, input }) => {
     const database = await databaseOrThrow();
     const rows = await database
-      .select({ id: attendanceProofSubmissions.id, sessionId: attendanceProofSubmissions.classSessionId, matchedSubjectStudentId: attendanceProofSubmissions.matchedSubjectStudentId })
+      .select({ id: attendanceProofSubmissions.id, sessionId: attendanceProofSubmissions.classSessionId, matchedSubjectStudentId: attendanceProofSubmissions.matchedSubjectStudentId, reviewSummary: attendanceProofSubmissions.reviewSummary })
       .from(attendanceProofSubmissions)
       .where(eq(attendanceProofSubmissions.id, input.proofId))
       .limit(1);
@@ -192,15 +278,27 @@ export const attendanceProofRouter = router({
     if (!proof) throw new Error("Attendance proof not found");
     const session = await getOwnerSession(database, ctx.user.id, proof.sessionId);
     const membershipId = input.membershipId ?? proof.matchedSubjectStudentId;
-    if (input.decision === "accepted") {
+
+    if (input.decision === "accepted" || input.decision === "accepted_present") {
       if (!membershipId) throw new Error("Choose the matching student before accepting this proof.");
       const member = await database.select({ id: subjectStudents.id }).from(subjectStudents).where(and(eq(subjectStudents.id, membershipId), eq(subjectStudents.subjectId, session.subjectId), eq(subjectStudents.membershipState, "active"))).limit(1);
       if (!member[0]) throw new Error("Selected Student does not belong to this Subject");
       const outcome = await publishProofCorrection(database, session, membershipId);
-      await database.update(attendanceProofSubmissions).set({ reviewState: "accepted", matchedSubjectStudentId: membershipId, reviewSummary: "Accepted by the class secretary.", reviewedAt: new Date() }).where(eq(attendanceProofSubmissions.id, proof.id));
+      await database.update(attendanceProofSubmissions).set({ reviewState: "accepted", matchedSubjectStudentId: membershipId, reviewSummary: "Accepted and marked Present by the class secretary.", reviewedAt: new Date() }).where(eq(attendanceProofSubmissions.id, proof.id));
       return { outcome };
     }
-    await database.update(attendanceProofSubmissions).set({ reviewState: "rejected", reviewSummary: "Reviewed by the class secretary.", reviewedAt: new Date() }).where(eq(attendanceProofSubmissions.id, proof.id));
+
+    if (input.decision === "accepted_excused") {
+      if (!membershipId) throw new Error("Choose the matching student before approving this excuse letter.");
+      const member = await database.select({ id: subjectStudents.id }).from(subjectStudents).where(and(eq(subjectStudents.id, membershipId), eq(subjectStudents.subjectId, session.subjectId), eq(subjectStudents.membershipState, "active"))).limit(1);
+      if (!member[0]) throw new Error("Selected Student does not belong to this Subject");
+      const excuseText = proof.reviewSummary?.replace(/^\[Excuse Letter\]\s*/, "") || "Approved excuse letter";
+      const outcome = await publishExcuseCorrection(database, session, membershipId, excuseText);
+      await database.update(attendanceProofSubmissions).set({ reviewState: "accepted", matchedSubjectStudentId: membershipId, reviewSummary: "Approved as Excused by the class secretary.", reviewedAt: new Date() }).where(eq(attendanceProofSubmissions.id, proof.id));
+      return { outcome };
+    }
+
+    await database.update(attendanceProofSubmissions).set({ reviewState: "rejected", reviewSummary: "Reviewed and rejected by the class secretary.", reviewedAt: new Date() }).where(eq(attendanceProofSubmissions.id, proof.id));
     return { outcome: "rejected" as const };
   }),
 });

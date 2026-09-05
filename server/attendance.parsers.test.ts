@@ -8,7 +8,7 @@ describe("Attendance defaults", () => {
   });
 
   it("limits bulk draft updates to statuses that do not require an individual private reason", () => {
-    expect(bulkDraftStatuses).toEqual(["PRESENT", "ABSENT", "NOT_SET"]);
+    expect(bulkDraftStatuses).toEqual(["PRESENT", "ABSENT", "CONFLICT", "NOT_SET"]);
     expect(bulkDraftStatuses).not.toContain("EXCUSED");
   });
 });

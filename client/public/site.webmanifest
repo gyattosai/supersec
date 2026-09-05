@@ -1,0 +1,28 @@
+{
+  "name": "supersec — Class Secretary Management System",
+  "short_name": "supersec",
+  "description": "Modern class secretary management system with live roll call, AI Zoom proof intake, announcements, and view-only student portals.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0e131f",
+  "background_color": "#0e131f",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}

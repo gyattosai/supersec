@@ -163,7 +163,7 @@ export const attendanceRecords = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     classSessionId: int("classSessionId").notNull().references(() => classSessions.id, { onDelete: "cascade" }),
     subjectStudentId: int("subjectStudentId").notNull().references(() => subjectStudents.id, { onDelete: "cascade" }),
-    attendanceStatus: mysqlEnum("attendanceStatus", ["PRESENT", "ABSENT", "EXCUSED", "NOT_SET"]).default("NOT_SET").notNull(),
+    attendanceStatus: mysqlEnum("attendanceStatus", ["PRESENT", "ABSENT", "EXCUSED", "CONFLICT", "NOT_SET"]).default("NOT_SET").notNull(),
     /** Secretary-only reason required when the official status is EXCUSED. */
     excuseReason: varchar("excuseReason", { length: 500 }),
     hasScheduleConflict: boolean("hasScheduleConflict").default(false).notNull(),

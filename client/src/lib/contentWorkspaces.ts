@@ -21,11 +21,12 @@ export const subjectContentWorkspaces = [
 
 export type SubjectContentWorkspaceKey = (typeof subjectContentWorkspaces)[number]["key"];
 
-export function subjectContentWorkspacePath(subjectId: number, workspace: SubjectContentWorkspaceKey) {
+export function subjectContentWorkspacePath(subjectId: string | number, workspace: SubjectContentWorkspaceKey) {
   return `/app/subjects/${subjectId}/${workspace}`;
 }
 
-export function resolveLegacyContentWorkspacePath(subjectId: number, workspace: string | undefined) {
+export function resolveLegacyContentWorkspacePath(subjectId: string | number, workspace: string | undefined) {
+  const sId = String(subjectId || "");
   const validWorkspace = subjectContentWorkspaces.some(candidate => candidate.key === workspace);
-  return Number.isFinite(subjectId) && subjectId > 0 && validWorkspace ? subjectContentWorkspacePath(subjectId, workspace as SubjectContentWorkspaceKey) : "/app/subjects";
+  return sId && sId !== "0" && sId !== "NaN" && validWorkspace ? subjectContentWorkspacePath(sId, workspace as SubjectContentWorkspaceKey) : "/app/subjects";
 }

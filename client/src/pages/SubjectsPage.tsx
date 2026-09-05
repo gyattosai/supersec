@@ -5,43 +5,396 @@ import { RecordStatusBadge } from "@/components/RecordStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, GraduationCap, Plus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  Clock,
+  ExternalLink,
+  GraduationCap,
+  Plus,
+  Sparkles,
+  Users,
+  Zap,
+} from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 type DayTimes = Record<number, { startTime: string; endTime: string }>;
-type SubjectInput = { name: string; code: string; professorName: string; termName: string | null; meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }> };
+type SubjectInput = {
+  name: string;
+  code: string;
+  professorName: string;
+  termName: string | null;
+  meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }>;
+};
 
 export default function SubjectsPage() {
   const [location, setLocation] = useLocation();
-  const subjects = trpc.subjects.list.useQuery();
+  const subjects = trpc.subjects.list.useQuery(undefined, { staleTime: 0, refetchOnMount: "always" });
   const activeSubjects = subjects.data?.filter(subject => subject.status === "active") ?? [];
-  const requestedId = Number(new URLSearchParams(location.split("?")[1] ?? "").get("subject"));
-  useEffect(() => { if (Number.isFinite(requestedId) && requestedId > 0) setLocation(`/app/subjects/${requestedId}`); }, [requestedId, setLocation]);
+  const requestedId = new URLSearchParams(location.split("?")[1] ?? "").get("subject");
+  useEffect(() => {
+    if (requestedId && requestedId !== "0" && requestedId !== "NaN") setLocation(`/app/subjects/${requestedId}`);
+  }, [requestedId, setLocation]);
 
-  return <DashboardLayout><section className="mx-auto max-w-6xl"><header className="flex flex-wrap items-end justify-between gap-5 pb-3 sm:pb-4"><div><p className="signal-kicker">Subjects</p><h1 className="signal-title mt-3">Choose a Subject.</h1></div><Button asChild><Link href="/app/subjects/new"><Plus className="h-4 w-4" />New Subject</Link></Button></header><section className="mt-8"><div className="flex items-end justify-between gap-4"><p className="signal-kicker">Your Subjects</p><p className="text-sm font-semibold text-muted-foreground"><span className="font-[Manrope] text-3xl font-extrabold tracking-[-0.07em] text-foreground">{activeSubjects.length}</span> active</p></div>{subjects.isLoading ? <p className="py-16 text-center text-sm text-muted-foreground">Loading Subjects…</p> : null}{!subjects.isLoading && !subjects.data?.length ? <EmptyLibrary /> : null}<div className="mt-5 divide-y divide-border">{activeSubjects.map((subject, index) => <SubjectDesk key={subject.id} subject={subject} position={index + 1} />)}</div></section></section></DashboardLayout>;
+  return (
+    <DashboardLayout>
+      <section className="mx-auto max-w-6xl space-y-7 pb-12">
+        <header className="flex flex-wrap items-end justify-between gap-5 border-b border-border pb-5">
+          <div>
+            <p className="signal-kicker">Subject Directory</p>
+            <h1 className="signal-title mt-1.5 text-3xl font-extrabold text-foreground">Class Desks</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Independent workspaces with isolated rosters, session schedules, Zoom matchers, and sharing portals.
+            </p>
+          </div>
+          <Button asChild className="rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/25">
+            <Link href="/app/subjects/new">
+              <Plus className="mr-1.5 size-4" /> New Subject Desk
+            </Link>
+          </Button>
+        </header>
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="signal-kicker">All Active Desks</p>
+            <span className="text-xs font-bold text-muted-foreground bg-secondary/80 px-3 py-1 rounded-full border border-border/80">
+              {activeSubjects.length} {activeSubjects.length === 1 ? "Class" : "Classes"} Active
+            </span>
+          </div>
+
+          {subjects.isLoading && (
+            <div className="py-20 text-center text-xs text-muted-foreground">Loading Class Desks…</div>
+          )}
+
+          {!subjects.isLoading && !subjects.data?.length && <EmptyLibrary />}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {activeSubjects.map((subject, index) => (
+              <SubjectDeskCard key={subject.id} subject={subject} position={index + 1} />
+            ))}
+          </div>
+        </section>
+      </section>
+    </DashboardLayout>
+  );
+}
+
+function SubjectDeskCard({
+  subject,
+  position,
+}: {
+  subject: {
+    id: string | number;
+    name: string;
+    code: string;
+    professorName: string;
+    termName: string | null;
+    publishState: "draft" | "published";
+    publicId?: string;
+    meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }>;
+  };
+  position: number;
+}) {
+  return (
+    <div className="signal-record-card group flex flex-col justify-between rounded-2xl border border-border/80 p-5 bg-card/95 hover:border-primary/50 hover:shadow-xl transition-all">
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="font-mono text-[10px] font-extrabold text-muted-foreground/60 tracking-wider">
+              DESK {String(position).padStart(2, "0")}
+            </span>
+            <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
+              {subject.name}
+            </h3>
+          </div>
+          <RecordStatusBadge tone={subject.publishState === "published" ? "published" : "draft"}>
+            {subject.publishState}
+          </RecordStatusBadge>
+        </div>
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">{subject.code}</span> · {subject.professorName}
+          {subject.termName ? ` · ${subject.termName}` : ""}
+        </p>
+
+        <div className="mt-3.5 flex items-start gap-2 rounded-xl bg-secondary/40 border border-border/60 p-2.5 text-xs text-muted-foreground">
+          <CalendarDays className="size-3.5 shrink-0 text-primary mt-0.5" />
+          <span className="leading-snug">{formatDays(subject.meetingDays)}</span>
+        </div>
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-border/70 flex items-center justify-between gap-2">
+        <Button asChild size="sm" className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20">
+          <Link href={`/app/subjects/${subject.id}`}>
+            Enter Workspace <ArrowRight className="ml-1.5 size-3.5" />
+          </Link>
+        </Button>
+
+        <div className="flex items-center gap-1.5">
+          <Button asChild size="icon" variant="outline" className="size-8 rounded-lg" title="Live Attendance Roll Call">
+            <Link href={`/app/subjects/${subject.id}/attendance`}>
+              <Zap className="size-3.5 text-amber-400" />
+            </Link>
+          </Button>
+          <Button asChild size="icon" variant="outline" className="size-8 rounded-lg" title="Roster & Students">
+            <Link href={`/app/subjects/${subject.id}/students`}>
+              <Users className="size-3.5 text-sky-400" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SubjectCreatePage() {
   const utils = trpc.useUtils();
-  const create = trpc.subjects.create.useMutation({ onSuccess: async () => { await utils.subjects.list.invalidate(); toast.success("Subject created"); }, onError: error => toast.error(error.message) });
-  return <DashboardLayout><section className="mx-auto max-w-3xl"><Link href="/app/subjects" className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"><ArrowLeft className="h-4 w-4" />Back to Subject desks</Link><header className="mt-6 pb-3 sm:pb-4"><p className="signal-kicker">Private setup</p><h1 className="signal-title mt-3">Open a new class desk.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Start with the class identity and repeating rhythm. Students, sessions, Attendance, and sharing stay separate after setup.</p></header><section className="signal-panel mt-7 overflow-hidden"><div className="border-b border-border bg-secondary/60 px-5 py-4 sm:px-7"><p className="signal-kicker">Subject foundation</p><p className="mt-1 text-sm text-muted-foreground">These details remain private until you choose to share class information.</p></div><div className="p-5 sm:p-7"><SubjectCreateForm busy={create.isPending} onCreate={input => create.mutate(input)} /></div></section></section></DashboardLayout>;
-}
+  const [, setLocation] = useLocation();
+  const create = trpc.subjects.create.useMutation({
+    onSuccess: async result => {
+      await utils.subjects.list.invalidate();
+      toast.success("Subject desk created successfully!");
+      if (result?.id) {
+        setLocation(`/app/subjects/${result.id}`);
+      }
+    },
+    onError: error => toast.error(error.message),
+  });
 
-function SubjectDesk({ subject, position }: { subject: { id: number; name: string; code: string; professorName: string; termName: string | null; publishState: "draft" | "published"; meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }> }; position: number }) {
-  return <Link href={`/app/subjects/${subject.id}`} className="signal-action group grid gap-4 py-6 hover:bg-secondary/45 sm:grid-cols-[4rem_minmax(0,1.1fr)_minmax(12rem,.7fr)_auto] sm:items-center sm:px-4"><div className="flex items-center gap-3"><span className="font-[Manrope] text-2xl font-extrabold tracking-[-0.07em] text-primary">{String(position).padStart(2, "0")}</span><span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-primary sm:hidden"><BookOpen className="h-4 w-4" /></span></div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="text-lg font-bold tracking-[-0.04em]">{subject.name}</p><RecordStatusBadge tone={subject.publishState === "published" ? "published" : "draft"}>{subject.publishState}</RecordStatusBadge></div><p className="mt-1 text-sm text-muted-foreground">{subject.code} · {subject.professorName}{subject.termName ? ` · ${subject.termName}` : ""}</p></div><div className="flex items-start gap-2 text-sm leading-6 text-muted-foreground"><CalendarDays className="mt-1 h-4 w-4 shrink-0 text-primary" /><span>{formatDays(subject.meetingDays)}</span></div><span className="inline-flex items-center gap-2 text-sm font-bold text-primary">Open <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span></Link>;
+  return (
+    <DashboardLayout>
+      <section className="mx-auto max-w-3xl space-y-6 pb-12">
+        <Link
+          href="/app/subjects"
+          className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-xs font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+        >
+          <ArrowLeft className="size-3.5" /> Back to Subject desks
+        </Link>
+
+        <header className="border-b border-border pb-5">
+          <p className="signal-kicker">New Workspace</p>
+          <h1 className="signal-title mt-1.5 text-2xl sm:text-3xl font-black text-foreground">
+            Open a new class desk
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Establish the class identity and weekly schedule rhythm. Students, session attendance, and sharing stay completely isolated.
+          </p>
+        </header>
+
+        <section className="signal-panel p-6 sm:p-8 rounded-2xl">
+          <SubjectCreateForm busy={create.isPending} onCreate={input => create.mutate(input)} />
+        </section>
+      </section>
+    </DashboardLayout>
+  );
 }
 
 function SubjectCreateForm({ busy, onCreate }: { busy: boolean; onCreate: (input: SubjectInput) => void }) {
-  const [name, setName] = useState(""); const [code, setCode] = useState(""); const [professor, setProfessor] = useState(""); const [term, setTerm] = useState(""); const [days, setDays] = useState<number[]>([2, 5]); const [dayTimes, setDayTimes] = useState<DayTimes>({});
-  const submit = (event: FormEvent) => { event.preventDefault(); onCreate({ name, code, professorName: professor, termName: term || null, meetingDays: days.sort((a, b) => a - b).map(weekday => ({ weekday, startTime: dayTimes[weekday]?.startTime || null, endTime: dayTimes[weekday]?.endTime || null })) }); };
-  return <form onSubmit={submit} className="space-y-6"><div className="grid gap-4"><Field label="Subject name"><Input required value={name} onChange={event => setName(event.target.value)} placeholder="Example: Research Methods" /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Subject code"><Input required value={code} onChange={event => setCode(event.target.value)} placeholder="RM 101" /></Field><Field label="Term (optional)"><Input value={term} onChange={event => setTerm(event.target.value)} placeholder="2026 Term 1" /></Field></div><Field label="Professor"><Input required value={professor} onChange={event => setProfessor(event.target.value)} placeholder="Professor name" /></Field></div><fieldset className="border-t border-border pt-6"><legend className="signal-kicker">Fixed weekday rhythm</legend><p className="mt-2 text-sm leading-6 text-muted-foreground">Select the days this class normally meets. Individual sessions and No Class dates are managed after setup.</p><div className="mt-4 flex flex-wrap gap-2">{weekdays.map((day, index) => <button type="button" key={day} onClick={() => setDays(current => current.includes(index) ? current.filter(value => value !== index) : [...current, index])} className={`signal-action min-h-11 rounded-[10px] border px-3 text-sm font-semibold ${days.includes(index) ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/60 hover:text-foreground"}`}>{day.slice(0, 3)}</button>)}</div></fieldset><ScheduleDayTimes days={days} value={dayTimes} onChange={setDayTimes} /><div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-md text-sm leading-6 text-muted-foreground">This opens a private Subject desk. You decide when class information becomes shareable.</p><Button disabled={busy || !days.length}>{busy ? "Creating…" : "Create Subject"}<ArrowRight className="h-4 w-4" /></Button></div></form>;
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [professor, setProfessor] = useState("");
+  const [term, setTerm] = useState("");
+  const [days, setDays] = useState<number[]>([2, 5]);
+  const [dayTimes, setDayTimes] = useState<DayTimes>({});
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onCreate({
+      name,
+      code,
+      professorName: professor,
+      termName: term || null,
+      meetingDays: days
+        .sort((a, b) => a - b)
+        .map(weekday => ({
+          weekday,
+          startTime: dayTimes[weekday]?.startTime || null,
+          endTime: dayTimes[weekday]?.endTime || null,
+        })),
+    });
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-6">
+      <div className="grid gap-4">
+        <Field label="Subject Name">
+          <Input
+            required
+            value={name}
+            onChange={event => setName(event.target.value)}
+            placeholder="e.g. Research Methods & Technical Writing"
+            className="rounded-xl h-11"
+          />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Subject Code">
+            <Input
+              required
+              value={code}
+              onChange={event => setCode(event.target.value)}
+              placeholder="e.g. RM 101"
+              className="rounded-xl h-11"
+            />
+          </Field>
+          <Field label="Term / Semester (Optional)">
+            <Input
+              value={term}
+              onChange={event => setTerm(event.target.value)}
+              placeholder="e.g. 1st Semester 2026-2027"
+              className="rounded-xl h-11"
+            />
+          </Field>
+        </div>
+
+        <Field label="Professor / Instructor Name">
+          <Input
+            required
+            value={professor}
+            onChange={event => setProfessor(event.target.value)}
+            placeholder="e.g. Dr. Arthur Pendelton"
+            className="rounded-xl h-11"
+          />
+        </Field>
+      </div>
+
+      <fieldset className="border-t border-border pt-6 space-y-3">
+        <legend className="signal-kicker">Weekly Meeting Rhythm</legend>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Select the days this class normally meets. Specific session dates and No Class announcements are scheduled in the Attendance workspace.
+        </p>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          {weekdays.map((day, index) => {
+            const active = days.includes(index);
+            return (
+              <button
+                type="button"
+                key={day}
+                onClick={() =>
+                  setDays(current =>
+                    current.includes(index) ? current.filter(v => v !== index) : [...current, index]
+                  )
+                }
+                className={`signal-action min-h-10 rounded-xl border px-3.5 text-xs font-bold transition-all ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                }`}
+              >
+                {day.slice(0, 3)}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <ScheduleDayTimes days={days} value={dayTimes} onChange={setDayTimes} />
+
+      <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted-foreground max-w-sm">
+          Opens a private subject desk. Records remain private until you explicitly publish.
+        </p>
+        <Button
+          type="submit"
+          disabled={busy || !days.length}
+          className="rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/25 px-6 h-11"
+        >
+          {busy ? "Creating Desk…" : "Create Subject Desk"}
+          <ArrowRight className="ml-2 size-4" />
+        </Button>
+      </div>
+    </form>
+  );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div className="flex flex-col gap-1.5"><Label>{label}</Label>{children}</div>; }
-function ScheduleDayTimes({ days, value, onChange }: { days: number[]; value: DayTimes; onChange: (value: DayTimes) => void }) { return days.length ? <section className="signal-inset p-4"><p className="signal-kicker">Optional class times</p><div className="mt-4 grid grid-cols-[minmax(0,1fr)_1fr_1fr] items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"><span /> <span>Start</span><span>End</span></div><div className="mt-2 flex flex-col gap-3">{[...days].sort((a, b) => a - b).map(weekday => <div key={weekday} className="grid grid-cols-[minmax(0,1fr)_1fr_1fr] items-center gap-2"><span className="text-sm font-semibold">{weekdays[weekday]}</span><Time12HourInput ariaLabel={`${weekdays[weekday]} start time`} value={value[weekday]?.startTime ?? ""} onChange={startTime => onChange({ ...value, [weekday]: { startTime, endTime: value[weekday]?.endTime ?? "" } })} /><Time12HourInput ariaLabel={`${weekdays[weekday]} end time`} value={value[weekday]?.endTime ?? ""} onChange={endTime => onChange({ ...value, [weekday]: { startTime: value[weekday]?.startTime ?? "", endTime } })} /></div>)}</div></section> : null; }
-function EmptyLibrary() { return <div className="signal-panel mt-5 grid min-h-72 place-items-center border-t-2 border-primary p-8 text-center"><div><span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-accent text-primary"><GraduationCap className="h-5 w-5" /></span><h2 className="signal-heading mt-5">Open your first class desk</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">Each Subject keeps its own Students, Schedule, class sessions, Attendance, and sharing space.</p><Button asChild className="mt-6"><Link href="/app/subjects/new"><Plus className="h-4 w-4" />New Subject</Link></Button></div></div>; }
-function formatDays(days: Array<{ weekday: number; startTime: string | null; endTime?: string | null }>) { return days.length ? days.map(day => `${weekdays[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ") : "No Schedule set"; }
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs font-bold text-foreground uppercase tracking-wider">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function ScheduleDayTimes({
+  days,
+  value,
+  onChange,
+}: {
+  days: number[];
+  value: DayTimes;
+  onChange: (value: DayTimes) => void;
+}) {
+  if (!days.length) return null;
+  return (
+    <section className="signal-inset p-4 sm:p-5 rounded-xl space-y-3">
+      <p className="signal-kicker">Optional Meeting Times</p>
+      <div className="grid grid-cols-[minmax(0,1fr)_1fr_1fr] items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+        <span>Day</span>
+        <span>Start Time</span>
+        <span>End Time</span>
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        {[...days]
+          .sort((a, b) => a - b)
+          .map(weekday => (
+            <div key={weekday} className="grid grid-cols-[minmax(0,1fr)_1fr_1fr] items-center gap-2">
+              <span className="text-xs font-bold text-foreground">{weekdays[weekday]}</span>
+              <Time12HourInput
+                ariaLabel={`${weekdays[weekday]} start time`}
+                value={value[weekday]?.startTime ?? ""}
+                onChange={startTime =>
+                  onChange({
+                    ...value,
+                    [weekday]: { startTime, endTime: value[weekday]?.endTime ?? "" },
+                  })
+                }
+              />
+              <Time12HourInput
+                ariaLabel={`${weekdays[weekday]} end time`}
+                value={value[weekday]?.endTime ?? ""}
+                onChange={endTime =>
+                  onChange({
+                    ...value,
+                    [weekday]: { startTime: value[weekday]?.startTime ?? "", endTime },
+                  })
+                }
+              />
+            </div>
+          ))}
+      </div>
+    </section>
+  );
+}
+
+function EmptyLibrary() {
+  return (
+    <div className="signal-panel p-10 text-center rounded-2xl border-t-2 border-primary">
+      <GraduationCap className="mx-auto size-10 text-primary opacity-80" />
+      <h2 className="signal-heading text-xl font-bold mt-4">Open your first class desk</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
+        Each Subject keeps its own Students, Schedule, class sessions, Attendance, and sharing space.
+      </p>
+      <Button asChild className="mt-6 rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/25">
+        <Link href="/app/subjects/new">
+          <Plus className="mr-1.5 size-4" /> Open New Subject
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+function formatDays(days: Array<{ weekday: number; startTime: string | null; endTime?: string | null }>) {
+  return days.length
+    ? days.map(day => `${weekdays[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ")
+    : "No fixed meeting rhythm";
+}

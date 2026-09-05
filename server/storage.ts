@@ -1,97 +1,100 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uploads via Forge Server presigned URL to S3 (PUT direct).
-// Downloads return /manus-storage/{key} paths served via 307 redirect.
-
+// Appwrite Storage helpers for Supersec Class Management
+import { Client, Storage, ID } from "node-appwrite";
+import { InputFile } from "node-appwrite/file";
 import { ENV } from "./_core/env";
 
-function getForgeConfig() {
-  const forgeUrl = ENV.forgeApiUrl;
-  const forgeKey = ENV.forgeApiKey;
-
-  if (!forgeUrl || !forgeKey) {
-    throw new Error(
-      "Storage config missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY",
-    );
+function getStorageClient(): { storage: Storage; client: Client } | null {
+  if (!ENV.appwriteProjectId || !ENV.appwriteApiKey) {
+    return null;
   }
-
-  return { forgeUrl: forgeUrl.replace(/\/+$/, ""), forgeKey };
+  const client = new Client()
+    .setEndpoint(ENV.appwriteEndpoint)
+    .setProject(ENV.appwriteProjectId)
+    .setKey(ENV.appwriteApiKey);
+  return { storage: new Storage(client), client };
 }
 
 function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
 }
 
-function appendHashSuffix(relKey: string): string {
-  const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
-  const lastDot = relKey.lastIndexOf(".");
-  if (lastDot === -1) return `${relKey}_${hash}`;
-  return `${relKey.slice(0, lastDot)}_${hash}${relKey.slice(lastDot)}`;
+function determineBucketId(relKey: string): string {
+  if (relKey.includes("proof") || relKey.includes("attendance-proof")) {
+    return ENV.appwriteBucketProofs;
+  }
+  return ENV.appwriteBucketMedia;
 }
 
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream",
+  customBucketId?: string
 ): Promise<{ key: string; url: string }> {
-  const { forgeUrl, forgeKey } = getForgeConfig();
-  const key = appendHashSuffix(normalizeKey(relKey));
+  const normKey = normalizeKey(relKey);
+  const bucketId = customBucketId || determineBucketId(normKey);
+  const appwriteStorage = getStorageClient();
 
-  // 1. Get presigned PUT URL from Forge
-  const presignUrl = new URL("v1/storage/presign/put", forgeUrl + "/");
-  presignUrl.searchParams.set("path", key);
+  const fileName = normKey.split("/").pop() || "file.bin";
 
-  const presignResp = await fetch(presignUrl, {
-    headers: { Authorization: `Bearer ${forgeKey}` },
-  });
-
-  if (!presignResp.ok) {
-    const msg = await presignResp.text().catch(() => presignResp.statusText);
-    throw new Error(`Storage presign failed (${presignResp.status}): ${msg}`);
+  // When Appwrite credentials are not provided (e.g. local offline testing), use dev fallback
+  if (!appwriteStorage) {
+    const devFileId = `dev_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}_${fileName}`;
+    return {
+      key: devFileId,
+      url: `/api/storage/${bucketId}/${devFileId}`,
+    };
   }
 
-  const { url: s3Url } = (await presignResp.json()) as { url: string };
-  if (!s3Url) throw new Error("Forge returned empty presign URL");
+  try {
+    let buffer: Buffer;
+    if (typeof data === "string") {
+      buffer = Buffer.from(data, "utf-8");
+    } else if (Buffer.isBuffer(data)) {
+      buffer = data;
+    } else {
+      buffer = Buffer.from(data);
+    }
 
-  // 2. PUT file directly to S3
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
+    const inputFile = InputFile.fromBuffer(buffer, fileName);
+    const file = await appwriteStorage.storage.createFile(
+      bucketId,
+      ID.unique(),
+      inputFile
+    );
 
-  const uploadResp = await fetch(s3Url, {
-    method: "PUT",
-    headers: { "Content-Type": contentType },
-    body: blob,
-  });
+    const fileUrl = `${ENV.appwriteEndpoint}/storage/buckets/${bucketId}/files/${file.$id}/view?project=${ENV.appwriteProjectId}`;
 
-  if (!uploadResp.ok) {
-    throw new Error(`Storage upload to S3 failed (${uploadResp.status})`);
+    return {
+      key: file.$id,
+      url: fileUrl,
+    };
+  } catch (error: any) {
+    console.error(`[Appwrite Storage] Upload failed for ${fileName}:`, error);
+    throw new Error(`Appwrite Storage upload failed: ${error?.message || error}`);
   }
-
-  return { key, url: `/manus-storage/${key}` };
 }
 
-export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
+export async function storageGet(
+  relKey: string,
+  customBucketId?: string
+): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
-  return { key, url: `/manus-storage/${key}` };
-}
-
-export async function storageGetSignedUrl(relKey: string): Promise<string> {
-  const { forgeUrl, forgeKey } = getForgeConfig();
-  const key = normalizeKey(relKey);
-
-  const getUrl = new URL("v1/storage/presign/get", forgeUrl + "/");
-  getUrl.searchParams.set("path", key);
-
-  const resp = await fetch(getUrl, {
-    headers: { Authorization: `Bearer ${forgeKey}` },
-  });
-
-  if (!resp.ok) {
-    const msg = await resp.text().catch(() => resp.statusText);
-    throw new Error(`Storage signed URL failed (${resp.status}): ${msg}`);
+  const bucketId = customBucketId || determineBucketId(key);
+  
+  if (!ENV.appwriteProjectId) {
+    return { key, url: `/api/storage/${bucketId}/${key}` };
   }
 
-  const { url } = (await resp.json()) as { url: string };
+  const url = `${ENV.appwriteEndpoint}/storage/buckets/${bucketId}/files/${key}/view?project=${ENV.appwriteProjectId}`;
+  return { key, url };
+}
+
+export async function storageGetSignedUrl(
+  relKey: string,
+  customBucketId?: string
+): Promise<string> {
+  const { url } = await storageGet(relKey, customBucketId);
   return url;
 }
+

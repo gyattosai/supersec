@@ -2,47 +2,41 @@ import type { Express } from "express";
 import { ENV } from "./env";
 
 export function registerStorageProxy(app: Express) {
-  app.get("/manus-storage/*", async (req, res) => {
+  // Direct Appwrite bucket/file endpoint proxy
+  app.get("/api/storage/:bucketId/:fileId", (req, res) => {
+    const { bucketId, fileId } = req.params;
+    if (!fileId) {
+      res.status(400).send("Missing file ID");
+      return;
+    }
+
+    if (!ENV.appwriteProjectId) {
+      res.status(200).send("Dev storage fallback active");
+      return;
+    }
+
+    const appwriteUrl = `${ENV.appwriteEndpoint}/storage/buckets/${bucketId || ENV.appwriteBucketMedia}/files/${fileId}/view?project=${ENV.appwriteProjectId}`;
+    res.set("Cache-Control", "public, max-age=3600");
+    res.redirect(307, appwriteUrl);
+  });
+
+  // Legacy proxy route redirecting to Appwrite media bucket
+  app.get("/manus-storage/*", (req, res) => {
     const key = (req.params as Record<string, string>)[0];
     if (!key) {
       res.status(400).send("Missing storage key");
       return;
     }
 
-    if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-      res.status(500).send("Storage proxy not configured");
+    if (!ENV.appwriteProjectId) {
+      res.status(200).send("Dev storage fallback active");
       return;
     }
 
-    try {
-      const forgeUrl = new URL(
-        "v1/storage/presign/get",
-        ENV.forgeApiUrl.replace(/\/+$/, "") + "/",
-      );
-      forgeUrl.searchParams.set("path", key);
-
-      const forgeResp = await fetch(forgeUrl, {
-        headers: { Authorization: `Bearer ${ENV.forgeApiKey}` },
-      });
-
-      if (!forgeResp.ok) {
-        const body = await forgeResp.text().catch(() => "");
-        console.error(`[StorageProxy] forge error: ${forgeResp.status} ${body}`);
-        res.status(502).send("Storage backend error");
-        return;
-      }
-
-      const { url } = (await forgeResp.json()) as { url: string };
-      if (!url) {
-        res.status(502).send("Empty signed URL from backend");
-        return;
-      }
-
-      res.set("Cache-Control", "no-store");
-      res.redirect(307, url);
-    } catch (err) {
-      console.error("[StorageProxy] failed:", err);
-      res.status(502).send("Storage proxy error");
-    }
+    const bucketId = key.includes("proof") ? ENV.appwriteBucketProofs : ENV.appwriteBucketMedia;
+    const appwriteUrl = `${ENV.appwriteEndpoint}/storage/buckets/${bucketId}/files/${key}/view?project=${ENV.appwriteProjectId}`;
+    res.set("Cache-Control", "public, max-age=3600");
+    res.redirect(307, appwriteUrl);
   });
 }
+
