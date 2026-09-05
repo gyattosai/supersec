@@ -53,8 +53,8 @@ export function SubjectQuickActions({
 
   return (
     <div
-      className={`flex items-center gap-2 pt-2 ${
-        compact ? "text-xs" : ""
+      className={`flex items-center gap-2 pt-4 sm:pt-5 ${
+        compact ? "text-xs pt-3" : ""
       }`}
       onClick={handleStopPropagation}
     >

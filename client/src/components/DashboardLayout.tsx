@@ -1,7 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startDevLogin } from "@/const";
 import { ThemeToggle, SimpleThemeToggle } from "@/components/ThemeToggle";
-import { trpc } from "@/lib/trpc";
 import {
   Archive,
   BookOpen,
@@ -15,7 +14,6 @@ import {
   MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
   Settings,
   Sparkles,
   StickyNote,
@@ -128,9 +126,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return next;
     });
   };
-
-  const subjects = trpc.subjects.list.useQuery(undefined, { enabled: Boolean(user), staleTime: 0, refetchOnMount: "always" });
-  const activeSubjects = subjects.data?.filter(s => s.status === "active") ?? [];
 
   // Lock body scroll when mobile drawers or sheets are active
   useEffect(() => {
@@ -278,56 +273,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <NavItems collapsed={isCollapsed} />
         </div>
 
-        {/* Quick Subjects Jump List */}
-        {activeSubjects.length > 0 && (
-          <div className={`py-3 border-t border-sidebar-border/80 ${isCollapsed ? "px-2" : "px-3"}`}>
-            {isCollapsed ? (
-              <div className="flex flex-col items-center gap-1.5">
-                <Link
-                  href="/app/subjects"
-                  className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-primary transition-colors"
-                  title="All Active Desks"
-                >
-                  <BookOpen className="size-4" />
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between px-3 pb-2">
-                  <p className="signal-kicker">Active Desks</p>
-                  <Link href="/app/subjects/new" className="text-muted-foreground hover:text-primary transition-colors p-1" title="New Subject">
-                    <Plus className="size-4" />
-                  </Link>
-                </div>
-                <div className="space-y-0.5 max-h-44 overflow-y-auto hide-scrollbar">
-                  {activeSubjects.slice(0, 5).map(s => {
-                    const isCurrent = location.includes(`/app/subjects/${s.id}`);
-                    return (
-                      <Link
-                        key={s.id}
-                        href={`/app/subjects/${s.id}`}
-                        className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-10 ${
-                          isCurrent
-                            ? "bg-primary/10 text-primary font-bold"
-                            : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="size-1.5 rounded-full bg-primary/70 shrink-0" />
-                          <span className="truncate">{s.code}</span>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground/70 font-mono truncate max-w-20">
-                          {s.professorName.split(" ").pop()}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {/* Sidebar Footer */}
         <div className={`mt-auto border-t border-sidebar-border bg-sidebar/50 ${
           isCollapsed ? "p-2.5 flex flex-col items-center gap-3" : "px-4 py-4"
@@ -461,36 +406,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="signal-kicker px-3 pb-2">Workspace Navigation</p>
               <NavItems onNavigate={() => setMobileDrawerOpen(false)} />
             </div>
-
-            {/* Active Desks in Mobile Drawer */}
-            {activeSubjects.length > 0 && (
-              <div className="px-3 py-3 border-t border-sidebar-border">
-                <div className="flex items-center justify-between px-3 pb-2">
-                  <p className="signal-kicker">Active Desks</p>
-                  <Link
-                    href="/app/subjects/new"
-                    onClick={() => setMobileDrawerOpen(false)}
-                    className="text-muted-foreground hover:text-primary transition-colors p-2"
-                    title="New Subject"
-                  >
-                    <Plus className="size-4 text-primary" />
-                  </Link>
-                </div>
-                <div className="space-y-1">
-                  {activeSubjects.slice(0, 6).map(s => (
-                    <Link
-                      key={s.id}
-                      href={`/app/subjects/${s.id}`}
-                      onClick={() => setMobileDrawerOpen(false)}
-                      className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground min-h-10 transition-colors"
-                    >
-                      <span className="truncate">{s.code} · {s.name}</span>
-                      <ChevronRight className="size-3.5 shrink-0 opacity-50" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Footer */}
             <div className="mt-auto border-t border-sidebar-border px-4 py-4 bg-sidebar/50 space-y-3">
