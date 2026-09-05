@@ -113,12 +113,12 @@ export function AttendanceProofPage() {
             <span
               className={`mx-auto flex h-20 w-20 items-center justify-center rounded-2xl ${
                 isAutoApproved
-                  ? "bg-emerald-500/10 ring-8 ring-emerald-500/8 text-emerald-400"
-                  : "bg-amber-500/10 ring-8 ring-amber-500/8 text-amber-400"
+                  ? "bg-emerald-500/10 ring-8 ring-emerald-500/8 text-emerald-600 dark:text-emerald-400"
+                  : "bg-amber-500/10 ring-8 ring-amber-500/8 text-amber-600 dark:text-amber-400"
               }`}
             >
               {isAutoApproved ? (
-                <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10 text-emerald-400 [animation:check-draw_0.5s_ease_forwards]" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10 text-emerald-600 dark:text-emerald-400 [animation:check-draw_0.5s_ease_forwards]" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               ) : (
@@ -146,7 +146,7 @@ export function AttendanceProofPage() {
 
             {matchedName ? (
               <p className="text-sm font-semibold text-foreground">
-                Verified Student: <span className="text-emerald-400 font-bold">{matchedName}</span>
+                Verified Student: <span className="text-emerald-700 dark:text-emerald-400 font-bold">{matchedName}</span>
               </p>
             ) : null}
 
@@ -198,7 +198,7 @@ export function AttendanceProofPage() {
         <section className="signal-panel mt-3 p-6 sm:p-8 rounded-2xl shadow-xl space-y-5">
           {/* Header info */}
           <div className="flex items-center justify-between gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
+            <span className="grid size-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
               <Sparkles className="size-5" />
             </span>
             <Badge className="rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground shadow-sm">
@@ -272,7 +272,7 @@ export function AttendanceProofPage() {
                     : "border-border hover:border-emerald-500/60 hover:bg-secondary/40"
                 }`}
               >
-                <UploadCloud className="size-6 text-emerald-400" />
+                <UploadCloud className="size-6 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-xs sm:text-sm font-bold text-foreground">
                   {file ? file.name : "Tap or drag your Zoom screenshot"}
                 </span>
@@ -289,7 +289,7 @@ export function AttendanceProofPage() {
               />
 
               {file ? (
-                <p className="mt-1.5 text-xs font-semibold text-emerald-400">
+                <p className="mt-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   ✓ {formatFileSize(file.size)} selected and ready
                 </p>
               ) : null}

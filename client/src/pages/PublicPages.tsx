@@ -448,7 +448,7 @@ export function PublicAttendancePage() {
         {/* Prominent Header Banner */}
         <section className={`signal-panel rounded-2xl border p-4 sm:p-6 shadow-xl ${
           isNoClass
-            ? "border-amber-500/40 bg-gradient-to-br from-amber-950/25 via-card to-card shadow-amber-950/20"
+            ? "border-amber-500/40 bg-gradient-to-br from-amber-500/10 dark:from-amber-950/25 via-card to-card shadow-black/5 dark:shadow-amber-950/20"
             : "border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-primary/5"
         }`}>
           <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -460,8 +460,8 @@ export function PublicAttendancePage() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {isNoClass ? (
-                <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-400 shadow-sm">
-                  <CalendarX className="mr-1 size-3 text-amber-400" />
+                <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:text-amber-400 shadow-sm">
+                  <CalendarX className="mr-1 size-3 text-amber-700 dark:text-amber-400" />
                   No Classes Scheduled
                 </Badge>
               ) : null}
@@ -477,10 +477,10 @@ export function PublicAttendancePage() {
 
           {/* Large Visible Time & Date Card */}
           <div className={`mt-3.5 flex items-center gap-3 rounded-xl sm:rounded-2xl border p-3 sm:p-4 ${
-            isNoClass ? "border-amber-500/30 bg-amber-950/20" : "border-border/80 bg-secondary/40"
+            isNoClass ? "border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/20" : "border-border/80 bg-secondary/40"
           }`}>
             <span className={`grid size-10 sm:size-11 shrink-0 place-items-center rounded-xl ${
-              isNoClass ? "bg-amber-500/20 text-amber-400" : "bg-primary/10 text-primary"
+              isNoClass ? "bg-amber-500/20 text-amber-800 dark:text-amber-400" : "bg-primary/10 text-primary"
             }`}>
               {isNoClass ? <CalendarX className="size-5" /> : <CalendarDays className="size-5" />}
             </span>
@@ -530,10 +530,10 @@ export function PublicAttendancePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {/* Card 1: Proof of Attendance (Attended Zoom) */}
-            <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-card to-card p-4 sm:p-5 shadow-lg shadow-emerald-950/15">
+            <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 dark:from-emerald-950/20 via-card to-card p-4 sm:p-5 shadow-lg shadow-black/5 dark:shadow-emerald-950/15">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="rounded-full border-emerald-500/40 bg-emerald-500/10 text-[11px] font-bold text-emerald-400">
+                  <Badge variant="outline" className="rounded-full border-emerald-500/40 bg-emerald-500/10 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                     <Sparkles className="mr-1 size-3" />
                     Instant AI Verification
                   </Badge>
@@ -548,7 +548,7 @@ export function PublicAttendancePage() {
               <div className="mt-4">
                 <Link
                   href={`/attendance/${details.publicId}/proof`}
-                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/30 transition-all active:scale-[0.99]"
+                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 dark:shadow-emerald-950/30 transition-all active:scale-[0.99]"
                 >
                   <Sparkles className="size-4" />
                   Submit Zoom Proof
@@ -557,10 +557,10 @@ export function PublicAttendancePage() {
             </section>
 
             {/* Card 2: Excuse Letter Submission */}
-            <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-950/20 via-card to-card p-4 sm:p-5 shadow-lg shadow-sky-950/15">
+            <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 dark:from-sky-950/20 via-card to-card p-4 sm:p-5 shadow-lg shadow-black/5 dark:shadow-sky-950/15">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="rounded-full border-sky-500/40 bg-sky-500/10 text-[11px] font-bold text-sky-300">
+                  <Badge variant="outline" className="rounded-full border-sky-500/40 bg-sky-500/10 text-[11px] font-bold text-sky-700 dark:text-sky-300">
                     <FileText className="mr-1 size-3" />
                     Secretary Review
                   </Badge>
@@ -575,7 +575,7 @@ export function PublicAttendancePage() {
               <div className="mt-4">
                 <Link
                   href={`/attendance/${details.publicId}/excuse`}
-                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-sky-950/30 transition-all active:scale-[0.99]"
+                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-sky-600/20 dark:shadow-sky-950/30 transition-all active:scale-[0.99]"
                 >
                   <FileText className="size-4" />
                   Submit Excuse Letter
@@ -814,13 +814,13 @@ export function PublicAttendancePage() {
                     key={record.canonicalName}
                     className={`flex items-center justify-between gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all ${
                       isPresent
-                        ? "border-emerald-500/30 bg-emerald-950/15 hover:border-emerald-500/50 shadow-sm"
+                        ? "border-emerald-500/30 bg-emerald-500/8 dark:bg-emerald-950/20 hover:border-emerald-500/50 shadow-sm"
                         : isAbsent
-                        ? "border-red-500/30 bg-red-950/15 hover:border-red-500/50 shadow-sm"
+                        ? "border-red-500/30 bg-red-500/8 dark:bg-red-950/20 hover:border-red-500/50 shadow-sm"
                         : isExcused
-                        ? "border-sky-500/30 bg-sky-950/15 hover:border-sky-500/50 shadow-sm"
+                        ? "border-sky-500/30 bg-sky-500/8 dark:bg-sky-950/20 hover:border-sky-500/50 shadow-sm"
                         : isConflict
-                        ? "border-purple-500/30 bg-purple-950/15 hover:border-purple-500/50 shadow-sm"
+                        ? "border-purple-500/30 bg-purple-500/8 dark:bg-purple-950/20 hover:border-purple-500/50 shadow-sm"
                         : "border-border/80 bg-card hover:border-border"
                     }`}
                   >
@@ -839,28 +839,28 @@ export function PublicAttendancePage() {
                     {/* Prominent High-Contrast Status Pill */}
                     <div className="shrink-0">
                       {isPresent ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-emerald-500/40 bg-emerald-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-emerald-300 shadow-sm shadow-emerald-950/30">
-                          <CheckCircle2 className="size-3.5 shrink-0 text-emerald-300" />
+                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-emerald-500/40 bg-emerald-500/15 dark:bg-emerald-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-emerald-800 dark:text-emerald-300 shadow-sm shadow-black/5 dark:shadow-emerald-950/30">
+                          <CheckCircle2 className="size-3.5 shrink-0 text-emerald-700 dark:text-emerald-300" />
                           PRESENT
                         </span>
                       ) : isAbsent ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-red-500/40 bg-red-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-red-300 shadow-sm shadow-red-950/30">
-                          <XCircle className="size-3.5 shrink-0 text-red-300" />
+                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-red-500/40 bg-red-500/15 dark:bg-red-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-red-800 dark:text-red-300 shadow-sm shadow-black/5 dark:shadow-red-950/30">
+                          <XCircle className="size-3.5 shrink-0 text-red-700 dark:text-red-300" />
                           ABSENT
                         </span>
                       ) : isExcused ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-sky-500/40 bg-sky-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-sky-300 shadow-sm shadow-sky-950/30">
-                          <AlertCircle className="size-3.5 shrink-0 text-sky-300" />
+                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-sky-500/40 bg-sky-500/15 dark:bg-sky-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-sky-800 dark:text-sky-300 shadow-sm shadow-black/5 dark:shadow-sky-950/30">
+                          <AlertCircle className="size-3.5 shrink-0 text-sky-700 dark:text-sky-300" />
                           EXCUSED
                         </span>
                       ) : isConflict ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-purple-500/40 bg-purple-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-purple-300 shadow-sm shadow-purple-950/30">
-                          <AlertCircle className="size-3.5 shrink-0 text-purple-300" />
+                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-purple-500/40 bg-purple-500/15 dark:bg-purple-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-purple-800 dark:text-purple-300 shadow-sm shadow-black/5 dark:shadow-purple-950/30">
+                          <AlertCircle className="size-3.5 shrink-0 text-purple-700 dark:text-purple-300" />
                           CONFLICT
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-amber-500/40 bg-amber-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-amber-300 shadow-sm shadow-amber-950/30">
-                          <Clock className="size-3.5 shrink-0 text-amber-300" />
+                        <span className="inline-flex items-center gap-1 rounded-lg sm:rounded-xl border border-amber-500/40 bg-amber-500/15 dark:bg-amber-500/20 px-2.5 py-1 text-[11px] sm:text-xs font-black text-amber-800 dark:text-amber-300 shadow-sm shadow-black/5 dark:shadow-amber-950/30">
+                          <Clock className="size-3.5 shrink-0 text-amber-700 dark:text-amber-300" />
                           NOT SET
                         </span>
                       )}

@@ -118,7 +118,7 @@ export default function Home() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-base text-foreground">Research Methods (RM 101)</h3>
-                      <Badge className="rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
+                      <Badge className="rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
                         Published
                       </Badge>
                     </div>
@@ -136,15 +136,15 @@ export default function Home() {
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="signal-inset p-3.5 rounded-xl text-center">
                   <p className="text-xs font-bold text-muted-foreground">Present</p>
-                  <p className="font-[Manrope] text-2xl font-black text-emerald-400 mt-1">38</p>
+                  <p className="font-[Manrope] text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">38</p>
                 </div>
                 <div className="signal-inset p-3.5 rounded-xl text-center">
                   <p className="text-xs font-bold text-muted-foreground">Absent</p>
-                  <p className="font-[Manrope] text-2xl font-black text-red-400 mt-1">2</p>
+                  <p className="font-[Manrope] text-2xl font-black text-red-600 dark:text-red-400 mt-1">2</p>
                 </div>
                 <div className="signal-inset p-3.5 rounded-xl text-center">
                   <p className="text-xs font-bold text-muted-foreground">Excused</p>
-                  <p className="font-[Manrope] text-2xl font-black text-sky-400 mt-1">2</p>
+                  <p className="font-[Manrope] text-2xl font-black text-sky-600 dark:text-sky-400 mt-1">2</p>
                 </div>
                 <div className="signal-inset p-3.5 rounded-xl text-center">
                   <p className="text-xs font-bold text-muted-foreground">Attendance Rate</p>
@@ -153,7 +153,7 @@ export default function Home() {
               </div>
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/80 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
                   <CheckCircle2 className="size-4" /> Zoom AI match completed (38 of 38 verified)
                 </span>
                 <span className="font-mono text-[11px] text-muted-foreground">

@@ -559,8 +559,8 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
                 </div>
 
                 {/* Messenger Message Preview */}
-                <div className="rounded-xl border border-border/70 bg-[#0f172a] p-3 space-y-2">
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-800 pb-1.5">
+                <div className="rounded-xl border border-border/70 bg-secondary/70 dark:bg-[#0f172a] p-3 space-y-2">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground dark:text-slate-400 border-b border-border/70 dark:border-slate-800 pb-1.5">
                     <span className="flex items-center gap-1 font-semibold">
                       <span className="size-1.5 rounded-full bg-emerald-500 inline-block" /> Messenger Preview
                     </span>
@@ -1081,8 +1081,8 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
                 />
               ) : (
                 /* Editor Tab 2: Full-Width Messenger Live Preview */
-                <div className="rounded-2xl border border-border/80 bg-[#0f172a] p-4 space-y-3 shadow-inner">
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
+                <div className="rounded-2xl border border-border/80 bg-secondary/60 dark:bg-[#0f172a] p-4 space-y-3 shadow-inner">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground dark:text-slate-400 border-b border-border/70 dark:border-slate-800 pb-2">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <span className="size-2 rounded-full bg-emerald-500 inline-block" /> Facebook Messenger Group Chat
                     </span>
@@ -1100,7 +1100,7 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
                           <span className="text-white/60 italic">Type in the message box to see live preview...</span>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-400 pl-1">
+                      <p className="text-[10px] text-muted-foreground dark:text-slate-400 pl-1">
                         Ready to paste into your class Messenger group chat
                       </p>
                     </div>

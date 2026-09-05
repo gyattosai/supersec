@@ -8,9 +8,26 @@
     <title>supersec — Class Secretary Management System</title>
     <meta name="description" content="Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals." />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#0e131f" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e131f" />
+    <meta name="theme-color" content="#151619" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f5f2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151619" />
+
+    <!-- Immediate Theme Initialization (Eliminates FOUC & Flash on Load) -->
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem("theme");
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (stored === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (stored === "dark" || (!stored && prefersDark) || (stored === "system" && prefersDark) || !stored) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Open Graph / Facebook / Messenger -->
     <meta property="og:site_name" content="supersec" />

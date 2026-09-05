@@ -176,16 +176,16 @@ export default function ReportsPage() {
                 <span className="size-1.5 rounded-full bg-emerald-400" />
                 {classReport.data.present} Present
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400">
-                <span className="size-1.5 rounded-full bg-red-400" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-400">
+                <span className="size-1.5 rounded-full bg-red-600 dark:bg-red-400" />
                 {classReport.data.absent} Absent
               </span>
               <span className="glow-badge-sky inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold">
                 <span className="size-1.5 rounded-full bg-sky-400" />
                 {classReport.data.excused} Excused
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-400">
-                <span className="size-1.5 rounded-full bg-purple-400" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
+                <span className="size-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
                 {classReport.data.conflict} With Schedule Conflict
               </span>
               <span className="glow-badge-amber inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold">
@@ -219,11 +219,11 @@ export default function ReportsPage() {
 
         {/* Global KPI Stats Grid */}
         <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Metric icon={CheckCircle2} label="Total Present" value={totals.present} tone="text-emerald-400" />
-          <Metric icon={XCircle} label="Total Absent" value={totals.absent} tone="text-red-400" />
-          <Metric icon={FilePlus2} label="Total Excused" value={totals.excused} tone="text-sky-400" />
-          <Metric icon={AlertCircle} label="Total Conflict" value={totals.conflict} tone="text-purple-400" />
-          <Metric icon={CircleDashed} label="Pending Review" value={totals.notSet} tone="text-amber-400" className="col-span-2 sm:col-span-1" />
+          <Metric icon={CheckCircle2} label="Total Present" value={totals.present} tone="text-emerald-600 dark:text-emerald-400" />
+          <Metric icon={XCircle} label="Total Absent" value={totals.absent} tone="text-red-600 dark:text-red-400" />
+          <Metric icon={FilePlus2} label="Total Excused" value={totals.excused} tone="text-sky-600 dark:text-sky-400" />
+          <Metric icon={AlertCircle} label="Total Conflict" value={totals.conflict} tone="text-purple-600 dark:text-purple-400" />
+          <Metric icon={CircleDashed} label="Pending Review" value={totals.notSet} tone="text-amber-600 dark:text-amber-400" className="col-span-2 sm:col-span-1" />
         </div>
 
         {/* Subject-wide Attendance Summary Grid */}
@@ -289,16 +289,16 @@ export default function ReportsPage() {
                     </label>
                     <div className="flex flex-wrap items-center gap-3 shrink-0">
                       <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                           {item.present} present
                         </span>
-                        <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-400">
+                        <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-700 dark:text-red-400">
                           {item.absent} absent
                         </span>
-                        <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-bold text-sky-400">
+                        <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-bold text-sky-700 dark:text-sky-400">
                           {item.excused} excused
                         </span>
-                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-400">
+                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:text-amber-400">
                           {item.notSet} not set
                         </span>
                       </div>
@@ -457,14 +457,14 @@ function ReportRow({
 function StatusBadge({ status }: { status: "PRESENT" | "ABSENT" | "EXCUSED" | "CONFLICT" | "NOT_SET" }) {
   const tone =
     status === "PRESENT"
-      ? "text-emerald-400 bg-emerald-500/10"
+      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-500/10"
       : status === "ABSENT"
-      ? "text-red-400 bg-red-500/10"
+      ? "text-red-700 dark:text-red-400 bg-red-500/10"
       : status === "EXCUSED"
-      ? "text-sky-400 bg-sky-500/10"
+      ? "text-sky-700 dark:text-sky-400 bg-sky-500/10"
       : status === "CONFLICT"
-      ? "text-purple-400 bg-purple-500/10"
-      : "text-amber-400 bg-amber-500/10";
+      ? "text-purple-700 dark:text-purple-300 bg-purple-500/10"
+      : "text-amber-800 dark:text-amber-400 bg-amber-500/10";
   return (
     <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${tone}`}>
       {status === "NOT_SET" ? "Not set" : status === "CONFLICT" ? "With Schedule Conflict" : status[0] + status.slice(1).toLowerCase()}

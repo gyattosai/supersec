@@ -578,20 +578,20 @@ export function PremiumPublicSubjectHome() {
             {(() => {
               const topAnno = allUnifiedItems.find(i => i.kind === "announcements")!;
               return (
-                <article className="p-5 sm:p-6 rounded-2xl border-2 border-amber-500/80 bg-amber-950 text-amber-50 shadow-xl">
-                  <div className="flex items-center justify-between gap-2 text-xs font-bold text-amber-300">
-                    <span className="inline-flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px] font-black bg-amber-500/25 px-2.5 py-1 rounded-full border border-amber-400/30 text-amber-200">
-                      <BellRing className="size-3.5 text-amber-300" /> Priority Announcement
+                <article className="p-5 sm:p-6 rounded-2xl border-2 border-amber-500/80 bg-amber-500/10 dark:bg-amber-950 text-foreground dark:text-amber-50 shadow-xl shadow-amber-500/5 dark:shadow-amber-950/20">
+                  <div className="flex items-center justify-between gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-1.5 uppercase tracking-wider text-[10px] sm:text-[11px] font-black bg-amber-500/20 dark:bg-amber-500/25 px-2.5 py-1 rounded-full border border-amber-500/40 dark:border-amber-400/30 text-amber-900 dark:text-amber-200">
+                      <BellRing className="size-3.5 text-amber-700 dark:text-amber-300" /> Priority Announcement
                     </span>
-                    <span className="text-amber-200/80 font-medium">{topAnno.dateFormatted}</span>
+                    <span className="text-amber-800/80 dark:text-amber-200/80 font-medium">{topAnno.dateFormatted}</span>
                   </div>
-                  <h3 className="mt-2.5 text-base sm:text-lg font-extrabold text-white">
+                  <h3 className="mt-2.5 text-base sm:text-lg font-extrabold text-foreground dark:text-white">
                     {topAnno.title}
                   </h3>
                   <div className="mt-3.5 flex justify-end">
                     <Link
                       href={topAnno.href}
-                      className="inline-flex items-center gap-1.5 text-xs font-black text-amber-200 hover:text-white bg-amber-900/80 hover:bg-amber-800 px-3.5 py-1.5 rounded-xl border border-amber-400/40 transition-colors shadow-sm"
+                      className="inline-flex items-center gap-1.5 text-xs font-black text-white bg-amber-700 hover:bg-amber-800 dark:text-amber-200 dark:hover:text-white dark:bg-amber-900/80 dark:hover:bg-amber-800 px-3.5 py-1.5 rounded-xl border border-amber-600/40 dark:border-amber-400/40 transition-colors shadow-sm"
                     >
                       Read full announcement <ArrowRight className="size-3.5" />
                     </Link>
@@ -791,58 +791,58 @@ export function filterAndSortItems(
 const sectionThemes = {
   attendance: {
     border: "border-emerald-500/30 hover:border-emerald-500/60",
-    glow: "shadow-lg shadow-emerald-950/20 bg-gradient-to-br from-emerald-950/25 via-card/95 to-card",
-    eyebrowText: "text-emerald-400 font-extrabold",
-    badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    accentDot: "bg-emerald-400",
-    hoverBg: "hover:bg-emerald-950/20",
-    hoverText: "group-hover:text-emerald-300",
-    chevronColor: "group-hover:text-emerald-400",
-    browseText: "text-emerald-400 hover:text-emerald-300",
+    glow: "shadow-lg shadow-black/5 dark:shadow-emerald-950/20 bg-gradient-to-br from-emerald-500/10 dark:from-emerald-950/25 via-card/95 to-card",
+    eyebrowText: "text-emerald-700 dark:text-emerald-400 font-extrabold",
+    badge: "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30",
+    accentDot: "bg-emerald-500 dark:bg-emerald-400",
+    hoverBg: "hover:bg-emerald-500/10 dark:hover:bg-emerald-950/20",
+    hoverText: "group-hover:text-emerald-700 dark:group-hover:text-emerald-300",
+    chevronColor: "group-hover:text-emerald-700 dark:group-hover:text-emerald-400",
+    browseText: "text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300",
   },
   announcements: {
     border: "border-amber-500/30 hover:border-amber-500/60",
-    glow: "shadow-lg shadow-amber-950/20 bg-gradient-to-br from-amber-950/25 via-card/95 to-card",
-    eyebrowText: "text-amber-400 font-extrabold",
-    badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    accentDot: "bg-amber-400",
-    hoverBg: "hover:bg-amber-950/20",
-    hoverText: "group-hover:text-amber-300",
-    chevronColor: "group-hover:text-amber-400",
-    browseText: "text-amber-400 hover:text-amber-300",
+    glow: "shadow-lg shadow-black/5 dark:shadow-amber-950/20 bg-gradient-to-br from-amber-500/10 dark:from-amber-950/25 via-card/95 to-card",
+    eyebrowText: "text-amber-800 dark:text-amber-400 font-extrabold",
+    badge: "bg-amber-500/15 text-amber-900 dark:text-amber-300 border-amber-500/30",
+    accentDot: "bg-amber-500 dark:bg-amber-400",
+    hoverBg: "hover:bg-amber-500/10 dark:hover:bg-amber-950/20",
+    hoverText: "group-hover:text-amber-800 dark:group-hover:text-amber-300",
+    chevronColor: "group-hover:text-amber-800 dark:group-hover:text-amber-400",
+    browseText: "text-amber-800 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300",
   },
   resources: {
     border: "border-sky-500/30 hover:border-sky-500/60",
-    glow: "shadow-lg shadow-sky-950/20 bg-gradient-to-br from-sky-950/25 via-card/95 to-card",
-    eyebrowText: "text-sky-400 font-extrabold",
-    badge: "bg-sky-500/15 text-sky-300 border-sky-500/30",
-    accentDot: "bg-sky-400",
-    hoverBg: "hover:bg-sky-950/20",
-    hoverText: "group-hover:text-sky-300",
-    chevronColor: "group-hover:text-sky-400",
-    browseText: "text-sky-400 hover:text-sky-300",
+    glow: "shadow-lg shadow-black/5 dark:shadow-sky-950/20 bg-gradient-to-br from-sky-500/10 dark:from-sky-950/25 via-card/95 to-card",
+    eyebrowText: "text-sky-700 dark:text-sky-400 font-extrabold",
+    badge: "bg-sky-500/15 text-sky-800 dark:text-sky-300 border-sky-500/30",
+    accentDot: "bg-sky-500 dark:bg-sky-400",
+    hoverBg: "hover:bg-sky-500/10 dark:hover:bg-sky-950/20",
+    hoverText: "group-hover:text-sky-700 dark:group-hover:text-sky-300",
+    chevronColor: "group-hover:text-sky-700 dark:group-hover:text-sky-400",
+    browseText: "text-sky-700 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300",
   },
   questions: {
     border: "border-purple-500/30 hover:border-purple-500/60",
-    glow: "shadow-lg shadow-purple-950/20 bg-gradient-to-br from-purple-950/25 via-card/95 to-card",
-    eyebrowText: "text-purple-400 font-extrabold",
-    badge: "bg-purple-500/15 text-purple-300 border-purple-500/30",
-    accentDot: "bg-purple-400",
-    hoverBg: "hover:bg-purple-950/20",
-    hoverText: "group-hover:text-purple-300",
-    chevronColor: "group-hover:text-purple-400",
-    browseText: "text-purple-400 hover:text-purple-300",
+    glow: "shadow-lg shadow-black/5 dark:shadow-purple-950/20 bg-gradient-to-br from-purple-500/10 dark:from-purple-950/25 via-card/95 to-card",
+    eyebrowText: "text-purple-700 dark:text-purple-400 font-extrabold",
+    badge: "bg-purple-500/15 text-purple-800 dark:text-purple-300 border-purple-500/30",
+    accentDot: "bg-purple-500 dark:bg-purple-400",
+    hoverBg: "hover:bg-purple-500/10 dark:hover:bg-purple-950/20",
+    hoverText: "group-hover:text-purple-700 dark:group-hover:text-purple-300",
+    chevronColor: "group-hover:text-purple-700 dark:group-hover:text-purple-400",
+    browseText: "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300",
   },
   students: {
     border: "border-indigo-500/30 hover:border-indigo-500/60",
-    glow: "shadow-lg shadow-indigo-950/20 bg-gradient-to-br from-indigo-950/25 via-card/95 to-card",
-    eyebrowText: "text-indigo-400 font-extrabold",
-    badge: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
-    accentDot: "bg-indigo-400",
-    hoverBg: "hover:bg-indigo-950/20",
-    hoverText: "group-hover:text-indigo-300",
-    chevronColor: "group-hover:text-indigo-400",
-    browseText: "text-indigo-400 hover:text-indigo-300",
+    glow: "shadow-lg shadow-black/5 dark:shadow-indigo-950/20 bg-gradient-to-br from-indigo-500/10 dark:from-indigo-950/25 via-card/95 to-card",
+    eyebrowText: "text-indigo-700 dark:text-indigo-400 font-extrabold",
+    badge: "bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border-indigo-500/30",
+    accentDot: "bg-indigo-500 dark:bg-indigo-400",
+    hoverBg: "hover:bg-indigo-500/10 dark:hover:bg-indigo-950/20",
+    hoverText: "group-hover:text-indigo-700 dark:group-hover:text-indigo-300",
+    chevronColor: "group-hover:text-indigo-700 dark:group-hover:text-indigo-400",
+    browseText: "text-indigo-700 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300",
   },
 };
 
@@ -1129,11 +1129,11 @@ function StudentMasterListSection({
   return (
     <div className="space-y-6">
       {/* Header & Stats Banner */}
-      <section className="p-6 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/25 via-card/95 to-card shadow-lg shadow-indigo-950/20 space-y-4">
+      <section className="p-6 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 dark:from-indigo-950/25 via-card/95 to-card shadow-lg shadow-black/5 dark:shadow-indigo-950/20 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/20 text-indigo-400">
+              <span className="grid size-8 place-items-center rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-400">
                 <Users className="size-4" />
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-foreground">Official Student Master List</h2>

@@ -35,15 +35,13 @@ export function ThemeProvider({
   defaultTheme = "dark",
   switchable = false,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
-
-  // Load saved theme
-  useEffect(() => {
-    if (!switchable) return;
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return defaultTheme;
+    if (!switchable) return defaultTheme;
     const stored = localStorage.getItem("theme");
-    if (stored === "light" || stored === "dark" || stored === "system") setThemeState(stored);
-  }, [switchable]);
+    return (stored === "light" || stored === "dark" || stored === "system") ? stored : defaultTheme;
+  });
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
 
   // Listen for system theme changes
   useEffect(() => {

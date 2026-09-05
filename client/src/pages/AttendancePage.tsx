@@ -418,13 +418,13 @@ export default function AttendancePage() {
         {session.data && (
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
             {isNoClass ? (
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-500 dark:bg-amber-400" />
                 No Class • {noClassReason || "Suspended"}
               </span>
             ) : (session.data as any)?.sessionState === "completed" ? (
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-400" />
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 dark:bg-emerald-400" />
                 Attendance completed
               </span>
             ) : (
@@ -578,31 +578,31 @@ export default function AttendancePage() {
             <Summary
               label="Present"
               count={totals.present}
-              tone="text-emerald-400"
+              tone="text-emerald-600 dark:text-emerald-400"
               percentage={records.data?.length ? Math.round((totals.present / records.data.length) * 100) : 0}
             />
             <Summary
               label="Absent"
               count={totals.absent}
-              tone="text-red-400"
+              tone="text-rose-600 dark:text-rose-400"
               percentage={records.data?.length ? Math.round((totals.absent / records.data.length) * 100) : 0}
             />
             <Summary
               label="Excused"
               count={totals.excused}
-              tone="text-sky-400"
+              tone="text-sky-600 dark:text-sky-400"
               percentage={records.data?.length ? Math.round((totals.excused / records.data.length) * 100) : 0}
             />
             <Summary
               label="With Schedule Conflict"
               count={totals.conflict}
-              tone="text-purple-400"
+              tone="text-purple-600 dark:text-purple-400"
               percentage={records.data?.length ? Math.round((totals.conflict / records.data.length) * 100) : 0}
             />
             <Summary
               label="Unmarked"
               count={totals.unset}
-              tone="text-amber-400"
+              tone="text-amber-600 dark:text-amber-400"
               percentage={records.data?.length ? Math.round((totals.unset / records.data.length) * 100) : 0}
               className="col-span-2 sm:col-span-1"
             />
@@ -804,8 +804,8 @@ export default function AttendancePage() {
                           </p>
 
                           {record.status === "EXCUSED" && record.excuseReason ? (
-                            <p className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 text-xs leading-relaxed text-sky-200">
-                              <span className="font-bold text-sky-400">Excuse Reason:</span> {record.excuseReason}
+                            <p className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs leading-relaxed text-sky-800 dark:text-sky-200">
+                              <span className="font-bold text-sky-700 dark:text-sky-400">Excuse Reason:</span> {record.excuseReason}
                             </p>
                           ) : null}
                         </div>

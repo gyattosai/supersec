@@ -5,14 +5,14 @@ import type { ReactNode } from "react";
 export type RecordStatusTone = "published" | "draft" | "archived" | "private" | "attention" | "confirmed" | "official" | "conflict";
 
 const toneClass: Record<RecordStatusTone, string> = {
-  published: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 dark:text-emerald-300",
+  published: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   draft: "border-border bg-secondary/70 text-muted-foreground",
   archived: "border-border bg-secondary/50 text-muted-foreground",
   private: "border-border bg-secondary/70 text-muted-foreground",
-  attention: "border-amber-500/35 bg-amber-500/10 text-amber-500 dark:text-amber-300",
-  confirmed: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 dark:text-emerald-300",
+  attention: "border-amber-500/35 bg-amber-500/10 text-amber-800 dark:text-amber-300",
+  confirmed: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   official: "border-primary/40 bg-primary/10 text-primary",
-  conflict: "border-purple-500/35 bg-purple-500/10 text-purple-400 dark:text-purple-300",
+  conflict: "border-purple-500/35 bg-purple-500/10 text-purple-700 dark:text-purple-300",
 };
 
 const dotClass: Record<RecordStatusTone, string> = {

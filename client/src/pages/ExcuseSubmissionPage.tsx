@@ -118,7 +118,7 @@ export function ExcuseSubmissionPage() {
             <div className="p-8 sm:p-10 text-center">
               {/* Animated check icon */}
               <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-500/10 ring-8 ring-emerald-500/8">
-                <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10 text-emerald-400 [animation:check-draw_0.5s_ease_forwards]" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10 text-emerald-600 dark:text-emerald-400 [animation:check-draw_0.5s_ease_forwards]" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </span>
@@ -135,7 +135,7 @@ export function ExcuseSubmissionPage() {
 
               {matchedName ? (
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  Student: <span className="text-emerald-400">{matchedName}</span>
+                  Student: <span className="text-emerald-700 dark:text-emerald-400 font-bold">{matchedName}</span>
                 </p>
               ) : null}
 
@@ -184,10 +184,10 @@ export function ExcuseSubmissionPage() {
         </Link>
 
         <section className="signal-card-shell mt-3">
-          <div className="signal-record-card p-4 sm:p-7 rounded-2xl border border-sky-500/25 bg-gradient-to-b from-sky-950/15 via-card to-card shadow-xl shadow-sky-950/10">
+          <div className="signal-record-card p-4 sm:p-7 rounded-2xl border border-sky-500/25 bg-gradient-to-b from-sky-500/8 dark:from-sky-950/20 via-card to-card shadow-xl shadow-sky-500/5">
             {/* Header info */}
             <div className="flex items-center justify-between gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-sky-500/15 text-sky-400">
+              <span className="grid size-10 place-items-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
                 <FileText className="size-5" />
               </span>
               <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary">
@@ -202,8 +202,8 @@ export function ExcuseSubmissionPage() {
               Session: <span className="font-semibold text-foreground">{new Date(details.startsAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
             </p>
 
-            <div className="mt-4 rounded-xl border border-sky-500/20 bg-sky-950/20 p-3.5 text-xs leading-5 text-sky-200/90">
-              <div className="flex items-center gap-1.5 font-bold text-sky-300">
+            <div className="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/8 dark:bg-sky-950/20 p-3.5 text-xs leading-5 text-foreground">
+              <div className="flex items-center gap-1.5 font-bold text-sky-700 dark:text-sky-300">
                 <Clock className="size-3.5" />
                 <span>Secretary Review</span>
               </div>
@@ -273,7 +273,7 @@ export function ExcuseSubmissionPage() {
                       : "border-border hover:border-sky-500/60 hover:bg-secondary/40"
                   }`}
                 >
-                  <UploadCloud className="size-5 text-sky-400" />
+                  <UploadCloud className="size-5 text-sky-600 dark:text-sky-400" />
                   <span className="text-xs sm:text-sm font-bold text-foreground">
                     {file ? file.name : "Attach photo or PDF document"}
                   </span>
@@ -290,7 +290,7 @@ export function ExcuseSubmissionPage() {
                 />
 
                 {file ? (
-                  <p className="mt-1.5 text-xs font-semibold text-sky-400">
+                  <p className="mt-1.5 text-xs font-semibold text-sky-700 dark:text-sky-400">
                     ✓ {formatFileSize(file.size)} ready
                   </p>
                 ) : null}
