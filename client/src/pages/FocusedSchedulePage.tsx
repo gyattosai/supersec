@@ -398,18 +398,18 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             {isNoClass ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-bold text-amber-300">
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
                                 No Class • {session.noClassReason || "Suspended"}
                               </span>
                             ) : isCompleted ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-400" />
                                 Attendance completed
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground" />
                                 Ready for Attendance
                               </span>
                             )}

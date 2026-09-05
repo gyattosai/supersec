@@ -15,6 +15,10 @@ const configuredSubject = {
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    content: {
+      autoDraftVersionHistory: { useMutation: vi.fn(() => ({ mutateAsync: vi.fn() })) },
+      updateHistoryEntrySummary: { useMutation: vi.fn(() => ({ mutateAsync: vi.fn() })) },
+    },
     foundation: {
       publicSubject: { useQuery: vi.fn(() => ({ data: { available: true, subject: { ...configuredSubject, meetingDays: [], noClass: null, latest: { attendance: [], announcements: [], resources: [], questions: [] } } } })) },
       publicItem: { useQuery: vi.fn(() => ({ data: { available: true, item: { kind: "resource", publicId: "resource-public-id", title: "Class guide", body: "Read this guide.", version: 1, publishedAt: null, destinationUrl: null, category: "Guide", resourceType: "Link", sourceDomain: "example.edu", media: null, socialPreviewMedia: null, attachments: [], subject: configuredSubject } } })) },

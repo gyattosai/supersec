@@ -9,9 +9,18 @@ import {
   BookOpen,
   Copy,
   ExternalLink,
-  Plus,
-  Share2,
+  ArrowRight,
+  MoreHorizontal,
+  ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 export interface SubjectQuickActionsProps {
@@ -24,7 +33,6 @@ export interface SubjectQuickActionsProps {
 export function SubjectQuickActions({
   subjectId,
   publicId,
-  publishState = "draft",
   compact = false,
 }: SubjectQuickActionsProps) {
   const handleCopyLink = (e: React.MouseEvent) => {
@@ -38,124 +46,124 @@ export function SubjectQuickActions({
     toast.success("Public subject page link copied to clipboard!");
   };
 
-  const handleLinkClick = (e: React.MouseEvent) => {
+  const handleStopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   return (
     <div
-      className={`flex flex-col gap-2.5 pt-3 border-t border-border/70 ${
+      className={`flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border/70 ${
         compact ? "text-xs" : ""
       }`}
-      onClick={e => e.stopPropagation()}
+      onClick={handleStopPropagation}
     >
-      {/* 1. Create Group */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-          <Plus className="size-3 text-primary" /> Create
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-7 px-2.5 rounded-lg text-xs font-semibold hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLinkClick}
-          >
-            <Link href={`/app/subjects/${subjectId}/students`}>
-              <UserPlus className="mr-1.5 size-3 text-sky-400" />
-              New Student
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-7 px-2.5 rounded-lg text-xs font-semibold hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLinkClick}
-          >
-            <Link href={`/app/subjects/${subjectId}/attendance`}>
-              <CalendarCheck className="mr-1.5 size-3 text-amber-400" />
-              New Attendance
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-7 px-2.5 rounded-lg text-xs font-semibold hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLinkClick}
-          >
-            <Link href={`/app/subjects/${subjectId}/announcements/new`}>
-              <Megaphone className="mr-1.5 size-3 text-amber-500" />
-              New Announcement
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-7 px-2.5 rounded-lg text-xs font-semibold hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLinkClick}
-          >
-            <Link href={`/app/subjects/${subjectId}/questions/new`}>
-              <HelpCircle className="mr-1.5 size-3 text-purple-400" />
-              New Q&amp;A
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-7 px-2.5 rounded-lg text-xs font-semibold hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLinkClick}
-          >
-            <Link href={`/app/subjects/${subjectId}/resources/new`}>
-              <BookOpen className="mr-1.5 size-3 text-emerald-400" />
-              New Resource
-            </Link>
-          </Button>
-        </div>
+      {/* Primary & Shortcut Triggers */}
+      <div className="flex items-center gap-2">
+        <Button
+          asChild
+          size="sm"
+          className="h-8 px-3 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          onClick={handleStopPropagation}
+        >
+          <Link href={`/app/subjects/${subjectId}`}>
+            Enter Workspace <ArrowRight className="ml-1.5 size-3.5" />
+          </Link>
+        </Button>
+
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="h-8 px-2.5 rounded-lg text-xs font-semibold hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-400"
+          onClick={handleStopPropagation}
+          title="Roll Call / Attendance Desk"
+        >
+          <Link href={`/app/subjects/${subjectId}/attendance`}>
+            <CalendarCheck className="mr-1.5 size-3.5 text-amber-400" />
+            Roll Call
+          </Link>
+        </Button>
       </div>
 
-      {/* 2. Copy / View Group */}
-      <div className="flex flex-col gap-1.5 pt-1">
-        <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-          <Share2 className="size-3 text-emerald-400" /> Copy / View
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5">
+      {/* Compact Actions Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={handleStopPropagation}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 px-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            <MoreHorizontal className="size-3.5 mr-1" />
+            Actions
+            <ChevronDown className="size-3 ml-1 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52" onClick={handleStopPropagation}>
+          <DropdownMenuLabel className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+            Create Content
+          </DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link href={`/app/subjects/${subjectId}/students`} className="flex items-center gap-2 cursor-pointer" onClick={handleStopPropagation}>
+              <UserPlus className="size-4 text-sky-400" />
+              <span>New Student</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/app/subjects/${subjectId}/attendance`} className="flex items-center gap-2 cursor-pointer" onClick={handleStopPropagation}>
+              <CalendarCheck className="size-4 text-amber-400" />
+              <span>New Attendance</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/app/subjects/${subjectId}/announcements/new`} className="flex items-center gap-2 cursor-pointer" onClick={handleStopPropagation}>
+              <Megaphone className="size-4 text-amber-500" />
+              <span>New Announcement</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/app/subjects/${subjectId}/questions/new`} className="flex items-center gap-2 cursor-pointer" onClick={handleStopPropagation}>
+              <HelpCircle className="size-4 text-purple-400" />
+              <span>New Q&amp;A</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/app/subjects/${subjectId}/resources/new`} className="flex items-center gap-2 cursor-pointer" onClick={handleStopPropagation}>
+              <BookOpen className="size-4 text-emerald-400" />
+              <span>New Resource</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuLabel className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+            Public Portal
+          </DropdownMenuLabel>
           {publicId ? (
             <>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleCopyLink}
-                className="h-7 px-2.5 rounded-lg text-xs font-semibold text-primary border-primary/30 hover:bg-primary/10"
-              >
-                <Copy className="mr-1.5 size-3 text-primary" />
-                Public Subject Page Link
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="h-7 px-2.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10"
-                onClick={handleLinkClick}
-              >
-                <a href={`/s/${publicId}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="mr-1.5 size-3" />
-                  View Public Subject Page
+              <DropdownMenuItem onClick={handleCopyLink} className="flex items-center gap-2 cursor-pointer text-primary focus:text-primary">
+                <Copy className="size-4 text-primary" />
+                <span>Copy Public Link</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/s/${publicId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 cursor-pointer text-emerald-400 focus:text-emerald-400"
+                  onClick={handleStopPropagation}
+                >
+                  <ExternalLink className="size-4 text-emerald-400" />
+                  <span>View Public Page</span>
                 </a>
-              </Button>
+              </DropdownMenuItem>
             </>
           ) : (
-            <span className="text-[11px] text-muted-foreground italic">
-              Public link available after publishing
-            </span>
+            <div className="px-2 py-1.5 text-[11px] text-muted-foreground italic">
+              Link available after publishing
+            </div>
           )}
-        </div>
-      </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

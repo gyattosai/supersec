@@ -79,99 +79,105 @@ export function PremiumPublicResourcePage() {
 
   return (
     <PublicShell subject={details.subject}>
-      {/* Breadcrumb back to subject home & Push Alerts */}
-      {details?.subject?.publicId ? (
-        <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
-          <Link
-            href={`/s/${details.subject.publicId}`}
-            className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
-          >
-            <ArrowLeft className="size-3.5" />
-            {details.subject.code} · {details.subject.name}
-          </Link>
-          <PushNotificationSubscribeButton
-            subjectPublicId={details.subject.publicId}
-            subjectName={details.subject.name || details.subject.code || "Subject"}
-            subjectCode={details.subject.code || "Subject"}
-            variant="pill"
-          />
-        </div>
-      ) : null}
-
-      {/* Main Resource Card */}
-      <article className="signal-panel min-w-0 overflow-hidden border-t-2 border-t-primary rounded-2xl shadow-xl space-y-0">
-        <div className="p-4 sm:p-6 md:p-8 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="glow-badge-orange inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold">
-              {details.category ?? "Resource"}
-            </span>
-            {details.sourceDomain ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                <Globe className="size-3" />
-                {details.sourceDomain}
-              </span>
-            ) : null}
-            <span className="text-xs text-muted-foreground font-mono ml-auto">
-              Version {details.version}
-            </span>
-          </div>
-
-          <h1 className="signal-title text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-            {details.title}
-          </h1>
-        </div>
-
-        {/* Visual Cover Asset */}
-        {visual ? (
-          <div className="border-y border-border/70 bg-black/20">
-            <img
-              src={visual.url}
-              alt={visual.altText ?? details.title}
-              className="max-h-[26rem] w-full object-cover"
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6 min-w-0">
+        {/* Breadcrumb back to subject home & Push Alerts */}
+        {details?.subject?.publicId ? (
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <Link
+              href={`/s/${details.subject.publicId}`}
+              className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
+            >
+              <ArrowLeft className="size-3.5" />
+              {details.subject.code} · {details.subject.name}
+            </Link>
+            <PushNotificationSubscribeButton
+              subjectPublicId={details.subject.publicId}
+              subjectName={details.subject.name || details.subject.code || "Subject"}
+              subjectCode={details.subject.code || "Subject"}
+              variant="pill"
             />
           </div>
         ) : null}
 
-        <div className="p-4 sm:p-6 md:p-8 space-y-6">
-          {/* Rich Body Content */}
-          <div className="signal-prose border-b border-border/60 pb-6">
-            <AnnouncementPreview body={details.body} />
+        {/* Main Resource Card */}
+        <article className="signal-panel min-w-0 overflow-hidden border-t-2 border-t-primary rounded-2xl shadow-xl space-y-0">
+          <div className="p-4 sm:p-6 md:p-8 space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="glow-badge-orange inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold">
+                  {details.category ?? "Resource"}
+                </span>
+                {details.sourceDomain ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                    <Globe className="size-3" />
+                    {details.sourceDomain}
+                  </span>
+                ) : null}
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
+                Version {details.version}
+              </span>
+            </div>
+
+            <h1 className="signal-title text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+              {details.title}
+            </h1>
           </div>
 
-          {/* Primary Action Button */}
-          {details.destinationUrl ? (
-            <div className="pt-2">
-              <a
-                href={details.destinationUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-md shadow-primary/25 active:scale-[0.98] transition-all"
-              >
-                <ExternalLink className="size-4" />
-                Open Link
-              </a>
+          {/* Visual Cover Asset */}
+          {visual ? (
+            <div className="border-y border-border/70 bg-black/20">
+              <img
+                src={visual.url}
+                alt={visual.altText ?? details.title}
+                className="max-h-[26rem] w-full object-cover"
+              />
             </div>
           ) : null}
 
-          {/* Attachments Section */}
-          <PublicResourceAttachments attachments={details.attachments} />
+          <div className="p-4 sm:p-6 md:p-8 space-y-6">
+            {/* Rich Body Content */}
+            <div className="signal-prose border-b border-border/60 pb-6">
+              <AnnouncementPreview body={details.body} />
+            </div>
 
-          <p className="text-[11px] text-muted-foreground pt-2">
-            Published by the class secretary
-            {details.publishedAt ? ` · ${new Date(details.publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
-          </p>
+            {/* Primary Action Button */}
+            {details.destinationUrl ? (
+              <div className="pt-4 border-t border-border/30">
+                <a
+                  href={details.destinationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-md shadow-primary/25 active:scale-[0.98] transition-all"
+                >
+                  <ExternalLink className="size-4" />
+                  Open Link
+                </a>
+              </div>
+            ) : null}
+
+            {/* Attachments Section */}
+            <PublicResourceAttachments attachments={details.attachments} />
+
+            <p className="text-[11px] text-muted-foreground pt-2">
+              Published by the class secretary
+              {details.publishedAt ? ` · ${new Date(details.publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
+            </p>
+          </div>
+        </article>
+
+        {/* Version History */}
+        <div className="text-xs text-muted-foreground space-y-2 mt-8 pt-6 border-t border-border/40">
+          <HistoryLedger
+            entries={history.data?.available ? history.data.history : []}
+            itemKind="resource"
+            entityId={details.publicId}
+            itemTitle={details.title}
+            itemBody={details.body}
+            onHistoryUpdated={() => history.refetch()}
+          />
         </div>
-      </article>
-
-      {/* Version History */}
-      <HistoryLedger
-        entries={history.data?.available ? history.data.history : []}
-        itemKind="resource"
-        entityId={details.publicId}
-        itemTitle={details.title}
-        itemBody={details.body}
-        onHistoryUpdated={() => history.refetch()}
-      />
+      </div>
     </PublicShell>
   );
 }

@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { AttendanceProofTimestamp } from "@/components/AttendanceProofTimestamp";
 import { DateTime12HourInput } from "@/components/TimeInputs";
+import { formatDateTime12Hour } from "@/lib/time";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
 import { WorkspaceFormFooter } from "@/components/WorkspaceFormFooter";
 import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
@@ -413,6 +414,33 @@ export default function AttendancePage() {
           }
         />
 
+        {/* Session Status & Meta Bar */}
+        {session.data && (
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+            {isNoClass ? (
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
+                No Class • {noClassReason || "Suspended"}
+              </span>
+            ) : (session.data as any)?.sessionState === "completed" ? (
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-400" />
+                Attendance completed
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground" />
+                Ready for Attendance
+              </span>
+            )}
+            {session.data.startsAt && (
+              <span className="text-xs text-muted-foreground font-medium">
+                {formatDateTime12Hour(session.data.startsAt)}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Context Navigation Switcher */}
         <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/60 p-1.5 shadow-sm">
           <button
@@ -495,10 +523,11 @@ export default function AttendancePage() {
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/20 text-[10px] font-black text-amber-300">
-                      CLASS SUSPENDED
-                    </Badge>
-                    <span className="text-xs font-bold text-amber-400">No Class Notice Active</span>
+                    <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
+                      No Class • {noClassReason || "Suspended"}
+                    </span>
+                    <span className="text-xs font-bold text-amber-400">Notice Active</span>
                   </div>
                   <p className="mt-1 text-sm sm:text-base font-bold text-foreground break-words">
                     {noClassReason || "No class scheduled"}

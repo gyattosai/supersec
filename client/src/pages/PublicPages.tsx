@@ -1010,76 +1010,85 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
   const tags = details.kind === "question" ? details.tagsText?.split(",").map(tag => tag.trim()).filter(Boolean) ?? [] : [];
   return (
     <PublicShell>
-      <BackToSubject subject={details.subject} />
-      <article className="signal-panel min-w-0 mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl shadow-primary/5 p-4 sm:p-6 md:p-8 space-y-6">
-        <div className="space-y-3.5">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-primary">
-              {label} · v{details.version}
-            </span>
-            {details.kind === "question" ? (
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${details.isOfficial ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-sm" : "border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"}`}>
-                {details.isOfficial ? <ShieldCheck className="size-3.5" /> : <CircleHelp className="size-3.5" />}
-                {details.isOfficial ? "Official Answer" : "Unofficial"}
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6 min-w-0">
+        <BackToSubject subject={details.subject} />
+        <article className="signal-panel min-w-0 overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl shadow-primary/5 p-4 sm:p-6 md:p-8 space-y-6">
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-primary">
+                  {label}
+                </span>
+                {details.kind === "question" ? (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${details.isOfficial ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-sm" : "border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"}`}>
+                    {details.isOfficial ? <ShieldCheck className="size-3.5" /> : <CircleHelp className="size-3.5" />}
+                    {details.isOfficial ? "Official Answer" : "Unofficial"}
+                  </span>
+                ) : null}
+                {details.kind === "resource" && details.category ? (
+                  <span className="text-xs sm:text-sm text-muted-foreground font-semibold">
+                    · {details.category}{details.sourceDomain ? ` · ${details.sourceDomain}` : ""}
+                  </span>
+                ) : null}
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
+                v{details.version}
               </span>
-            ) : null}
-            {details.kind === "resource" && details.category ? (
-              <span className="text-xs sm:text-sm text-muted-foreground font-semibold">
-                · {details.category}{details.sourceDomain ? ` · ${details.sourceDomain}` : ""}
-              </span>
-            ) : null}
-          </div>
-
-          <h1 className="signal-title text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-snug">
-            {visibleTitle}
-          </h1>
-
-          {tags.length ? (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="rounded-full text-xs px-2.5 py-0.5 font-medium">
-                  {tag}
-                </Badge>
-              ))}
             </div>
-          ) : null}
-        </div>
 
-        {visual ? (
-          <div className="-mx-4 sm:-mx-6 md:-mx-8 overflow-hidden border-y border-border/80 bg-black/20">
-            <img src={visual.url} alt={visual.altText ?? ""} className="max-h-[28rem] w-full object-cover" />
+            <h1 className="signal-title text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-snug">
+              {visibleTitle}
+            </h1>
+
+            {tags.length ? (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="rounded-full text-xs px-2.5 py-0.5 font-medium">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
           </div>
-        ) : null}
 
-        <div className="border-t border-border/70 pt-6 space-y-5">
-          <div className="text-base sm:text-lg leading-relaxed text-foreground/95 font-normal max-w-none">
-            <AnnouncementPreview body={details.body} />
-          </div>
-
-          {details.kind === "resource" && details.destinationUrl ? (
-            <div className="pt-2">
-              <a href={details.destinationUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground active:scale-[0.98] shadow-md shadow-primary/25">
-                <ExternalLink className="size-4" />
-                Open Link
-              </a>
+          {visual ? (
+            <div className="-mx-4 sm:-mx-6 md:-mx-8 overflow-hidden border-y border-border/80 bg-black/20">
+              <img src={visual.url} alt={visual.altText ?? ""} className="max-h-[28rem] w-full object-cover" />
             </div>
           ) : null}
 
-          <div className="pt-4 border-t border-border/40">
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Official class record{details.publishedAt ? ` · ${new Date(details.publishedAt).toLocaleDateString()}` : ""}
-            </p>
+          <div className="border-t border-border/70 pt-6 space-y-5">
+            <div className="text-base sm:text-lg leading-relaxed text-foreground/95 font-normal max-w-none">
+              <AnnouncementPreview body={details.body} />
+            </div>
+
+            {details.kind === "resource" && details.destinationUrl ? (
+              <div className="pt-4 border-t border-border/30">
+                <a href={details.destinationUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground active:scale-[0.98] shadow-md shadow-primary/25">
+                  <ExternalLink className="size-4" />
+                  Open Link
+                </a>
+              </div>
+            ) : null}
+
+            <div className="pt-4 border-t border-border/40">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                Official class record{details.publishedAt ? ` · ${new Date(details.publishedAt).toLocaleDateString()}` : ""}
+              </p>
+            </div>
           </div>
+        </article>
+        <div className="text-xs text-muted-foreground space-y-2 mt-8 pt-6 border-t border-border/40">
+          <HistoryLedger
+            entries={history.data?.available ? history.data.history : []}
+            itemKind={kind}
+            entityId={details.publicId}
+            itemTitle={visibleTitle}
+            itemBody={details.body}
+            onHistoryUpdated={() => history.refetch()}
+          />
         </div>
-      </article>
-      <HistoryLedger
-        entries={history.data?.available ? history.data.history : []}
-        itemKind={kind}
-        entityId={details.publicId}
-        itemTitle={visibleTitle}
-        itemBody={details.body}
-        onHistoryUpdated={() => history.refetch()}
-      />
+      </div>
     </PublicShell>
   );
 }
@@ -1100,16 +1109,14 @@ export function PublicShell({ children, subject }: { children: React.ReactNode; 
 function BackToSubject({ subject }: { subject?: { publicId?: string; code?: string; name?: string } | null }) {
   if (!subject?.publicId) return null;
   return (
-    <div className="mb-5 flex items-center justify-between gap-2 flex-wrap">
-      <Link href={`/s/${subject.publicId}`} className="signal-action inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 text-xs sm:text-sm font-bold text-primary hover:bg-secondary active:scale-[0.98] shadow-sm">
-        ← {subject.code || "Subject"}
+    <div className="mb-4">
+      <Link
+        href={`/s/${subject.publicId}`}
+        className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
+      >
+        <ChevronRight className="size-3.5 rotate-180" />
+        {subject.code ? `${subject.code} · ` : ""}{subject.name || "Subject Home"}
       </Link>
-      <PushNotificationSubscribeButton
-        subjectPublicId={subject.publicId}
-        subjectName={subject.name || subject.code || "Subject"}
-        subjectCode={subject.code || "Subject"}
-        variant="pill"
-      />
     </div>
   );
 }
@@ -1161,8 +1168,8 @@ export function HistoryLedger({
   const [editText, setEditText] = useState("");
   const [draftingVersion, setDraftingVersion] = useState<number | null>(null);
 
-  const autoDraftMutation = (trpc as any).content?.autoDraftVersionHistory?.useMutation ? trpc.content.autoDraftVersionHistory.useMutation() : ({} as any);
-  const updateSummaryMutation = (trpc as any).content?.updateHistoryEntrySummary?.useMutation ? trpc.content.updateHistoryEntrySummary.useMutation() : ({} as any);
+  const autoDraftMutation = trpc.content.autoDraftVersionHistory.useMutation();
+  const updateSummaryMutation = trpc.content.updateHistoryEntrySummary.useMutation();
 
   if (!entries.length) return null;
 

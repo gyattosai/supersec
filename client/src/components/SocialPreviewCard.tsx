@@ -215,197 +215,205 @@ export function SocialPreviewCard({
   };
 
   return (
-    <div className="signal-card-shell">
-      <section className="signal-panel rounded-2xl border border-primary/25 bg-gradient-to-br from-card via-card to-secondary/30 p-5 sm:p-7 shadow-xl shadow-primary/5 space-y-6">
+    <div className="signal-card-shell w-full">
+      <section className="signal-panel rounded-2xl border border-primary/25 bg-gradient-to-br from-card via-card to-secondary/30 p-4 sm:p-6 shadow-xl shadow-primary/5 space-y-5">
+        {/* Header & Badges */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
                 <Share2 className="size-4" />
               </span>
               <p className="signal-kicker text-primary">Social &amp; OpenGraph Previews</p>
             </div>
-            <h2 className="signal-heading text-lg sm:text-xl font-black text-foreground">
+            <h2 className="signal-heading text-base sm:text-lg font-black text-foreground">
               Messenger &amp; Social Card Preview
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="rounded-full border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
-              <Zap className="mr-1.5 size-3.5" />
-              Instant Pre-rendered Edge
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge variant="outline" className="rounded-full border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
+              <Zap className="mr-1 size-3" />
+              Pre-rendered Edge
             </Badge>
-            <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              <Sparkles className="mr-1.5 size-3.5" />
-              1200×630 OG Cover
+            <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+              <Sparkles className="mr-1 size-3" />
+              1200×630 OG
             </Badge>
           </div>
         </div>
 
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          When this link is sent to Facebook Messenger, Discord, Telegram, iMessage, or Twitter/X, classmates will see this rich high-resolution cover card with live verified details.
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          When this link is sent to Facebook Messenger, Discord, Telegram, or Twitter/X, classmates will see this rich high-resolution cover card with live verified details.
         </p>
 
-        {/* Tab Switcher for different platforms */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 rounded-xl bg-secondary/60 p-1">
-            <TabsTrigger value="messenger" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:text-primary">
-              <MessageCircle className="size-3.5" />
-              <span className="hidden sm:inline">Messenger</span>
-            </TabsTrigger>
-            <TabsTrigger value="discord" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:text-sky-400">
-              <MessageSquare className="size-3.5" />
-              <span className="hidden sm:inline">Discord / TG</span>
-            </TabsTrigger>
-            <TabsTrigger value="twitter" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:text-foreground">
-              <Twitter className="size-3.5" />
-              <span className="hidden sm:inline">Twitter / X</span>
-            </TabsTrigger>
-            <TabsTrigger value="google" className="rounded-lg text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:text-emerald-400">
-              <Globe className="size-3.5" />
-              <span className="hidden sm:inline">Google Search</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Responsive 2-column desktop grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+          {/* Left column (md:col-span-7): Platform Switcher & Live Preview */}
+          <div className="md:col-span-7 space-y-3 min-w-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 w-full">
+              <TabsList className="grid w-full grid-cols-4 rounded-xl bg-secondary/60 p-1">
+                <TabsTrigger value="messenger" className="rounded-lg text-[11px] sm:text-xs font-bold gap-1 sm:gap-1.5 data-[state=active]:bg-card data-[state=active]:text-primary px-1.5">
+                  <MessageCircle className="size-3.5" />
+                  <span className="hidden sm:inline">Messenger</span>
+                </TabsTrigger>
+                <TabsTrigger value="discord" className="rounded-lg text-[11px] sm:text-xs font-bold gap-1 sm:gap-1.5 data-[state=active]:bg-card data-[state=active]:text-sky-400 px-1.5">
+                  <MessageSquare className="size-3.5" />
+                  <span className="hidden sm:inline">Discord</span>
+                </TabsTrigger>
+                <TabsTrigger value="twitter" className="rounded-lg text-[11px] sm:text-xs font-bold gap-1 sm:gap-1.5 data-[state=active]:bg-card data-[state=active]:text-foreground px-1.5">
+                  <Twitter className="size-3.5" />
+                  <span className="hidden sm:inline">Twitter / X</span>
+                </TabsTrigger>
+                <TabsTrigger value="google" className="rounded-lg text-[11px] sm:text-xs font-bold gap-1 sm:gap-1.5 data-[state=active]:bg-card data-[state=active]:text-emerald-400 px-1.5">
+                  <Globe className="size-3.5" />
+                  <span className="hidden sm:inline">Search</span>
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Facebook Messenger Preview */}
-          <TabsContent value="messenger" className="mt-0 space-y-3">
-            <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-[#1e293b]/90 shadow-2xl transition-all">
-              {/* Dynamic Image Cover */}
-              <div className="relative aspect-[1.91/1] w-full overflow-hidden bg-black/40">
-                <img
-                  src={previewImageDataUri}
-                  alt={title}
-                  className="h-full w-full object-cover transition-all"
-                  loading="lazy"
-                />
-              </div>
-              {/* Messenger Link Caption Block */}
-              <div className="p-4 space-y-1 bg-[#0f172a]">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
-                  {originDomain}
+              {/* Facebook Messenger Preview */}
+              <TabsContent value="messenger" className="mt-0 space-y-2">
+                <div className="overflow-hidden rounded-xl border border-border/80 bg-[#1e293b]/90 shadow-xl transition-all">
+                  <div className="relative aspect-[1.91/1] w-full overflow-hidden bg-black/40">
+                    <img
+                      src={previewImageDataUri}
+                      alt={title}
+                      className="h-full w-full object-cover transition-all"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-3.5 space-y-1 bg-[#0f172a]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
+                      {originDomain}
+                    </p>
+                    <p className="font-bold text-xs sm:text-sm text-foreground line-clamp-1">
+                      {displayCardTitle}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                      {safeDescription}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-center text-[10px] font-medium text-muted-foreground">
+                  Messenger Chat Card representation
                 </p>
-                <p className="font-bold text-sm text-foreground line-clamp-1">
-                  {displayCardTitle}
+              </TabsContent>
+
+              {/* Discord / Telegram Preview */}
+              <TabsContent value="discord" className="mt-0 space-y-2">
+                <div className="overflow-hidden rounded-xl border-l-4 border-l-primary border-y border-r border-border/70 bg-[#2b2d31] p-3.5 text-foreground shadow-xl">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-bold text-primary">supersec</span>
+                    {subjectCode ? <span className="text-[10px] text-muted-foreground">· {subjectCode}</span> : null}
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-sky-400 hover:underline cursor-pointer line-clamp-1">
+                    {displayCardTitle}
+                  </p>
+                  <p className="text-[11px] text-neutral-300 mt-1 leading-relaxed line-clamp-2">
+                    {safeDescription}
+                  </p>
+                  <div className="mt-2.5 aspect-[1.91/1] w-full overflow-hidden rounded-lg border border-border/40">
+                    <img src={previewImageDataUri} alt={displayCardTitle} className="h-full w-full object-cover" />
+                  </div>
+                </div>
+                <p className="text-center text-[10px] font-medium text-muted-foreground">
+                  Discord / Telegram Rich Embed representation
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                  {safeDescription}
+              </TabsContent>
+
+              {/* Twitter / X Large Summary Card */}
+              <TabsContent value="twitter" className="mt-0 space-y-2">
+                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black text-foreground shadow-xl">
+                  <div className="aspect-[1.91/1] w-full overflow-hidden">
+                    <img src={previewImageDataUri} alt={displayCardTitle} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="p-3 space-y-0.5 border-t border-neutral-800 bg-neutral-950">
+                    <p className="text-[10px] text-neutral-400 truncate">{originDomain}</p>
+                    <p className="text-xs sm:text-sm font-bold text-neutral-100 line-clamp-1">{displayCardTitle}</p>
+                    <p className="text-[11px] text-neutral-400 line-clamp-1">{safeDescription}</p>
+                  </div>
+                </div>
+                <p className="text-center text-[10px] font-medium text-muted-foreground">
+                  Twitter / X Large Image Card representation
                 </p>
-              </div>
-            </div>
-            <p className="text-center text-[11px] font-medium text-muted-foreground">
-              Messenger Chat Card representation
-            </p>
-          </TabsContent>
+              </TabsContent>
 
-          {/* Discord / Telegram Preview */}
-          <TabsContent value="discord" className="mt-0 space-y-3">
-            <div className="mx-auto max-w-lg overflow-hidden rounded-xl border-l-4 border-l-primary border-y border-r border-border/70 bg-[#2b2d31] p-4 text-foreground shadow-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[11px] font-bold text-primary">supersec</span>
-                {subjectCode ? <span className="text-[11px] text-muted-foreground">· {subjectCode}</span> : null}
-              </div>
-              <p className="text-sm font-bold text-sky-400 hover:underline cursor-pointer">
-                {displayCardTitle}
+              {/* Google Search Snippet */}
+              <TabsContent value="google" className="mt-0 space-y-2">
+                <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-lg space-y-1">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <Globe className="size-3 text-emerald-500" />
+                    <span className="truncate">{originDomain} &gt; s &gt; {subjectCode?.toLowerCase() || "portal"}</span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-semibold text-primary hover:underline cursor-pointer line-clamp-1">
+                    {title} · supersec
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                    {description}
+                  </p>
+                </div>
+                <p className="text-center text-[10px] font-medium text-muted-foreground">
+                  Google Search Snippet representation
+                </p>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right column (md:col-span-5): Fast Action Triggers Stacked */}
+          <div className="md:col-span-5 flex flex-col gap-2.5">
+            <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-2.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                Fast Share Actions
               </p>
-              <p className="text-xs text-neutral-300 mt-1 leading-relaxed line-clamp-2">
-                {safeDescription}
-              </p>
-              <div className="mt-3 aspect-[1.91/1] w-full overflow-hidden rounded-lg border border-border/40">
-                <img src={previewImageDataUri} alt={displayCardTitle} className="h-full w-full object-cover" />
-              </div>
+
+              <Button
+                onClick={copyFastMessengerLink}
+                className="signal-action min-h-10 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 gap-2 text-xs justify-start px-3"
+              >
+                {copiedFastLink ? <Check className="size-4 text-white shrink-0" /> : <Zap className="size-4 text-emerald-200 shrink-0" />}
+                <span className="truncate">{copiedFastLink ? "Copied Fast Link!" : "Copy Fast Messenger Link"}</span>
+              </Button>
+
+              <Button
+                onClick={copyFormattedMessengerText}
+                variant="outline"
+                className="signal-action min-h-10 w-full rounded-xl font-bold border-border/80 hover:bg-secondary gap-2 text-xs justify-start px-3"
+              >
+                {copiedText ? <Check className="size-4 text-emerald-400 shrink-0" /> : <MessageCircle className="size-4 text-primary shrink-0" />}
+                <span className="truncate">{copiedText ? "Copied Post!" : "Copy Post + Link"}</span>
+              </Button>
+
+              <Button
+                onClick={copyUrlOnly}
+                variant="outline"
+                className="signal-action min-h-10 w-full rounded-xl font-semibold border-border/80 hover:bg-secondary gap-2 text-xs text-muted-foreground hover:text-foreground justify-start px-3"
+              >
+                {copiedLink ? <Check className="size-4 text-emerald-400 shrink-0" /> : <Copy className="size-4 shrink-0" />}
+                <span className="truncate">{copiedLink ? "Copied URL!" : "Copy Raw URL"}</span>
+              </Button>
+
+              <Button
+                asChild
+                variant="outline"
+                className="signal-action min-h-10 w-full rounded-xl font-semibold border-border/80 hover:bg-secondary text-sky-400 hover:text-sky-300 gap-2 text-xs justify-start px-3"
+              >
+                <a href={fbDebuggerUrl} target="_blank" rel="noreferrer" title="Force Facebook crawler to scrape this exact URL right now">
+                  <RefreshCw className="size-3.5 text-sky-400 shrink-0" />
+                  <span className="truncate">Force FB Re-scrape</span>
+                </a>
+              </Button>
+
+              <Button
+                asChild
+                variant="outline"
+                className="signal-action min-h-10 w-full rounded-xl font-semibold border-border/80 hover:bg-secondary text-muted-foreground hover:text-foreground gap-2 text-xs justify-start px-3"
+              >
+                <a href={normalizedPublicUrl || publicUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-3.5 mr-1 shrink-0" />
+                  <span className="truncate">Open Live Shared Page</span>
+                </a>
+              </Button>
             </div>
-            <p className="text-center text-[11px] font-medium text-muted-foreground">
-              Discord / Telegram Rich Embed representation
-            </p>
-          </TabsContent>
-
-          {/* Twitter / X Large Summary Card */}
-          <TabsContent value="twitter" className="mt-0 space-y-3">
-            <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-neutral-800 bg-black text-foreground shadow-xl">
-              <div className="aspect-[1.91/1] w-full overflow-hidden">
-                <img src={previewImageDataUri} alt={displayCardTitle} className="h-full w-full object-cover" />
-              </div>
-              <div className="p-3.5 space-y-0.5 border-t border-neutral-800 bg-neutral-950">
-                <p className="text-[11px] text-neutral-400 truncate">{originDomain}</p>
-                <p className="text-sm font-bold text-neutral-100 line-clamp-1">{displayCardTitle}</p>
-                <p className="text-xs text-neutral-400 line-clamp-1">{safeDescription}</p>
-              </div>
-            </div>
-            <p className="text-center text-[11px] font-medium text-muted-foreground">
-              Twitter / X Large Image Card representation
-            </p>
-          </TabsContent>
-
-          {/* Google Search Snippet */}
-          <TabsContent value="google" className="mt-0 space-y-3">
-            <div className="mx-auto max-w-lg rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-lg space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Globe className="size-3.5 text-emerald-500" />
-                <span className="truncate">{originDomain} &gt; s &gt; {subjectCode?.toLowerCase() || "portal"}</span>
-              </div>
-              <h3 className="text-base sm:text-lg font-semibold text-primary hover:underline cursor-pointer">
-                {title} · supersec
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {description}
-              </p>
-            </div>
-            <p className="text-center text-[11px] font-medium text-muted-foreground">
-              Google Search Snippet representation
-            </p>
-          </TabsContent>
-        </Tabs>
-
-        {/* Quick Action Toolbar */}
-        <div className="space-y-3 pt-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button
-              onClick={copyFastMessengerLink}
-              className="signal-action min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 gap-2 text-xs"
-            >
-              {copiedFastLink ? <Check className="size-4 text-white" /> : <Zap className="size-4 text-emerald-200" />}
-              {copiedFastLink ? "Copied Fast Link!" : "Fast Messenger Link"}
-            </Button>
-
-            <Button
-              onClick={copyFormattedMessengerText}
-              variant="outline"
-              className="signal-action min-h-11 rounded-xl font-bold border-border/80 hover:bg-secondary gap-2 text-xs"
-            >
-              {copiedText ? <Check className="size-4 text-emerald-400" /> : <MessageCircle className="size-4 text-primary" />}
-              {copiedText ? "Copied Post!" : "Copy Post + Link"}
-            </Button>
-
-            <Button
-              onClick={copyUrlOnly}
-              variant="outline"
-              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary gap-2 text-xs text-muted-foreground hover:text-foreground"
-            >
-              {copiedLink ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
-              {copiedLink ? "Copied URL!" : "Copy Raw URL"}
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary text-sky-400 hover:text-sky-300 gap-2 text-xs"
-            >
-              <a href={fbDebuggerUrl} target="_blank" rel="noreferrer" title="Force Facebook crawler to scrape this exact URL right now">
-                <RefreshCw className="size-3.5 text-sky-400" />
-                Force FB Re-scrape
-              </a>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary text-muted-foreground hover:text-foreground gap-2 text-xs md:col-span-2 lg:col-span-2"
-            >
-              <a href={normalizedPublicUrl || publicUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-3.5 mr-1" />
-                Open Live Shared Page
-              </a>
-            </Button>
           </div>
         </div>
       </section>

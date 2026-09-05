@@ -247,6 +247,38 @@ export function PremiumPublicSubjectHome() {
     return filterAndSortItems(allUnifiedItems, { searchQuery, activeCategory, sortBy });
   }, [allUnifiedItems, activeCategory, searchQuery, sortBy]);
 
+  const students = useMemo(() => subjectData?.students || [], [subjectData?.students]);
+  const conflictCount = useMemo(() => students.filter(s => s.hasScheduleConflict).length, [students]);
+  const regularCount = students.length - conflictCount;
+
+  const counts = useMemo(() => ({
+    announcements: allUnifiedItems.filter(i => i.kind === "announcements").length,
+    resources: allUnifiedItems.filter(i => i.kind === "resources").length,
+    questions: allUnifiedItems.filter(i => i.kind === "questions").length,
+    attendance: allUnifiedItems.filter(i => i.kind === "attendance").length,
+    students: students.length,
+    all: allUnifiedItems.length,
+  }), [allUnifiedItems, students.length]);
+
+  const categories = useMemo((): Array<{ id: CategoryFilter; label: string; count: number; icon: typeof BellRing }> => [
+    { id: "all", label: "All Items", count: counts.all, icon: LayoutGrid },
+    { id: "announcements", label: "Announcements", count: counts.announcements, icon: BellRing },
+    { id: "resources", label: "Resources", count: counts.resources, icon: BookOpen },
+    { id: "questions", label: "Q&A Knowledgebase", count: counts.questions, icon: HelpCircle },
+    { id: "attendance", label: "Attendance", count: counts.attendance, icon: CalendarCheck },
+    { id: "students", label: "Student Master List", count: counts.students, icon: Users },
+  ], [counts]);
+
+  useEffect(() => {
+    if (!subject?.publicId) return;
+    const isSub = isSubjectSubscribedLocally(subject.publicId);
+    setIsPushSubscribed(isSub);
+    const dismissed = localStorage.getItem(`push_optin_dismissed_${subject.publicId}`);
+    if (!isSub && !dismissed && isPushNotificationSupported()) {
+      setShowPushOptInBanner(true);
+    }
+  }, [subject?.publicId]);
+
   if (query.isLoading)
     return (
       <PublicFrame>
@@ -273,40 +305,8 @@ export function PremiumPublicSubjectHome() {
     ? subject.meetingDays.map(day => `${dayNames[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ")
     : "Schedule to be announced";
 
-  const students = useMemo(() => subjectData.students || [], [subjectData.students]);
-  const conflictCount = useMemo(() => students.filter(s => s.hasScheduleConflict).length, [students]);
-  const regularCount = students.length - conflictCount;
-
-  const counts = {
-    announcements: allUnifiedItems.filter(i => i.kind === "announcements").length,
-    resources: allUnifiedItems.filter(i => i.kind === "resources").length,
-    questions: allUnifiedItems.filter(i => i.kind === "questions").length,
-    attendance: allUnifiedItems.filter(i => i.kind === "attendance").length,
-    students: students.length,
-    all: allUnifiedItems.length,
-  };
-
-  const categories: Array<{ id: CategoryFilter; label: string; count: number; icon: typeof BellRing }> = [
-    { id: "all", label: "All Items", count: counts.all, icon: LayoutGrid },
-    { id: "announcements", label: "Announcements", count: counts.announcements, icon: BellRing },
-    { id: "resources", label: "Resources", count: counts.resources, icon: BookOpen },
-    { id: "questions", label: "Q&A Knowledgebase", count: counts.questions, icon: HelpCircle },
-    { id: "attendance", label: "Attendance", count: counts.attendance, icon: CalendarCheck },
-    { id: "students", label: "Student Master List", count: counts.students, icon: Users },
-  ];
-
   const isSearchActive = Boolean(searchQuery.trim());
   const showBentoCategorized = activeCategory === "all" && !isSearchActive && viewMode === "categorized";
-
-  useEffect(() => {
-    if (!subject?.publicId) return;
-    const isSub = isSubjectSubscribedLocally(subject.publicId);
-    setIsPushSubscribed(isSub);
-    const dismissed = localStorage.getItem(`push_optin_dismissed_${subject.publicId}`);
-    if (!isSub && !dismissed && isPushNotificationSupported()) {
-      setShowPushOptInBanner(true);
-    }
-  }, [subject?.publicId]);
 
   const dismissPushOptIn = () => {
     if (subject?.publicId) {

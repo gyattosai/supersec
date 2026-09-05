@@ -1779,14 +1779,14 @@ export function SignalContentList({
                             Messenger Card
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/80 p-6 rounded-3xl">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+                        <DialogContent className="max-w-2xl sm:max-w-3xl w-full max-h-[85vh] sm:max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border">
+                          <DialogHeader className="p-4 sm:p-5 border-b border-border/80 sticky top-0 bg-card z-10 shrink-0">
+                            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-foreground">
                               <Sparkles className="size-5 text-primary" />
                               Messenger Link Card &amp; Fast Share
                             </DialogTitle>
                           </DialogHeader>
-                          <div className="mt-4">
+                          <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1">
                             <SocialPreviewCard
                               type={kind === "announcements" ? "announcement" : kind === "resources" ? "resource" : "question"}
                               title={title || item.title || item.question || "Class Update"}
