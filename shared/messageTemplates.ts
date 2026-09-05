@@ -195,7 +195,7 @@ export function filterMessageTemplates(
           // Compare as string to be type-safe across number and string IDs
           const targetStr = String(filters.subjectId);
           const tmplStr = tmpl.subjectId !== null && tmpl.subjectId !== undefined ? String(tmpl.subjectId) : null;
-          if (tmplStr && tmplStr !== targetStr) {
+          if (tmplStr && tmplStr !== targetStr && (!tmpl.subjectCode || tmpl.subjectCode !== targetStr)) {
             return false;
           }
         }

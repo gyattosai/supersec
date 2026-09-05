@@ -150,8 +150,14 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
   const [isQuickExpanded, setIsQuickExpanded] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
   const [quickContent, setQuickContent] = useState("");
-  const [quickSubjectId, setQuickSubjectId] = useState<string>("general");
+  const [quickSubjectId, setQuickSubjectId] = useState<string>(initialSubjectId ? String(initialSubjectId) : "general");
   const [quickColor, setQuickColor] = useState<NoteColor>("default");
+
+  useEffect(() => {
+    if (initialSubjectId) {
+      setQuickSubjectId(String(initialSubjectId));
+    }
+  }, [initialSubjectId]);
 
   // Full Note Editor Modal State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -160,12 +166,36 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
   // Editor Draft State
   const [draftTitle, setDraftTitle] = useState("");
   const [draftContent, setDraftContent] = useState("");
-  const [draftSubjectId, setDraftSubjectId] = useState<string>("general");
+  const [draftSubjectId, setDraftSubjectId] = useState<string>(initialSubjectId ? String(initialSubjectId) : "general");
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [draftColor, setDraftColor] = useState<NoteColor>("default");
   const [draftIsPinned, setDraftIsPinned] = useState(false);
   const [draftAttachments, setDraftAttachments] = useState<NoteAttachment[]>([]);
+
+  // Open Create Modal
+  const handleOpenCreate = () => {
+    setEditingNoteId(null);
+    setDraftTitle("");
+    setDraftContent("");
+    const defaultSub = initialSubjectId
+      ? (activeSubjects.find(s => String(s.id) === String(initialSubjectId) || s.code === String(initialSubjectId) || s.publicId === String(initialSubjectId))?.id?.toString() ?? String(initialSubjectId))
+      : (activeSubjects.length > 0 ? String(activeSubjects[0].id) : "general");
+    setDraftSubjectId(defaultSub);
+    setDraftTags([]);
+    setTagInput("");
+    setDraftColor("default");
+    setDraftIsPinned(false);
+    setDraftAttachments([]);
+    setIsEditorOpen(true);
+  };
+
+  // Listen for open new note trigger from studio header
+  useEffect(() => {
+    const handleOpenNew = () => handleOpenCreate();
+    window.addEventListener("supersec_open_new_note", handleOpenNew);
+    return () => window.removeEventListener("supersec_open_new_note", handleOpenNew);
+  }, [activeSubjects, initialSubjectId]);
 
   // Focus Reader Modal State
   const [readingNote, setReadingNote] = useState<SecretaryNote | null>(null);
@@ -205,7 +235,7 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
     }
 
     const title = quickTitle.trim() || "Quick Note";
-    const selectedSub = activeSubjects.find(s => String(s.id) === quickSubjectId);
+    const selectedSub = activeSubjects.find(s => String(s.id) === quickSubjectId || s.code === quickSubjectId || s.publicId === quickSubjectId);
     const now = new Date().toISOString();
 
     const newNote: SecretaryNote = {
@@ -231,19 +261,6 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
     toast.success("Saved quick note!");
   };
 
-  // Open Create Modal
-  const handleOpenCreate = () => {
-    setEditingNoteId(null);
-    setDraftTitle("");
-    setDraftContent("");
-    setDraftSubjectId(activeSubjects.length > 0 ? String(activeSubjects[0].id) : "general");
-    setDraftTags([]);
-    setTagInput("");
-    setDraftColor("default");
-    setDraftIsPinned(false);
-    setDraftAttachments([]);
-    setIsEditorOpen(true);
-  };
 
   // Open Edit Modal
   const handleOpenEdit = (note: SecretaryNote, e?: React.MouseEvent) => {
@@ -287,7 +304,7 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
       return;
     }
 
-    const selectedSub = activeSubjects.find(s => String(s.id) === draftSubjectId);
+    const selectedSub = activeSubjects.find(s => String(s.id) === draftSubjectId || s.code === draftSubjectId || s.publicId === draftSubjectId);
     const now = new Date().toISOString();
 
     if (editingNoteId) {

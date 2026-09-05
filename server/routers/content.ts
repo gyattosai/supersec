@@ -98,7 +98,7 @@ async function resolveVersionSummary(params: {
   attachmentsCount?: number | null;
 }): Promise<string> {
   const clean = (params.providedSummary || "").trim();
-  const genericPlaceholders = ["updated", "published", "updated question & answer", "update", "publish", "new version", "draft"];
+  const genericPlaceholders = ["updated", "published", "updated question & answer", "updated q&a", "updated qa", "update", "publish", "new version", "draft"];
   if (clean && !genericPlaceholders.includes(clean.toLowerCase())) {
     return clean;
   }

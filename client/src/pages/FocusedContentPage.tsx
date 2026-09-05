@@ -94,6 +94,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
     { subjectId: subjectQueryParam },
     { enabled: Boolean(subjectQueryParam), staleTime: 0, refetchOnMount: "always" }
   );
+  const isListLoading = kind === "announcements" ? announcements.isLoading : kind === "resources" ? resources.isLoading : questions.isLoading;
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [category, setCategory] = useState("");
@@ -119,9 +120,35 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   useEffect(() => {
     if (!editing || !selectedItem) return;
     setChangeSummary(""); setPreviewOpen(false);
-    if (kind === "announcements" && "body" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.body); setMediaAssetId(selectedItem.mediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setSocialAsset(selectedItem.socialAsset ?? null); }
-    if (kind === "resources" && "description" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.description); setCategory(selectedItem.category); setResourceType(selectedItem.resourceType); setDestinationUrl(selectedItem.destinationUrl); setMediaAssetId(selectedItem.fallbackMediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setAttachmentAssets(selectedItem.attachments ?? []); setSocialAsset(selectedItem.socialAsset ?? null); }
-    if (kind === "questions" && "question" in selectedItem) { setQuestion(selectedItem.question); setAnswer(selectedItem.answer); setTagsText(selectedItem.tagsText ?? ""); setIsOfficial(selectedItem.isOfficial); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setSocialAsset(selectedItem.socialAsset ?? null); }
+    if (kind === "announcements" && "body" in selectedItem) {
+      setTitle(selectedItem.title);
+      setBody(selectedItem.body);
+      setMediaAssetId(selectedItem.mediaAssetId);
+      setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId);
+      setSocialAsset(selectedItem.socialAsset ?? null);
+      setImageAltText(selectedItem.socialAsset?.altText ?? selectedItem.coverAsset?.altText ?? "");
+    }
+    if (kind === "resources" && "description" in selectedItem) {
+      setTitle(selectedItem.title);
+      setBody(selectedItem.description);
+      setCategory(selectedItem.category);
+      setResourceType(selectedItem.resourceType);
+      setDestinationUrl(selectedItem.destinationUrl);
+      setMediaAssetId(selectedItem.fallbackMediaAssetId);
+      setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId);
+      setAttachmentAssets(selectedItem.attachments ?? []);
+      setSocialAsset(selectedItem.socialAsset ?? null);
+      setImageAltText(selectedItem.socialAsset?.altText ?? selectedItem.coverAsset?.altText ?? "");
+    }
+    if (kind === "questions" && "question" in selectedItem) {
+      setQuestion(selectedItem.question);
+      setAnswer(selectedItem.answer);
+      setTagsText(selectedItem.tagsText ?? "");
+      setIsOfficial(selectedItem.isOfficial);
+      setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId);
+      setSocialAsset(selectedItem.socialAsset ?? null);
+      setImageAltText(selectedItem.socialAsset?.altText ?? "");
+    }
   }, [editing, kind, selectedItem]);
 
   const subjectsQuery = trpc.subjects.list.useQuery();
@@ -335,22 +362,148 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const tags = tagsText.trim() || null;
-    const socialImage = socialPreviewMediaAssetId ?? mediaAssetId;
     const effectiveSubjectId = subjectQueryParam as any;
 
     if (kind === "announcements") {
-      if (editing) announcementUpdate.mutate({ id: effectiveItemId, title, body, mediaAssetId, socialPreviewMediaAssetId: socialImage, summary: changeSummary.trim() || "Updated", targetSubjectIds: selectedCrossPostSubjectIds });
-      else announcementCreate.mutate({ subjectId: effectiveSubjectId, title, body, mediaAssetId, socialPreviewMediaAssetId: socialImage, targetSubjectIds: selectedCrossPostSubjectIds });
+      const trimmedTitle = title.trim();
+      const trimmedBody = body.trim();
+      if (trimmedTitle.length < 2) {
+        toast.error("Announcement title must be at least 2 characters");
+        return;
+      }
+      if (!trimmedBody) {
+        toast.error("Announcement body cannot be empty");
+        return;
+      }
+      const socialImage = socialPreviewMediaAssetId !== null ? socialPreviewMediaAssetId : (mediaAssetId ?? null);
+      if (editing) {
+        announcementUpdate.mutate({
+          id: effectiveItemId,
+          title: trimmedTitle,
+          body: trimmedBody,
+          mediaAssetId: mediaAssetId ?? null,
+          socialPreviewMediaAssetId: socialImage,
+          summary: changeSummary.trim() || "Updated",
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      } else {
+        announcementCreate.mutate({
+          subjectId: effectiveSubjectId,
+          title: trimmedTitle,
+          body: trimmedBody,
+          mediaAssetId: mediaAssetId ?? null,
+          socialPreviewMediaAssetId: socialImage,
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      }
     }
+
     if (kind === "resources") {
-      const attachmentAssetIds = attachmentAssets.map(asset => asset.id as any);
-      if (editing) resourceUpdate.mutate({ id: effectiveItemId, title, description: body, category, resourceType, destinationUrl, fallbackMediaAssetId: mediaAssetId, socialPreviewMediaAssetId: socialImage, attachmentAssetIds, summary: changeSummary.trim() || "Updated", targetSubjectIds: selectedCrossPostSubjectIds });
-      else resourceCreate.mutate({ subjectId: effectiveSubjectId, title, description: body, category, resourceType, destinationUrl, fallbackMediaAssetId: mediaAssetId, socialPreviewMediaAssetId: socialImage, attachmentAssetIds, targetSubjectIds: selectedCrossPostSubjectIds });
+      const trimmedTitle = title.trim();
+      const trimmedBody = body.trim();
+      const trimmedCategory = category.trim();
+      if (trimmedTitle.length < 2) {
+        toast.error("Resource title must be at least 2 characters");
+        return;
+      }
+      if (!trimmedBody) {
+        toast.error("Resource description cannot be empty");
+        return;
+      }
+      if (trimmedCategory.length < 2) {
+        toast.error("Resource category must be at least 2 characters");
+        return;
+      }
+
+      let finalUrl = destinationUrl.trim();
+      if (!finalUrl && attachmentAssets.length > 0) {
+        finalUrl = new URL(attachmentAssets[0].url, window.location.origin).toString();
+        setDestinationUrl(finalUrl);
+      }
+      if (finalUrl && !/^https?:\/\//i.test(finalUrl)) {
+        finalUrl = `https://${finalUrl}`;
+        setDestinationUrl(finalUrl);
+      }
+      if (!finalUrl) {
+        toast.error("Please provide a destination link or upload a file");
+        return;
+      }
+
+      const attachmentAssetIds = attachmentAssets.map(asset => Number(asset.id)).filter(id => !isNaN(id) && id > 0);
+      const effectiveFallbackId = attachmentAssetIds[0] ?? (mediaAssetId ? Number(mediaAssetId) : null);
+      const socialImage = socialPreviewMediaAssetId !== null ? socialPreviewMediaAssetId : (mediaAssetId ?? null);
+
+      if (editing) {
+        resourceUpdate.mutate({
+          id: effectiveItemId,
+          title: trimmedTitle,
+          description: trimmedBody,
+          category: trimmedCategory,
+          resourceType,
+          destinationUrl: finalUrl,
+          fallbackMediaAssetId: effectiveFallbackId,
+          socialPreviewMediaAssetId: socialImage,
+          attachmentAssetIds,
+          summary: changeSummary.trim() || "Updated",
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      } else {
+        resourceCreate.mutate({
+          subjectId: effectiveSubjectId,
+          title: trimmedTitle,
+          description: trimmedBody,
+          category: trimmedCategory,
+          resourceType,
+          destinationUrl: finalUrl,
+          fallbackMediaAssetId: effectiveFallbackId,
+          socialPreviewMediaAssetId: socialImage,
+          attachmentAssetIds,
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      }
     }
+
     if (kind === "questions") {
-      if (editing) questionUpdate.mutate({ id: effectiveItemId, question, answer, tagsText: tags, isOfficial, socialPreviewMediaAssetId, summary: changeSummary.trim() || "Updated Q&A", targetSubjectIds: selectedCrossPostSubjectIds });
-      else questionCreate.mutate({ subjectId: effectiveSubjectId, question, answer, tagsText: tags, isOfficial, socialPreviewMediaAssetId, targetSubjectIds: selectedCrossPostSubjectIds });
+      const trimmedQuestion = question.trim();
+      const trimmedAnswer = answer.trim();
+      if (trimmedQuestion.length < 3) {
+        toast.error("Question must be at least 3 characters");
+        return;
+      }
+      if (!trimmedAnswer) {
+        toast.error("Answer cannot be empty");
+        return;
+      }
+
+      const cleanTags = tagsText
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean)
+        .join(", ") || null;
+      const socialImage = socialPreviewMediaAssetId !== null ? socialPreviewMediaAssetId : null;
+
+      if (editing) {
+        questionUpdate.mutate({
+          id: effectiveItemId,
+          question: trimmedQuestion,
+          answer: trimmedAnswer,
+          tagsText: cleanTags,
+          isOfficial,
+          socialPreviewMediaAssetId: socialImage,
+          summary: changeSummary.trim() || "Updated",
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      } else {
+        questionCreate.mutate({
+          subjectId: effectiveSubjectId,
+          question: trimmedQuestion,
+          answer: trimmedAnswer,
+          tagsText: cleanTags,
+          isOfficial,
+          socialPreviewMediaAssetId: socialImage,
+          targetSubjectIds: selectedCrossPostSubjectIds,
+        });
+      }
     }
   };
 
@@ -416,7 +569,18 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             </div>
           </div>
           {editing && !selectedItem ? (
-            <p className="signal-inset m-5 p-4 text-sm text-muted-foreground">Loading item…</p>
+            isListLoading ? (
+              <div className="signal-inset m-5 p-6 text-center text-xs text-muted-foreground animate-pulse">
+                Loading {tab.singular.toLowerCase()}…
+              </div>
+            ) : (
+              <div className="signal-panel m-5 p-6 text-center space-y-3">
+                <p className="text-sm font-semibold text-foreground">{tab.singular} not found or has been deleted.</p>
+                <Button type="button" variant="outline" onClick={backToList} className="rounded-xl text-xs">
+                  Return to {tab.label}
+                </Button>
+              </div>
+            )
           ) : (
             <div className="flex flex-col gap-5 p-5 sm:p-6">
               {kind === "announcements" ? (
@@ -466,15 +630,25 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                 attachmentAssets={attachmentAssets}
                 imageAltText={imageAltText}
                 busy={uploadMedia.isPending}
-                onImageAltTextChange={setImageAltText}
+                onImageAltTextChange={val => {
+                  setImageAltText(val);
+                  setSocialAsset(prev => prev ? { ...prev, altText: val } : null);
+                }}
                 onUpload={uploadAsset}
                 onRemoveSocial={() => {
                   setSocialPreviewMediaAssetId(null);
                   setSocialAsset(null);
+                  setMediaAssetId(null);
                 }}
-                onRemoveAttachment={assetId =>
-                  setAttachmentAssets(current => current.filter(asset => asset.id !== assetId))
-                }
+                onRemoveAttachment={assetId => {
+                  setAttachmentAssets(current => {
+                    const remaining = current.filter(asset => asset.id !== assetId);
+                    if (mediaAssetId === assetId) {
+                      setMediaAssetId(remaining[0]?.id ? Number(remaining[0].id) : null);
+                    }
+                    return remaining;
+                  });
+                }}
               />
               {otherSubjects.length > 0 ? (
                 <CrossPostFormSection
@@ -484,7 +658,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                   onChange={setSelectedCrossPostSubjectIds}
                 />
               ) : null}
-              {editing && kind !== "questions" ? (
+              {editing ? (
                 <ChangeSummary
                   value={changeSummary}
                   onChange={setChangeSummary}
@@ -541,7 +715,16 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
       try {
         const savedNotes = localStorage.getItem("supersec_secretary_notes");
         const parsedNotes: SecretaryNote[] = savedNotes ? JSON.parse(savedNotes) : INITIAL_SECRETARY_NOTES;
-        const matchingNotes = filterNotes(parsedNotes, { subjectId });
+        const matchingNotes = filterNotes(parsedNotes, {
+          subjectId: currentSubject ? currentSubject.id : subjectId,
+        }).filter(n => {
+          if (!currentSubject && !subjectId) return true;
+          const matchSubId = currentSubject ? String(currentSubject.id) : String(subjectId);
+          const matchCode = currentSubject ? currentSubject.code : String(subjectId);
+          if (n.subjectId && String(n.subjectId) === matchSubId) return true;
+          if (n.subjectCode && (n.subjectCode === matchCode || n.subjectCode === currentSubject?.publicId)) return true;
+          return false;
+        });
         setNotesCount(matchingNotes.length);
       } catch {
         setNotesCount(0);
@@ -553,7 +736,9 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
         const custom: MessageTemplate[] = savedTemplates ? JSON.parse(savedTemplates) : [];
         const hidden: string[] = hiddenPresets ? JSON.parse(hiddenPresets) : [];
         const presets = DEFAULT_PRESET_TEMPLATES.filter(p => !hidden.includes(p.id));
-        const matchingSnippets = filterMessageTemplates([...presets, ...custom], { subjectId });
+        const matchingSnippets = filterMessageTemplates([...presets, ...custom], {
+          subjectId: currentSubject ? currentSubject.id : subjectId,
+        });
         setSnippetsCount(matchingSnippets.length);
       } catch {
         setSnippetsCount(0);
@@ -569,7 +754,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
       window.removeEventListener("supersec_snippets_updated", updateCounts);
       window.removeEventListener("storage", updateCounts);
     };
-  }, [subjectId]);
+  }, [subjectId, currentSubject]);
 
   const annoCount = announcements.data?.length ?? 0;
   const resCount = resources.data?.length ?? 0;
@@ -599,14 +784,32 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             </Link>
           }
           action={
-            kind !== "notes" && kind !== "snippets" ? (
+            kind === "notes" ? (
+              <Button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("supersec_open_new_note"))}
+                className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10"
+              >
+                <StickyNote className="mr-1.5 size-4" />
+                New Note
+              </Button>
+            ) : kind === "snippets" ? (
+              <Button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("supersec_open_new_snippet"))}
+                className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10"
+              >
+                <Sparkles className="mr-1.5 size-4" />
+                New Snippet
+              </Button>
+            ) : (
               <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
                 <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
                   <Send className="mr-1.5 size-4" />
                   New {tab.singular}
                 </Link>
               </Button>
-            ) : null
+            )
           }
         />
 
@@ -686,7 +889,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                     : publishQuestion.mutate({
                         id,
                         summary: "Published by the class secretary",
-                        official: Boolean(questions.data?.find(item => item.id === id)?.isOfficial),
+                        official: Boolean(questions.data?.find(item => String(item.id) === String(id))?.isOfficial),
                       })
                 }
                 onArchive={id =>
@@ -1020,7 +1223,7 @@ function QuestionFields({
         onOfficialChange={onOfficialChange}
         changeSummary={changeSummary}
         onChangeSummaryChange={onSummaryChange}
-        showChangeSummary={editing}
+        showChangeSummary={false}
         onAutoDraft={onAutoDraft}
         isDrafting={isDrafting}
       />
@@ -1188,7 +1391,11 @@ function MediaFields({
               disabled={busy}
               onChange={event => onUpload(event, "attachment")}
             />
-          ) : null}
+          ) : (
+            <p className="rounded-xl border border-border/80 bg-secondary/40 p-3 text-center text-xs font-semibold text-muted-foreground">
+              Maximum 6 attachments reached. Remove an attachment to upload another.
+            </p>
+          )}
         </div>
       ) : null}
     </section>
@@ -1663,7 +1870,12 @@ export function SignalContentList({
                               publicUrl={`${typeof window !== "undefined" ? window.location.origin : "https://supersec.mjbalubar.tech"}${sharePath || ""}`}
                               version={item.version || 1}
                               category={kind === "resources" ? item.category : undefined}
-                              coverUrl={item.socialAsset?.url || (item.socialPreviewMediaAssetId ? `/api/media/${item.socialPreviewMediaAssetId}` : undefined)}
+                              coverUrl={
+                                item.socialAsset?.url ||
+                                item.coverAsset?.url ||
+                                item.attachments?.[0]?.url ||
+                                (item.socialPreviewMediaAssetId ? `/api/media/${item.socialPreviewMediaAssetId}` : undefined)
+                              }
                             />
                           </div>
                         </DialogContent>

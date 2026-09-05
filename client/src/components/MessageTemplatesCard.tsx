@@ -160,6 +160,9 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
     setCustomTemplates(templates);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("supersec_snippets_updated", { detail: { templates } }));
+      }
     } catch {}
   };
 
@@ -167,6 +170,9 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
     setHiddenPresetIds(ids);
     try {
       localStorage.setItem(HIDDEN_PRESETS_KEY, JSON.stringify(ids));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("supersec_snippets_updated"));
+      }
     } catch {}
   };
 
@@ -188,6 +194,20 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
   const [draftDescription, setDraftDescription] = useState("");
   const [draftContent, setDraftContent] = useState("");
   const [editorTab, setEditorTab] = useState<"write" | "preview">("write");
+
+  // Listen for open new snippet trigger from studio header
+  useEffect(() => {
+    const handleOpenNew = () => {
+      setEditingTemplate(null);
+      setDraftTitle("");
+      setDraftDescription("");
+      setDraftContent("");
+      setEditorTab("write");
+      setIsEditorOpen(true);
+    };
+    window.addEventListener("supersec_open_new_snippet", handleOpenNew);
+    return () => window.removeEventListener("supersec_open_new_snippet", handleOpenNew);
+  }, []);
   const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("Alerts");
 
   // Delete Alert State

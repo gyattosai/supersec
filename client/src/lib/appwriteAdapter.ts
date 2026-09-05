@@ -1622,6 +1622,8 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
         subjectId: d.subjectId,
         title: d.title,
         body: d.body,
+        mediaAssetId: d.mediaAssetId || null,
+        socialPreviewMediaAssetId: d.socialPreviewMediaAssetId || null,
         publishState: d.publishState || "draft",
         version: d.version || 1,
         publishedAt: d.publishedAt ? new Date(d.publishedAt) : null,
@@ -1742,6 +1744,8 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     const doc = await appwriteDatabases.updateDocument(DB_ID, "announcements", realId, {
       title: input.title,
       body: input.body,
+      mediaAssetId: input.mediaAssetId !== undefined ? input.mediaAssetId : (sourceDoc?.mediaAssetId || null),
+      socialPreviewMediaAssetId: input.socialPreviewMediaAssetId !== undefined ? input.socialPreviewMediaAssetId : (sourceDoc?.socialPreviewMediaAssetId || null),
       version: newVersion,
       publishState: "published",
       publishedAt: new Date().toISOString(),
@@ -1864,6 +1868,9 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
         resourceType: d.resourceType,
         destinationUrl: d.destinationUrl,
         sourceDomain: d.sourceDomain,
+        fallbackMediaAssetId: d.fallbackMediaAssetId || null,
+        socialPreviewMediaAssetId: d.socialPreviewMediaAssetId || null,
+        attachments: d.attachments ? (typeof d.attachments === "string" ? JSON.parse(d.attachments) : d.attachments) : [],
         publishState: d.publishState || "draft",
         version: d.version || 1,
         publishedAt: d.publishedAt ? new Date(d.publishedAt) : null,
@@ -1889,6 +1896,7 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
       destinationUrl: input.destinationUrl || "",
       fallbackMediaAssetId: input.fallbackMediaAssetId || null,
       socialPreviewMediaAssetId: input.socialPreviewMediaAssetId || null,
+      attachments: Array.isArray(input.attachments) ? JSON.stringify(input.attachments) : (input.attachments || "[]"),
       publishState: initialPublishState,
       publishedAt: initialPublishedAt,
       version: 1,
@@ -2008,6 +2016,9 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
       resourceType: input.resourceType || "link",
       sourceDomain: input.sourceDomain || "",
       destinationUrl: input.destinationUrl || "",
+      fallbackMediaAssetId: input.fallbackMediaAssetId !== undefined ? input.fallbackMediaAssetId : (sourceDoc?.fallbackMediaAssetId || null),
+      socialPreviewMediaAssetId: input.socialPreviewMediaAssetId !== undefined ? input.socialPreviewMediaAssetId : (sourceDoc?.socialPreviewMediaAssetId || null),
+      attachments: Array.isArray(input.attachments) ? JSON.stringify(input.attachments) : (input.attachments !== undefined ? input.attachments : (sourceDoc?.attachments || "[]")),
       version: newVersion,
       publishState: "published",
       publishedAt: new Date().toISOString(),
@@ -2136,6 +2147,7 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
         answer: d.answer,
         tagsText: d.tagsText || "",
         isOfficial: Boolean(d.isOfficial),
+        socialPreviewMediaAssetId: d.socialPreviewMediaAssetId || null,
         publishState: d.publishState || "draft",
         version: d.version || 1,
         publishedAt: d.publishedAt ? new Date(d.publishedAt) : null,
@@ -2150,13 +2162,14 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     const hasCrossPost = targetSubjectIds.length > 0;
     const initialPublishState = hasCrossPost ? "published" : "draft";
     const initialPublishedAt = hasCrossPost ? new Date().toISOString() : null;
+    const isOfficialBool = input.isOfficial !== undefined ? Boolean(input.isOfficial) : false;
     const doc = await appwriteDatabases.createDocument(DB_ID, "questionsAnswers", ID.unique(), {
       subjectId: String(input.subjectId),
       publicId: nanoid(12),
       question: input.question,
       answer: input.answer,
       tagsText: input.tagsText || "",
-      isOfficial: true,
+      isOfficial: isOfficialBool,
       socialPreviewMediaAssetId: input.socialPreviewMediaAssetId || null,
       publishState: initialPublishState,
       publishedAt: initialPublishedAt,
@@ -2266,7 +2279,8 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
       question: input.question,
       answer: input.answer,
       tagsText: input.tagsText || "",
-      isOfficial: input.isOfficial !== undefined ? Boolean(input.isOfficial) : true,
+      isOfficial: input.isOfficial !== undefined ? Boolean(input.isOfficial) : (sourceDoc?.isOfficial !== undefined ? Boolean(sourceDoc.isOfficial) : false),
+      socialPreviewMediaAssetId: input.socialPreviewMediaAssetId !== undefined ? input.socialPreviewMediaAssetId : (sourceDoc?.socialPreviewMediaAssetId || null),
       version: newVersion,
       publishState: "published",
       publishedAt: new Date().toISOString(),
@@ -2356,9 +2370,11 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     const sourceDoc: any = await resolveContentDoc("questionsAnswers", id);
     const realId = sourceDoc ? sourceDoc.$id : id;
     const version = ((sourceDoc?.version || 0)) + 1;
+    const finalOfficial = input.official !== undefined ? Boolean(input.official) : (sourceDoc?.isOfficial !== undefined ? Boolean(sourceDoc.isOfficial) : true);
     await appwriteDatabases.updateDocument(DB_ID, "questionsAnswers", realId, {
       publishState: "published",
       version,
+      isOfficial: finalOfficial,
       publishedAt: new Date().toISOString(),
     });
     return { success: true, version };
