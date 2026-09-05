@@ -2488,6 +2488,14 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     };
   }
 
+  if (path === "content.notes.list") {
+    return { success: true, notes: [] };
+  }
+
+  if (path === "content.snippets.list") {
+    return { success: true, snippets: [] };
+  }
+
   // === REPORTS ===
   if (path === "reports.allSubjectAttendance") {
     // 1. Fetch active subjects

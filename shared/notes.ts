@@ -14,13 +14,14 @@ export interface SecretaryNote {
   id: string;
   title: string;
   content: string; // Markdown / Rich Text
-  subjectId?: number | null;
+  subjectId?: number | string | null;
   subjectCode?: string;
   subjectName?: string;
   tags: string[];
   isPinned: boolean;
   color: NoteColor;
   attachments: NoteAttachment[];
+  displayOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -148,7 +149,7 @@ export function filterNotes(
   notes: SecretaryNote[],
   options: {
     searchQuery?: string;
-    subjectId?: string;
+    subjectId?: number | string | null;
     tag?: string;
     onlyPinned?: boolean;
   }
@@ -169,10 +170,13 @@ export function filterNotes(
       }
 
       // Subject filter
-      if (targetSubject && targetSubject !== "all") {
-        if (targetSubject === "general") {
-          if (note.subjectId !== null && note.subjectCode !== "GENERAL") return false;
-        } else if (String(note.subjectId) !== targetSubject && note.subjectCode !== targetSubject) {
+      if (targetSubject !== undefined && targetSubject !== "all") {
+        if (targetSubject === "general" || targetSubject === null) {
+          if (note.subjectId !== null && note.subjectId !== undefined && note.subjectCode !== "GENERAL") return false;
+        } else if (
+          String(note.subjectId ?? "") !== String(targetSubject) &&
+          note.subjectCode !== targetSubject
+        ) {
           return false;
         }
       }
@@ -192,9 +196,45 @@ export function filterNotes(
     .sort((a, b) => {
       // Pinned notes come first
       if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+      // Then display order if set
+      if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+        return a.displayOrder - b.displayOrder;
+      }
       // Then newest updated notes
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
+}
+
+export function moveNoteSubject(
+  notes: SecretaryNote[],
+  noteId: string,
+  target: { id: number | string | null; code?: string; name?: string }
+): SecretaryNote[] {
+  const now = new Date().toISOString();
+  return notes.map(note => {
+    if (note.id !== noteId) return note;
+    const isGeneral = target.id === null || target.id === "general" || target.code === "GENERAL";
+    return {
+      ...note,
+      subjectId: isGeneral ? null : target.id,
+      subjectCode: isGeneral ? "GENERAL" : (target.code || note.subjectCode),
+      subjectName: isGeneral ? "General Notes" : (target.name || note.subjectName),
+      updatedAt: now,
+    };
+  });
+}
+
+export function reorderNotes(notes: SecretaryNote[], orderedIds: string[]): SecretaryNote[] {
+  const map = new Map<string, number>();
+  orderedIds.forEach((id, idx) => map.set(id, idx));
+  return [...notes].sort((a, b) => {
+    const aOrder = map.get(a.id);
+    const bOrder = map.get(b.id);
+    if (aOrder !== undefined && bOrder !== undefined) return aOrder - bOrder;
+    if (aOrder !== undefined) return -1;
+    if (bOrder !== undefined) return 1;
+    return 0;
+  });
 }
 
 export function formatNoteForMessenger(note: SecretaryNote): string {

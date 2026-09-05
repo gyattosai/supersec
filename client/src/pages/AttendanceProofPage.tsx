@@ -161,14 +161,14 @@ export function AttendanceProofPage() {
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 href={`/attendance/${publicId}`}
-                className="signal-action inline-flex min-h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-6 text-xs sm:text-sm font-bold text-primary-foreground shadow-sm shadow-primary/25 active:scale-[0.98]"
+                className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-6 text-xs sm:text-sm font-bold text-primary-foreground shadow-sm shadow-primary/25 active:scale-[0.98]"
               >
                 <ArrowLeft className="size-4" />
                 Back to Attendance
               </Link>
               <Button
                 variant="outline"
-                className="w-full sm:w-auto min-h-11 rounded-xl text-xs sm:text-sm font-semibold"
+                className="w-full sm:w-auto min-h-12 rounded-xl text-xs sm:text-sm font-semibold"
                 onClick={() => {
                   setOutcome(null);
                   setFile(null);
@@ -239,7 +239,7 @@ export function AttendanceProofPage() {
                 onChange={event => setSubmittedName(event.target.value)}
                 placeholder="e.g. Dela Cruz, Juan"
                 autoComplete="name"
-                className="mt-1.5 min-h-11 rounded-xl bg-secondary/30"
+                className="mt-1.5 min-h-12 rounded-xl bg-secondary/30 text-xs sm:text-sm"
                 required
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -257,7 +257,7 @@ export function AttendanceProofPage() {
                   <button
                     type="button"
                     onClick={() => setFile(null)}
-                    className="text-xs font-semibold text-destructive hover:underline"
+                    className="text-xs font-semibold text-destructive hover:underline p-1"
                   >
                     Remove
                   </button>
@@ -266,7 +266,7 @@ export function AttendanceProofPage() {
 
               <label
                 htmlFor="attendance-proof-file"
-                className={`signal-action signal-inset mt-1.5 flex min-h-32 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-4 text-center transition-all ${
+                className={`signal-action signal-inset mt-1.5 flex min-h-36 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-4 text-center transition-all ${
                   file
                     ? "border-emerald-500/60 bg-emerald-500/5"
                     : "border-border hover:border-emerald-500/60 hover:bg-secondary/40"
@@ -310,7 +310,7 @@ export function AttendanceProofPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="mt-5 min-h-11 w-full rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-primary/25 active:scale-[0.99]"
+              className="mt-5 min-h-12 w-full rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-primary/25 active:scale-[0.99]"
               disabled={submitProof.isPending || !file || submittedName.trim().length < 2}
             >
               {submitProof.isPending ? (

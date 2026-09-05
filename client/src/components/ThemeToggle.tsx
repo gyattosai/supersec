@@ -71,7 +71,7 @@ export function SimpleThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={`grid size-9 place-items-center rounded-xl border border-border bg-card/60 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors ${className}`}
+      className={`grid size-11 sm:size-9 place-items-center rounded-xl border border-border bg-card/60 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 transition-all shadow-xs cursor-pointer ${className}`}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >

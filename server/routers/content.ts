@@ -864,4 +864,27 @@ export const contentRouter = router({
 
       return { success: true, version: input.version, summary: input.summary };
     }),
+  notes: router({
+    list: ownerProcedure
+      .input(
+        z.object({
+          subjectId: z.union([z.number().int().positive(), z.string()]).optional(),
+        }).optional()
+      )
+      .query(async () => {
+        return { success: true, notes: [] };
+      }),
+  }),
+  snippets: router({
+    list: ownerProcedure
+      .input(
+        z.object({
+          subjectId: z.union([z.number().int().positive(), z.string()]).optional(),
+        }).optional()
+      )
+      .query(async () => {
+        return { success: true, snippets: [] };
+      }),
+  }),
 });
+

@@ -24,7 +24,7 @@ export function BulkActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-lg lg:left-72">
+    <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-lg lg:left-72 shadow-xl">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">

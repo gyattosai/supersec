@@ -7,6 +7,13 @@ export interface MessageTemplate {
   template: string;
   description?: string;
   isPreset?: boolean;
+  subjectId?: number | string | null;
+  subjectCode?: string;
+  subjectName?: string;
+  tags?: string[];
+  displayOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TemplateContextVariables {
@@ -157,4 +164,111 @@ export function interpolateTemplate(
     return match;
   });
 }
+
+export interface MessageTemplateFilters {
+  searchQuery?: string;
+  category?: MessageTemplateCategory | "all";
+  subjectId?: number | string | "all" | "general" | null;
+  tag?: string;
+}
+
+export function filterMessageTemplates(
+  templates: MessageTemplate[],
+  filters: MessageTemplateFilters
+): MessageTemplate[] {
+  const query = filters.searchQuery?.trim().toLowerCase();
+
+  return templates
+    .filter((tmpl) => {
+      // Category filter
+      if (filters.category && filters.category !== "all" && tmpl.category !== filters.category) {
+        return false;
+      }
+
+      // Subject filter (supports both numeric and string/Appwrite IDs safely)
+      if (filters.subjectId !== undefined && filters.subjectId !== "all" && filters.subjectId !== "") {
+        if (filters.subjectId === "general" || filters.subjectId === null) {
+          if (tmpl.subjectId !== null && tmpl.subjectId !== undefined && tmpl.subjectId !== "general") {
+            return false;
+          }
+        } else {
+          // Compare as string to be type-safe across number and string IDs
+          const targetStr = String(filters.subjectId);
+          const tmplStr = tmpl.subjectId !== null && tmpl.subjectId !== undefined ? String(tmpl.subjectId) : null;
+          if (tmplStr && tmplStr !== targetStr) {
+            return false;
+          }
+        }
+      }
+
+      // Tag filter
+      if (filters.tag && filters.tag !== "all") {
+        if (!tmpl.tags || !tmpl.tags.some((t) => t.toLowerCase() === filters.tag?.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Search query filter
+      if (query) {
+        const titleMatch = tmpl.title.toLowerCase().includes(query);
+        const bodyMatch = tmpl.template.toLowerCase().includes(query);
+        const descMatch = tmpl.description?.toLowerCase().includes(query) ?? false;
+        const tagMatch = tmpl.tags?.some((t) => t.toLowerCase().includes(query)) ?? false;
+        const codeMatch = tmpl.subjectCode?.toLowerCase().includes(query) ?? false;
+        if (!titleMatch && !bodyMatch && !descMatch && !tagMatch && !codeMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      // Presets or displayOrder first if specified
+      if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+        return a.displayOrder - b.displayOrder;
+      }
+      if (a.displayOrder !== undefined) return -1;
+      if (b.displayOrder !== undefined) return 1;
+      return a.title.localeCompare(b.title);
+    });
+}
+
+export function moveSnippetCategoryOrSubject(
+  templates: MessageTemplate[],
+  templateId: string,
+  target: {
+    category?: MessageTemplateCategory;
+    subjectId?: number | string | null;
+    subjectCode?: string;
+    subjectName?: string;
+  }
+): MessageTemplate[] {
+  const now = new Date().toISOString();
+  return templates.map((tmpl) => {
+    if (tmpl.id !== templateId) return tmpl;
+    const isGeneral = target.subjectId === null || target.subjectId === "general" || target.subjectCode === "GENERAL";
+    return {
+      ...tmpl,
+      category: target.category || tmpl.category,
+      subjectId: target.subjectId !== undefined ? (isGeneral ? null : target.subjectId) : tmpl.subjectId,
+      subjectCode: target.subjectId !== undefined ? (isGeneral ? "GENERAL" : (target.subjectCode || tmpl.subjectCode)) : tmpl.subjectCode,
+      subjectName: target.subjectId !== undefined ? (isGeneral ? "General Snippets" : (target.subjectName || tmpl.subjectName)) : tmpl.subjectName,
+      updatedAt: now,
+    };
+  });
+}
+
+export function reorderSnippets(templates: MessageTemplate[], orderedIds: string[]): MessageTemplate[] {
+  const map = new Map<string, number>();
+  orderedIds.forEach((id, idx) => map.set(id, idx));
+  return [...templates].sort((a, b) => {
+    const aOrder = map.get(a.id);
+    const bOrder = map.get(b.id);
+    if (aOrder !== undefined && bOrder !== undefined) return aOrder - bOrder;
+    if (aOrder !== undefined) return -1;
+    if (bOrder !== undefined) return 1;
+    return 0;
+  });
+}
+
 

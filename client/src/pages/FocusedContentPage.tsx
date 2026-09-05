@@ -27,12 +27,19 @@ import { trpc } from "@/lib/trpc";
 import { Archive, ArchiveRestore, ArrowLeft, BookOpen, Check, CircleHelp, Copy, ExternalLink, Eye, FileText, Image, Layers, Loader2, Megaphone, Paperclip, Pencil, Send, Share2, Sparkles, StickyNote, Trash2, Upload } from "lucide-react";
 import React, { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { NotesWorkspaceCard } from "@/components/NotesWorkspaceCard";
+import { MessageTemplatesCard } from "@/components/MessageTemplatesCard";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { filterNotes, type SecretaryNote, INITIAL_SECRETARY_NOTES } from "@shared/notes";
+import { filterMessageTemplates, DEFAULT_PRESET_TEMPLATES, type MessageTemplate } from "@shared/messageTemplates";
 import { Link, useLocation, useRoute } from "wouter";
 
 const tabs = [
   { key: "announcements", label: "Announcements", singular: "Announcement", icon: Megaphone, description: "Write, publish, and share class updates." },
   { key: "resources", label: "Resources", singular: "Resource", icon: BookOpen, description: "Keep class links, files, forms, and meeting links." },
   { key: "questions", label: "Questions & Answers", singular: "Question & Answer", icon: CircleHelp, description: "Save answers you can share again." },
+  { key: "notes", label: "Notes", singular: "Note", icon: StickyNote, description: "Personal drafts, meeting minutes, and subject-specific memos." },
+  { key: "snippets", label: "Snippets", singular: "Snippet", icon: Sparkles, description: "Quick message templates and canned responses for class blasts." },
 ] as const;
 type ContentKind = (typeof tabs)[number]["key"];
 type ContentRowAction = { type: "publish" | "archive" | "restore" | "delete"; id: number | string };
@@ -552,6 +559,44 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
       onDelete={item => setItemToDelete({ id: item.id, title: kind === "questions" ? item.question : item.title })}
     />
   );
+  const [notesCount, setNotesCount] = useState<number>(0);
+  const [snippetsCount, setSnippetsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updateCounts = () => {
+      try {
+        const savedNotes = localStorage.getItem("supersec_secretary_notes");
+        const parsedNotes: SecretaryNote[] = savedNotes ? JSON.parse(savedNotes) : INITIAL_SECRETARY_NOTES;
+        const matchingNotes = filterNotes(parsedNotes, { subjectId });
+        setNotesCount(matchingNotes.length);
+      } catch {
+        setNotesCount(0);
+      }
+
+      try {
+        const savedTemplates = localStorage.getItem("supersec_custom_message_templates");
+        const hiddenPresets = localStorage.getItem("supersec_hidden_preset_templates");
+        const custom: MessageTemplate[] = savedTemplates ? JSON.parse(savedTemplates) : [];
+        const hidden: string[] = hiddenPresets ? JSON.parse(hiddenPresets) : [];
+        const presets = DEFAULT_PRESET_TEMPLATES.filter(p => !hidden.includes(p.id));
+        const matchingSnippets = filterMessageTemplates([...presets, ...custom], { subjectId });
+        setSnippetsCount(matchingSnippets.length);
+      } catch {
+        setSnippetsCount(0);
+      }
+    };
+
+    updateCounts();
+    window.addEventListener("supersec_notes_updated", updateCounts);
+    window.addEventListener("supersec_snippets_updated", updateCounts);
+    window.addEventListener("storage", updateCounts);
+    return () => {
+      window.removeEventListener("supersec_notes_updated", updateCounts);
+      window.removeEventListener("supersec_snippets_updated", updateCounts);
+      window.removeEventListener("storage", updateCounts);
+    };
+  }, [subjectId]);
+
   const annoCount = announcements.data?.length ?? 0;
   const resCount = resources.data?.length ?? 0;
   const qaCount = questions.data?.length ?? 0;
@@ -559,6 +604,8 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
     announcements: annoCount,
     resources: resCount,
     questions: qaCount,
+    notes: notesCount,
+    snippets: snippetsCount,
   };
 
   return (
@@ -583,7 +630,9 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                 asChild
                 variant="outline"
                 size="sm"
-                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+                className={`rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10 ${
+                  kind === "notes" ? "border-primary/50 text-primary" : ""
+                }`}
               >
                 <Link href={`/app/notes?subjectId=${subjectId}`}>
                   <StickyNote className="size-3.5 text-primary" />
@@ -594,33 +643,45 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                 asChild
                 variant="outline"
                 size="sm"
-                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+                className={`rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10 ${
+                  kind === "snippets" ? "border-amber-400/50 text-amber-400" : ""
+                }`}
               >
                 <Link href={`/app/snippets?subjectId=${subjectId}`}>
                   <Sparkles className="size-3.5 text-amber-400" />
                   <span>Snippets</span>
                 </Link>
               </Button>
-              <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
-                <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
-                  <Send className="mr-1.5 size-4" />
-                  New {tab.singular}
-                </Link>
-              </Button>
+              {kind !== "notes" && kind !== "snippets" && (
+                <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
+                  <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
+                    <Send className="mr-1.5 size-4" />
+                    New {tab.singular}
+                  </Link>
+                </Button>
+              )}
             </div>
           }
         />
 
         {/* Tab switcher */}
-        <div className="signal-inset flex gap-1 p-1.5 rounded-2xl bg-secondary/50 border border-border/80">
+        <div
+          role="tablist"
+          aria-label="Subject Workspaces"
+          className="signal-inset flex gap-1 p-1.5 rounded-2xl bg-secondary/50 border border-border/80 overflow-x-auto no-scrollbar scroll-shadow-x"
+        >
           {tabs.map(t => {
             const TabIcon = t.icon;
             const isActive = t.key === kind;
             return (
               <Link
                 key={t.key}
+                role="tab"
+                id={`tab-${t.key}`}
+                aria-selected={isActive}
+                aria-controls={`panel-${t.key}`}
                 href={`/app/subjects/${subjectId}/${t.key}`}
-                className={`signal-action inline-flex min-h-11 flex-1 items-center justify-center gap-2.5 rounded-xl px-3 text-xs sm:text-sm font-bold transition-all ${
+                className={`signal-action inline-flex min-h-11 flex-1 items-center justify-center gap-2.5 rounded-xl px-3 text-xs sm:text-sm font-bold transition-all shrink-0 ${
                   isActive
                     ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground"
@@ -641,64 +702,80 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
           })}
         </div>
 
-        <ContentList
-          kind={kind}
-          subjectId={subjectId}
-          items={
-            kind === "announcements"
-              ? announcements.data
-              : kind === "resources"
-              ? resources.data
-              : questions.data
-          }
-          loading={
-            kind === "announcements"
-              ? announcements.isLoading
-              : kind === "resources"
-              ? resources.isLoading
-              : questions.isLoading
-          }
-          onPublish={id =>
-            kind === "announcements"
-              ? publishAnnouncement.mutate({ id, summary: "Published by the class secretary" })
-              : kind === "resources"
-              ? publishResource.mutate({ id, summary: "Published by the class secretary" })
-              : publishQuestion.mutate({
-                  id,
-                  summary: "Published by the class secretary",
-                  official: Boolean(questions.data?.find(item => item.id === id)?.isOfficial),
-                })
-          }
-          onArchive={id =>
-            kind === "announcements"
-              ? archiveAnnouncement.mutate({ id })
-              : kind === "resources"
-              ? archiveResource.mutate({ id })
-              : archiveQuestion.mutate({ id })
-          }
-          onRestore={id =>
-            kind === "announcements"
-              ? restoreAnnouncement.mutate({ id })
-              : kind === "resources"
-              ? restoreResource.mutate({ id })
-              : restoreQuestion.mutate({ id })
-          }
-          busy={
-            publishAnnouncement.isPending ||
-            publishResource.isPending ||
-            publishQuestion.isPending ||
-            archiveAnnouncement.isPending ||
-            archiveResource.isPending ||
-            archiveQuestion.isPending ||
-            restoreAnnouncement.isPending ||
-            restoreResource.isPending ||
-            restoreQuestion.isPending ||
-            crossPostAnnouncement.isPending ||
-            crossPostResource.isPending ||
-            crossPostQuestion.isPending
-          }
-          onCrossPost={openCrossPostModal}
-        />
+        <div
+          role="tabpanel"
+          id={`panel-${kind}`}
+          aria-labelledby={`tab-${kind}`}
+          tabIndex={0}
+          className="outline-none"
+        >
+          <ErrorBoundary>
+            {kind === "notes" ? (
+              <NotesWorkspaceCard initialSubjectId={subjectId} embedded />
+            ) : kind === "snippets" ? (
+              <MessageTemplatesCard initialSubjectId={subjectId} embedded />
+            ) : (
+              <ContentList
+                kind={kind}
+                subjectId={subjectId}
+                items={
+                  kind === "announcements"
+                    ? announcements.data
+                    : kind === "resources"
+                    ? resources.data
+                    : questions.data
+                }
+                loading={
+                  kind === "announcements"
+                    ? announcements.isLoading
+                    : kind === "resources"
+                    ? resources.isLoading
+                    : questions.isLoading
+                }
+                onPublish={id =>
+                  kind === "announcements"
+                    ? publishAnnouncement.mutate({ id, summary: "Published by the class secretary" })
+                    : kind === "resources"
+                    ? publishResource.mutate({ id, summary: "Published by the class secretary" })
+                    : publishQuestion.mutate({
+                        id,
+                        summary: "Published by the class secretary",
+                        official: Boolean(questions.data?.find(item => item.id === id)?.isOfficial),
+                      })
+                }
+                onArchive={id =>
+                  kind === "announcements"
+                    ? archiveAnnouncement.mutate({ id })
+                    : kind === "resources"
+                    ? archiveResource.mutate({ id })
+                    : archiveQuestion.mutate({ id })
+                }
+                onRestore={id =>
+                  kind === "announcements"
+                    ? restoreAnnouncement.mutate({ id })
+                    : kind === "resources"
+                    ? restoreResource.mutate({ id })
+                    : restoreQuestion.mutate({ id })
+                }
+                busy={
+                  publishAnnouncement.isPending ||
+                  publishResource.isPending ||
+                  publishQuestion.isPending ||
+                  archiveAnnouncement.isPending ||
+                  archiveResource.isPending ||
+                  archiveQuestion.isPending ||
+                  restoreAnnouncement.isPending ||
+                  restoreResource.isPending ||
+                  restoreQuestion.isPending ||
+                  crossPostAnnouncement.isPending ||
+                  crossPostResource.isPending ||
+                  crossPostQuestion.isPending
+                }
+                onCrossPost={openCrossPostModal}
+              />
+            )}
+          </ErrorBoundary>
+        </div>
 
         <CrossPostModal
           isOpen={Boolean(crossPostTargetItem)}
@@ -783,37 +860,46 @@ function AnnouncementFields({
           value={title}
           onChange={event => onTitleChange(event.target.value)}
           placeholder="State the update clearly (e.g. Midterm Exam Schedule & Guidelines)"
-          className="rounded-xl h-11"
+          className="rounded-xl min-h-12 h-12 sm:h-11 text-xs sm:text-sm"
         />
       </div>
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-foreground">Announcement content</Label>
+        <Label htmlFor="announcement-body" className="text-xs font-bold uppercase tracking-wider text-foreground">
+          Announcement Body *
+        </Label>
         <AnnouncementEditor
+          id="announcement-body"
+          label="Announcement body"
           required
           value={body}
           onChange={onBodyChange}
           aiTarget="announcement"
-          aiContext={title ? `Announcement title: ${title}` : "Write a clear class announcement."}
+          aiContext={title || "Class announcement"}
+          placeholder="Write the details of the announcement here. Use the formatting toolbar for bold text, lists, quotes, and links."
+          helperText="Use headings and bullet points for important deadlines so classmates do not miss them."
+          minHeightClassName="min-h-56"
         />
-        <button
-          type="button"
-          aria-expanded={previewOpen}
-          onClick={onPreview}
-          className="mt-3 inline-flex min-h-9 items-center gap-1.5 text-xs font-bold text-primary hover:underline"
-        >
-          <Eye className="size-3.5" />
-          {previewOpen ? "Hide draft preview" : "Preview live layout"}
-        </button>
-        {previewOpen ? (
-          <section className="mt-3 rounded-2xl border border-border bg-secondary/40 p-5 space-y-2">
-            <p className="signal-kicker">Live preview</p>
-            <h3 className="text-lg font-bold text-foreground">{title || "Untitled Announcement"}</h3>
-            <div className="mt-4 pt-3 border-t border-border/60">
-              <AnnouncementPreview body={body || "Start typing to preview your formatted announcement."} />
-            </div>
-          </section>
-        ) : null}
       </div>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Preview before publishing to see exactly what students see.</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onPreview}
+          className="rounded-xl min-h-10 sm:min-h-9"
+        >
+          <Eye className="mr-1.5 size-3.5 text-primary" />
+          {previewOpen ? "Hide Preview" : "Live Preview"}
+        </Button>
+      </div>
+      {previewOpen ? (
+        <div className="rounded-2xl border border-primary/20 bg-card p-4 sm:p-5 shadow-sm space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Live Public Preview</p>
+          <h3 className="text-lg font-bold text-foreground">{title || "Untitled Announcement"}</h3>
+          <AnnouncementPreview body={body || "Announcement text will appear here."} />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -861,7 +947,7 @@ function ResourceFields({
           value={title}
           onChange={event => onTitleChange(event.target.value)}
           placeholder="e.g. Midterm Syllabus & Reference Resources"
-          className="rounded-xl h-11"
+          className="rounded-xl min-h-12 h-12 sm:h-11 text-xs sm:text-sm"
         />
       </div>
       <div>
@@ -889,7 +975,7 @@ function ResourceFields({
             value={category}
             onChange={event => onCategoryChange(event.target.value)}
             placeholder="e.g. Syllabus, Slide Deck, Quiz Link"
-            className="rounded-xl h-11"
+            className="rounded-xl min-h-12 h-12 sm:h-11 text-xs sm:text-sm"
           />
         </Field>
         <Field label="Platform / Source" htmlFor="resource-source-type">
@@ -897,7 +983,7 @@ function ResourceFields({
             id="resource-source-type"
             value={resourceType}
             onChange={event => onResourceTypeChange(event.target.value)}
-            className="min-h-11 w-full rounded-xl border border-input bg-card px-3 text-xs sm:text-sm font-semibold text-foreground"
+            className="min-h-12 h-12 sm:h-11 w-full rounded-xl border border-input bg-card px-3 text-xs sm:text-sm font-semibold text-foreground"
           >
             <option value="External link">External link</option>
             <option value="File attachment">File attachment</option>
@@ -918,7 +1004,7 @@ function ResourceFields({
           value={destinationUrl}
           onChange={event => onDestinationUrlChange(event.target.value)}
           placeholder="https://"
-          className="rounded-xl h-11"
+          className="rounded-xl min-h-12 h-12 sm:h-11 text-xs sm:text-sm"
         />
         <p className="text-xs text-muted-foreground mt-1">This is the safe link classmates open. Uploading a file fills it automatically.</p>
       </Field>

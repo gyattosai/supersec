@@ -17,6 +17,18 @@ export const subjectContentWorkspaces = [
     description: "Save answers you can publish and share again.",
     action: "Open Questions & Answers",
   },
+  {
+    key: "notes",
+    title: "Notes",
+    description: "Personal drafts, meeting minutes, and subject-specific memos.",
+    action: "Open Notes",
+  },
+  {
+    key: "snippets",
+    title: "Snippets",
+    description: "Quick message templates and canned responses for class blasts.",
+    action: "Open Snippets",
+  },
 ] as const;
 
 export type SubjectContentWorkspaceKey = (typeof subjectContentWorkspaces)[number]["key"];

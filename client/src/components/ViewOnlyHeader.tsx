@@ -46,17 +46,17 @@ function ViewOnlyHeaderSurface({ subject }: { subject?: PublicSubjectIdentity | 
   const identity = resolveViewOnlyIdentity(subject);
 
   return (
-    <header className="glass-header sticky top-0 z-40 mb-6 flex min-h-[3.25rem] items-center justify-between gap-3 rounded-2xl border border-border/70 px-3 py-2 sm:px-5">
+    <header className="glass-header sticky top-0 z-40 mb-6 flex min-h-14 items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border border-border/70 px-3 py-2 sm:px-5 pt-[max(0.5rem,env(safe-area-inset-top,0px))]">
       {/* Brand lockup */}
       <Link
         href={identity.subjectHome}
         aria-label={`${identity.fullName} shared Subject home`}
-        className="signal-action inline-flex min-w-0 items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="signal-action inline-flex min-w-0 items-center gap-2 sm:gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-11"
       >
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-primary text-[10px] font-extrabold leading-none text-primary-foreground shadow-sm shadow-primary/30">
           {identity.shortMark}
         </span>
-        <span className="flex flex-col leading-none min-w-0 max-w-[140px] xs:max-w-[200px] sm:max-w-[340px] md:max-w-[500px]">
+        <span className="flex flex-col leading-none min-w-0 max-w-[130px] xs:max-w-[190px] sm:max-w-[340px] md:max-w-[500px]">
           <span className="truncate text-[11px] font-extrabold tracking-[-0.02em] text-foreground" title={identity.fullName}>
             {identity.fullName}
           </span>
@@ -65,15 +65,15 @@ function ViewOnlyHeaderSurface({ subject }: { subject?: PublicSubjectIdentity | 
       </Link>
 
       {/* Right side */}
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         {subject?.code ? (
           <span className="hidden min-h-8 items-center rounded-full bg-primary/10 px-3 text-[11px] font-bold text-primary sm:inline-flex">
             {subject.code}
           </span>
         ) : null}
         <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border bg-secondary/60 px-2.5 text-[11px] font-semibold text-muted-foreground">
-          <Lock className="size-3" />
-          View only
+          <Lock className="size-3 shrink-0" />
+          <span className="hidden xs:inline">View only</span>
         </span>
         <SimpleThemeToggle />
       </div>

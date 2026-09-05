@@ -604,6 +604,7 @@ export default function AttendancePage() {
               count={totals.unset}
               tone="text-amber-400"
               percentage={records.data?.length ? Math.round((totals.unset / records.data.length) * 100) : 0}
+              className="col-span-2 sm:col-span-1"
             />
           </div>
         )}
@@ -825,7 +826,14 @@ export default function AttendancePage() {
                               ? "bg-purple-600 text-white font-bold shadow-sm shadow-purple-600/30"
                               : "bg-amber-600 text-white font-bold shadow-sm shadow-amber-600/30";
 
-                          const label =
+                          const shortLabel =
+                            status === "NOT_SET"
+                              ? "Unset"
+                              : status === "CONFLICT"
+                              ? "Conflict"
+                              : status[0] + status.slice(1).toLowerCase();
+
+                          const fullLabel =
                             status === "NOT_SET"
                               ? "Unmarked"
                               : status === "CONFLICT"
@@ -846,13 +854,14 @@ export default function AttendancePage() {
                                   setStatus.mutate({ recordId: record.recordId, status });
                                 }
                               }}
-                              className={`signal-action min-h-9 rounded-xl px-3 text-xs font-bold transition-all ${
+                              className={`signal-action min-h-11 sm:min-h-9 rounded-xl px-2.5 sm:px-3 text-xs font-bold transition-all ${
                                 isActive
                                   ? activeColor
                                   : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border/70"
                               }`}
                             >
-                              {label}
+                              <span className="sm:hidden">{shortLabel}</span>
+                              <span className="hidden sm:inline">{fullLabel}</span>
                             </button>
                           );
                         })}
@@ -948,29 +957,34 @@ export default function AttendancePage() {
 
             {/* Bulk Actions Bar */}
             {selectedRecordIds.size > 0 && (
-              <div className="sticky bottom-0 z-30 -mx-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur rounded-b-2xl sm:-mx-6 sm:px-6">
+              <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-0 z-30 -mx-5 border-t border-border bg-card/95 px-5 py-3 backdrop-blur rounded-b-2xl sm:-mx-6 sm:px-6 shadow-lg">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="text-xs font-bold text-foreground">
                     {selectedRecordIds.size} student{selectedRecordIds.size === 1 ? "" : "s"} selected
                   </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {statusOptions.map(status => (
-                      <Button
-                        key={status}
-                        size="sm"
-                        variant="outline"
-                        className="rounded-xl text-xs font-semibold"
-                        disabled={setStatus.isPending}
-                        onClick={() => {
-                          selectedRecordIds.forEach(id =>
-                            setStatus.mutate({ recordId: (isNumeric ? Number(id) : id) as any, status })
-                          );
-                          deselectAllRecords();
-                        }}
-                      >
-                        Mark {status === "NOT_SET" ? "Unmarked" : status === "CONFLICT" ? "With Schedule Conflict" : status[0] + status.slice(1).toLowerCase()}
-                      </Button>
-                    ))}
+                    {statusOptions.map(status => {
+                      const shortText = status === "NOT_SET" ? "Unset" : status === "CONFLICT" ? "Conflict" : status[0] + status.slice(1).toLowerCase();
+                      const fullText = status === "NOT_SET" ? "Unmarked" : status === "CONFLICT" ? "With Schedule Conflict" : status[0] + status.slice(1).toLowerCase();
+                      return (
+                        <Button
+                          key={status}
+                          size="sm"
+                          variant="outline"
+                          className="min-h-10 sm:min-h-9 rounded-xl text-xs font-semibold"
+                          disabled={setStatus.isPending}
+                          onClick={() => {
+                            selectedRecordIds.forEach(id =>
+                              setStatus.mutate({ recordId: (isNumeric ? Number(id) : id) as any, status })
+                            );
+                            deselectAllRecords();
+                          }}
+                        >
+                          <span className="sm:hidden">Mark {shortText}</span>
+                          <span className="hidden sm:inline">Mark {fullText}</span>
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1605,9 +1619,9 @@ export default function AttendancePage() {
   );
 }
 
-function Summary({ label, count, tone, percentage }: { label: string; count: number; tone: string; percentage?: number }) {
+function Summary({ label, count, tone, percentage, className }: { label: string; count: number; tone: string; percentage?: number; className?: string }) {
   return (
-    <section className="signal-inset p-4 rounded-2xl border border-border/80 flex flex-col justify-between shadow-sm">
+    <section className={`signal-inset p-4 rounded-2xl border border-border/80 flex flex-col justify-between shadow-sm ${className || ""}`}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</p>
         {percentage !== undefined && (

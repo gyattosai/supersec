@@ -466,14 +466,15 @@ export function PremiumPublicSubjectHome() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search announcements, files, Q&amp;As, or attendance..."
-              className="w-full h-11 pl-10 pr-14 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm"
+              className="w-full min-h-12 h-12 sm:h-11 pl-10 pr-14 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm"
             />
             {searchQuery ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 title="Clear search"
+                aria-label="Clear search"
               >
                 <X className="size-4" />
               </button>
@@ -488,7 +489,7 @@ export function PremiumPublicSubjectHome() {
           <div className="flex items-center gap-2">
             <div className="relative shrink-0">
               <label htmlFor="subject-sort" className="sr-only">Sort by</label>
-              <div className="flex items-center gap-1.5 h-11 px-3 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm shadow-sm text-xs font-semibold text-foreground">
+              <div className="flex items-center gap-1.5 min-h-12 h-12 sm:h-11 px-3 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm shadow-sm text-xs font-semibold text-foreground">
                 <ArrowUpDown className="size-3.5 text-primary shrink-0" />
                 <select
                   id="subject-sort"
@@ -506,7 +507,7 @@ export function PremiumPublicSubjectHome() {
 
             {/* View Mode Toggle when browsing all items without active search */}
             {activeCategory === "all" && !isSearchActive && (
-              <div className="flex items-center rounded-xl border border-border/80 bg-card/90 p-1 h-11 shadow-sm">
+              <div className="flex items-center rounded-xl border border-border/80 bg-card/90 p-1 min-h-12 h-12 sm:h-11 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setViewMode("categorized")}
@@ -548,7 +549,7 @@ export function PremiumPublicSubjectHome() {
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`shrink-0 inline-flex items-center gap-2 min-h-10 sm:min-h-9 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 scale-[1.02]"
                     : "bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border/60"
@@ -993,7 +994,7 @@ function FeedItemCard({ item }: { item: UnifiedItem }) {
 
 function PublicFrame({ children, subject }: { children: React.ReactNode; subject?: ViewOnlySubject }) {
   return (
-    <main className="signal-canvas min-h-screen px-3.5 sm:px-6 md:px-8 py-3.5 sm:py-6 md:py-8 text-foreground">
+    <main className="signal-canvas min-h-screen px-3.5 sm:px-6 md:px-8 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] pb-[calc(3rem+env(safe-area-inset-bottom,0px))] sm:py-6 md:py-8 text-foreground">
       <div className="mx-auto max-w-5xl">
         <ViewOnlyHeader subject={subject} />
         <div className="pb-12">{children}</div>

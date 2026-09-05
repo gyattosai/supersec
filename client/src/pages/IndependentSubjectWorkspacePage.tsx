@@ -32,6 +32,7 @@ import {
   QrCode,
   ShieldCheck,
   Sparkles,
+  StickyNote,
   Users,
   Zap,
 } from "lucide-react";
@@ -291,6 +292,20 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
           href: `/app/subjects/${subjectId}/questions`,
           icon: GraduationCap,
           badge: `${qaCount}`,
+        },
+        {
+          label: "Subject Notes & Memos",
+          desc: "Personal lecture notes, formulas, and meeting minutes",
+          href: `/app/subjects/${subjectId}/notes`,
+          icon: StickyNote,
+          badge: "Notes",
+        },
+        {
+          label: "Message Snippets",
+          desc: "Quick copy templates and group chat notices",
+          href: `/app/subjects/${subjectId}/snippets`,
+          icon: Sparkles,
+          badge: "Snippets",
         },
       ],
     },

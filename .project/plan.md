@@ -1,7 +1,7 @@
 # Plan — supersec
 
 ## Status Summary
-- **Done:** 5 tasks
+- **Done:** 6 tasks
 - **In progress:** 0 tasks
 - **Blocked:** 0 tasks
 - **Backlog:** 2 tasks
@@ -16,6 +16,7 @@
 - [x] Subject UI/UX modernization pass and resolution of workspace identifier lookup (`6a944a7994f6ff5f3c13`)
 
 ### M2 — Extended Feature Verification & Optimization — backlog
+- [x] Notes and Snippets subject workspace interactive tabs & parity synchronization
 - [ ] End-to-end multi-user attendance proof uploading with Appwrite Storage
 - [ ] Automated scheduled reports export using Appwrite Functions
 
@@ -23,5 +24,6 @@
 *(No currently blocked tasks)*
 
 ## Change History
+- **2026-09-05:** Added Notes and Snippets interactive tabs in Subject Workspaces with string ID safety and cross-tab real-time sync.
 - **2026-08-31:** Updated plan to mark UI modernization and subject workspace fix as completed on Appwrite Sites.
 - **2026-08-30:** Initial plan seeded following Manus to Appwrite migration and edge deployment.

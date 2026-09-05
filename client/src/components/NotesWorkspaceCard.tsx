@@ -7,6 +7,7 @@ import {
   INITIAL_SECRETARY_NOTES,
   createDefaultNote,
   filterNotes,
+  moveNoteSubject,
   formatNoteForMessenger,
 } from "@shared/notes";
 import { RichNoteEditor } from "@/components/RichNoteEditor";
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
+  ArrowRightLeft,
   BookOpen,
   Check,
   ChevronRight,
@@ -71,9 +73,10 @@ const STORAGE_KEY = "supersec_secretary_notes";
 
 export interface NotesWorkspaceCardProps {
   initialSubjectId?: string | number;
+  embedded?: boolean;
 }
 
-export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps = {}) {
+export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: NotesWorkspaceCardProps = {}) {
   const subjects = trpc.subjects.list.useQuery();
   const activeSubjects = subjects.data?.filter(s => s.status === "active") ?? [];
 
@@ -91,8 +94,35 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
     setNotes(newNotes);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newNotes));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("supersec_notes_updated", { detail: { notes: newNotes } }));
+      }
     } catch {}
   };
+
+  // Cross-component and cross-tab real-time state sync
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      try {
+        const customEvt = e as CustomEvent<{ notes: SecretaryNote[] }>;
+        if (customEvt.detail?.notes) {
+          setNotes(customEvt.detail.notes);
+          return;
+        }
+      } catch {}
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setNotes(JSON.parse(saved));
+      } catch {}
+    };
+
+    window.addEventListener("supersec_notes_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("supersec_notes_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
 
   // View Mode: grid vs list
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -144,6 +174,9 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<SecretaryNote | null>(null);
 
+  // Move Note to Subject State
+  const [movingNote, setMovingNote] = useState<SecretaryNote | null>(null);
+
   // Collect all unique tags across notes
   const allUniqueTags = useMemo(() => {
     const set = new Set<string>();
@@ -179,7 +212,7 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
       id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       title,
       content: quickContent.trim(),
-      subjectId: selectedSub ? Number(selectedSub.id) : null,
+      subjectId: selectedSub ? selectedSub.id : null,
       subjectCode: selectedSub ? selectedSub.code : "GENERAL",
       subjectName: selectedSub ? selectedSub.name : "General Notes",
       tags: ["QuickNote"],
@@ -265,7 +298,7 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
               ...n,
               title: draftTitle.trim(),
               content: draftContent,
-              subjectId: selectedSub ? Number(selectedSub.id) : null,
+              subjectId: selectedSub ? selectedSub.id : null,
               subjectCode: selectedSub ? selectedSub.code : "GENERAL",
               subjectName: selectedSub ? selectedSub.name : "General Notes",
               tags: draftTags,
@@ -284,7 +317,7 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
         id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         title: draftTitle.trim(),
         content: draftContent,
-        subjectId: selectedSub ? Number(selectedSub.id) : null,
+        subjectId: selectedSub ? selectedSub.id : null,
         subjectCode: selectedSub ? selectedSub.code : "GENERAL",
         subjectName: selectedSub ? selectedSub.name : "General Notes",
         tags: draftTags,
@@ -299,6 +332,33 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
     }
 
     setIsEditorOpen(false);
+  };
+
+  // Move Note to Subject with Optimistic State and Error Rollback
+  const handleMoveNote = (target: { id: number | string | null; code?: string; name?: string }) => {
+    if (!movingNote) return;
+    const prev = notes;
+    try {
+      const updated = moveNoteSubject(notes, movingNote.id, target);
+      saveNotes(updated);
+      toast.success(`Moved "${movingNote.title}" to ${target.name || "General"}!`, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            saveNotes(prev);
+            toast.success("Move undone.");
+          },
+        },
+      });
+      if (readingNote?.id === movingNote.id) {
+        setReadingNote(updated.find(n => n.id === movingNote.id) ?? null);
+      }
+    } catch {
+      saveNotes(prev);
+      toast.error("Failed to move note.");
+    } finally {
+      setMovingNote(null);
+    }
   };
 
   // Toggle Pin
@@ -376,32 +436,51 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
   return (
     <section className="signal-panel rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6 shadow-xl shadow-primary/5 space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm font-black text-xs">
-              <StickyNote className="size-4" />
-            </span>
-            <p className="signal-kicker">Secretary Workspace</p>
+      {!embedded ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm font-black text-xs">
+                <StickyNote className="size-4" />
+              </span>
+              <p className="signal-kicker">Secretary Workspace</p>
+            </div>
+            <h2 className="signal-heading text-lg sm:text-xl font-extrabold tracking-tight mt-1">
+              Notes & Study References
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Take rich-text notes, attach reference files & images, organize by subject, and copy formatted notes to Messenger.
+            </p>
           </div>
-          <h2 className="signal-heading text-lg sm:text-xl font-extrabold tracking-tight mt-1">
-            Notes & Study References
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Take rich-text notes, attach reference files & images, organize by subject, and copy formatted notes to Messenger.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={handleOpenCreate}
+              className="rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 font-bold text-xs sm:text-sm"
+            >
+              <Plus className="mr-1.5 size-4" /> New Rich Note
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="grid size-7 place-items-center rounded-lg bg-primary/20 text-primary font-bold text-xs">
+              <StickyNote className="size-3.5" />
+            </span>
+            <span className="text-xs font-bold text-foreground">Subject Notes & Memos</span>
+          </div>
           <Button
             type="button"
+            size="sm"
             onClick={handleOpenCreate}
-            className="rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 font-bold text-xs sm:text-sm"
+            className="rounded-xl bg-primary text-primary-foreground font-bold text-xs h-8 px-3"
           >
-            <Plus className="mr-1.5 size-4" /> New Rich Note
+            <Plus className="mr-1 size-3.5" /> New Rich Note
           </Button>
         </div>
-      </div>
+      )}
 
       {/* Quick Note Inline Composer (Google Keep Style) */}
       <div className="rounded-2xl border border-border/80 bg-secondary/40 p-3 sm:p-4 shadow-sm transition-all">
@@ -693,6 +772,17 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
                       </button>
                       <button
                         type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setMovingNote(note);
+                        }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        title="Move note to another subject"
+                      >
+                        <ArrowRightLeft className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={e => handleOpenEdit(note, e)}
                         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                         title="Edit note"
@@ -745,6 +835,16 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
                     title="Download as Markdown file"
                   >
                     <Download className="mr-1 size-3.5" /> Download .md
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMovingNote(readingNote)}
+                    className="rounded-xl text-xs"
+                    title="Move note to another subject"
+                  >
+                    <ArrowRightLeft className="mr-1 size-3.5" /> Move
                   </Button>
                   <Button
                     type="button"
@@ -1013,21 +1113,28 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
                           key={color}
                           type="button"
                           onClick={() => setDraftColor(color)}
-                          className={`size-6 rounded-full border-2 transition-all ${
-                            color === "default"
-                              ? "bg-slate-700 border-slate-500"
-                              : color === "sky"
-                              ? "bg-sky-500 border-sky-400"
-                              : color === "emerald"
-                              ? "bg-emerald-500 border-emerald-400"
-                              : color === "amber"
-                              ? "bg-amber-500 border-amber-400"
-                              : color === "purple"
-                              ? "bg-purple-500 border-purple-400"
-                              : "bg-rose-500 border-rose-400"
-                          } ${draftColor === color ? "scale-125 ring-2 ring-primary ring-offset-2 ring-offset-background" : "hover:scale-110 opacity-70 hover:opacity-100"}`}
+                          className={`size-8 sm:size-7 p-0.5 rounded-full inline-flex items-center justify-center transition-all ${
+                            draftColor === color ? "scale-110" : "hover:scale-105"
+                          }`}
                           title={`Color ${color}`}
-                        />
+                          aria-label={`Select color ${color}`}
+                        >
+                          <span
+                            className={`size-6 rounded-full border-2 transition-all ${
+                              color === "default"
+                                ? "bg-slate-700 border-slate-500"
+                                : color === "sky"
+                                ? "bg-sky-500 border-sky-400"
+                                : color === "emerald"
+                                ? "bg-emerald-500 border-emerald-400"
+                                : color === "amber"
+                                ? "bg-amber-500 border-amber-400"
+                                : color === "purple"
+                                ? "bg-purple-500 border-purple-400"
+                                : "bg-rose-500 border-rose-400"
+                            } ${draftColor === color ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "opacity-70 hover:opacity-100"}`}
+                          />
+                        </button>
                       )
                     )}
                   </div>
@@ -1088,6 +1195,64 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Move Note to Subject Dialog */}
+      <Dialog open={Boolean(movingNote)} onOpenChange={open => !open && setMovingNote(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <ArrowRightLeft className="size-4 text-primary" /> Move Note to Subject
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Select which subject desk this note should belong to, or move it to General Notes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-3 max-h-[60vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => handleMoveNote({ id: null, code: "GENERAL", name: "General Notes" })}
+              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-xs font-semibold ${
+                !movingNote?.subjectId || movingNote?.subjectCode === "GENERAL"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/80 hover:border-primary/60 hover:bg-secondary/60 text-foreground"
+              }`}
+            >
+              <span>📌 General Notes</span>
+              <span className="text-[10px] text-muted-foreground">Global desk</span>
+            </button>
+            {activeSubjects.map(sub => {
+              const isCurrent = String(movingNote?.subjectId) === String(sub.id) || movingNote?.subjectCode === sub.code;
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => handleMoveNote({ id: sub.id, code: sub.code, name: sub.name })}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-xs font-semibold ${
+                    isCurrent
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/80 hover:border-primary/60 hover:bg-secondary/60 text-foreground"
+                  }`}
+                >
+                  <span className="truncate">{sub.code} · {sub.name}</span>
+                  {isCurrent && (
+                    <span className="text-[10px] font-bold text-primary shrink-0 ml-2">Current</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMovingNote(null)}
+              className="rounded-xl text-xs bg-card border-border"
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 
@@ -1134,6 +1299,18 @@ export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps
                 title="Copy note text for Messenger"
               >
                 <Copy className="size-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  setMovingNote(note);
+                }}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Move note to another subject"
+              >
+                <ArrowRightLeft className="size-3.5" />
               </button>
 
               <button

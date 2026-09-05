@@ -548,7 +548,7 @@ export function PublicAttendancePage() {
               <div className="mt-4">
                 <Link
                   href={`/attendance/${details.publicId}/proof`}
-                  className="signal-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/30 transition-all active:scale-[0.99]"
+                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/30 transition-all active:scale-[0.99]"
                 >
                   <Sparkles className="size-4" />
                   Submit Zoom Proof
@@ -575,7 +575,7 @@ export function PublicAttendancePage() {
               <div className="mt-4">
                 <Link
                   href={`/attendance/${details.publicId}/excuse`}
-                  className="signal-action inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-sky-950/30 transition-all active:scale-[0.99]"
+                  className="signal-action inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white px-4 text-xs sm:text-sm font-bold shadow-md shadow-sky-950/30 transition-all active:scale-[0.99]"
                 >
                   <FileText className="size-4" />
                   Submit Excuse Letter
@@ -699,7 +699,7 @@ export function PublicAttendancePage() {
               <button
                 type="button"
                 onClick={() => setSelectedStatus(selectedStatus === "NOT_SET" ? "ALL" : "NOT_SET")}
-                className={`p-3 sm:p-4 text-left transition-all cursor-pointer rounded-xl sm:rounded-2xl border active:scale-[0.98] ${
+                className={`col-span-2 sm:col-span-1 p-3 sm:p-4 text-left transition-all cursor-pointer rounded-xl sm:rounded-2xl border active:scale-[0.98] ${
                   selectedStatus === "NOT_SET"
                     ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/15 shadow-md shadow-amber-950/20"
                     : "border-border/80 bg-card hover:border-amber-500/40"
@@ -731,7 +731,7 @@ export function PublicAttendancePage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setSelectedStatus(tab.id)}
-                    className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                    className={`shrink-0 inline-flex items-center justify-center min-h-10 sm:min-h-8 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                       selectedStatus === tab.id
                         ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                         : "text-muted-foreground hover:text-foreground"
@@ -751,13 +751,14 @@ export function PublicAttendancePage() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search student name…"
-                    className="min-h-10 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs sm:text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="min-h-11 sm:min-h-10 w-full rounded-xl border border-input bg-card pl-9 pr-8 text-xs sm:text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                   {searchQuery ? (
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground"
+                      aria-label="Clear student search"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -770,7 +771,7 @@ export function PublicAttendancePage() {
                     id="public-att-sort"
                     value={sortMode}
                     onChange={e => setSortMode(e.target.value as PublicAttendanceSortMode)}
-                    className="min-h-10 rounded-xl border border-input bg-card pl-3 pr-8 text-xs sm:text-sm font-semibold text-foreground appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="min-h-11 sm:min-h-10 rounded-xl border border-input bg-card pl-3 pr-8 text-xs sm:text-sm font-semibold text-foreground appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     aria-label="Sort Attendance records"
                   >
                     <option value="last-name-asc">Last Name (A–Z)</option>
@@ -1133,7 +1134,7 @@ type ViewOnlySubject = { publicId: string; viewOnlyShortMark?: string | null; vi
 function subjectFromReaderChildren(children: React.ReactNode): ViewOnlySubject | null { for (const child of Children.toArray(children)) if (isValidElement<{ subject?: ViewOnlySubject }>(child) && child.type === BackToSubject) return child.props.subject ?? null; return null; }
 export function PublicShell({ children, subject }: { children: React.ReactNode; subject?: ViewOnlySubject | null }) {
   return (
-    <main className="signal-canvas min-h-screen px-3.5 sm:px-6 md:px-8 py-3.5 sm:py-5 md:py-6 text-foreground">
+    <main className="signal-canvas min-h-screen px-3.5 sm:px-6 md:px-8 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] sm:py-5 md:py-6 text-foreground">
       <div className="mx-auto max-w-5xl">
         <ViewOnlyHeader subject={subject ?? subjectFromReaderChildren(children)} />
         <div className="pb-10">{children}</div>
@@ -1436,13 +1437,14 @@ function PublicStudentMasterList({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Check your name (e.g. Dela Cruz)..."
-            className="w-full h-9 pl-9 pr-8 text-xs rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full min-h-11 sm:min-h-9 h-auto pl-9 pr-8 text-xs rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground"
+              aria-label="Clear student search"
             >
               <X className="size-3.5" />
             </button>
@@ -1482,11 +1484,11 @@ function PublicStudentMasterList({
         )}
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 pt-1">
+        <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setFilter("all")}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+            className={`min-h-10 sm:min-h-8 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs sm:text-[11px] font-bold transition-all shrink-0 ${
               filter === "all"
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary/60 text-muted-foreground hover:text-foreground"
@@ -1497,7 +1499,7 @@ function PublicStudentMasterList({
           <button
             type="button"
             onClick={() => setFilter("regular")}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+            className={`min-h-10 sm:min-h-8 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs sm:text-[11px] font-bold transition-all shrink-0 ${
               filter === "regular"
                 ? "bg-emerald-600 text-white"
                 : "bg-secondary/60 text-muted-foreground hover:text-emerald-400"
@@ -1508,7 +1510,7 @@ function PublicStudentMasterList({
           <button
             type="button"
             onClick={() => setFilter("conflict")}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+            className={`min-h-10 sm:min-h-8 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs sm:text-[11px] font-bold transition-all shrink-0 ${
               filter === "conflict"
                 ? "bg-amber-600 text-white"
                 : "bg-secondary/60 text-muted-foreground hover:text-amber-400"

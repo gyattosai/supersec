@@ -218,12 +218,12 @@ export default function ReportsPage() {
         ) : null}
 
         {/* Global KPI Stats Grid */}
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <Metric icon={CheckCircle2} label="Total Present" value={totals.present} tone="text-emerald-400" />
           <Metric icon={XCircle} label="Total Absent" value={totals.absent} tone="text-red-400" />
           <Metric icon={FilePlus2} label="Total Excused" value={totals.excused} tone="text-sky-400" />
           <Metric icon={AlertCircle} label="Total Conflict" value={totals.conflict} tone="text-purple-400" />
-          <Metric icon={CircleDashed} label="Pending Review" value={totals.notSet} tone="text-amber-400" />
+          <Metric icon={CircleDashed} label="Pending Review" value={totals.notSet} tone="text-amber-400" className="col-span-2 sm:col-span-1" />
         </div>
 
         {/* Subject-wide Attendance Summary Grid */}
@@ -472,9 +472,9 @@ function StatusBadge({ status }: { status: "PRESENT" | "ABSENT" | "EXCUSED" | "C
   );
 }
 
-function Metric({ icon: Icon, label, value, tone }: { icon: typeof CheckCircle2; label: string; value: number; tone: string }) {
+function Metric({ icon: Icon, label, value, tone, className }: { icon: typeof CheckCircle2; label: string; value: number; tone: string; className?: string }) {
   return (
-    <div className="signal-stat-card p-4 sm:p-5">
+    <div className={`signal-stat-card p-4 sm:p-5 ${className || ""}`}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-muted-foreground">{label}</p>
         <Icon className={`h-4 w-4 ${tone}`} />

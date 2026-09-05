@@ -42,9 +42,9 @@ export default function Home() {
   return (
     <main className="signal-canvas min-h-[100dvh] text-foreground flex flex-col">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md px-5 sm:px-8 lg:px-12">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md px-4 sm:px-8 lg:px-12 pt-[max(0.25rem,env(safe-area-inset-top,0px))]">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-h-11">
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-xs font-extrabold text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
               SS
             </span>
@@ -53,53 +53,53 @@ export default function Home() {
               <span className="hidden text-[10px] text-muted-foreground sm:block">Class secretary management</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <SimpleThemeToggle />
             <Link
               href="/login"
-              className="signal-action inline-flex min-h-10 items-center rounded-xl border border-border bg-card/60 px-4 text-xs font-bold text-foreground hover:bg-secondary transition-all shadow-sm"
+              className="signal-action hidden sm:inline-flex min-h-11 items-center rounded-xl border border-border bg-card/60 px-3.5 text-xs font-bold text-foreground hover:bg-secondary transition-all shadow-xs"
             >
               Secretary Sign In
             </Link>
             <Link
               href="/app"
-              className="signal-action inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground hover:opacity-95 shadow-md shadow-primary/25"
+              className="signal-action inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3.5 sm:px-4 text-xs font-bold text-primary-foreground hover:opacity-95 shadow-md shadow-primary/25 active:scale-95 transition-all"
             >
-              Open Workspace <ArrowRight className="size-3.5" />
+              <span>Open Workspace</span> <ArrowRight className="size-3.5" />
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="signal-landing-hero mx-auto w-full max-w-6xl px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+      <section className="signal-landing-hero mx-auto w-full max-w-6xl px-4 py-12 sm:px-8 lg:px-12 lg:py-24">
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary shadow-sm mb-6">
             <Sparkles className="size-3.5" />
             <span>Modern Class Secretary System</span>
           </div>
 
-          <h1 className="signal-title text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.08] text-foreground">
+          <h1 className="signal-title text-2xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.08] text-foreground">
             Manage your class. <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-primary via-primary/80 to-amber-500 bg-clip-text text-transparent">
               Share what matters.
             </span>
           </h1>
 
-          <p className="mt-5 text-base sm:text-lg leading-relaxed text-muted-foreground max-w-2xl">
+          <p className="mt-4 sm:mt-5 text-sm sm:text-lg leading-relaxed text-muted-foreground max-w-2xl">
             Supersec empowers class secretaries to organize independent subject desks, run AI-assisted Zoom attendance, publish view-only updates, and export official reports.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
             <Link
               href="/app"
-              className="signal-action inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-extrabold text-primary-foreground shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-extrabold text-primary-foreground shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Launch Secretary Workspace <ArrowRight className="size-4" />
             </Link>
             <Link
               href="/login"
-              className="signal-action inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-card/70 px-5 text-sm font-bold text-foreground hover:bg-secondary transition-all"
+              className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-5 text-sm font-bold text-foreground hover:bg-secondary active:scale-[0.98] transition-all"
             >
               Sign In / Register
             </Link>

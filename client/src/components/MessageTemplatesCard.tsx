@@ -110,9 +110,10 @@ const DYNAMIC_VARIABLES = [
 
 export interface MessageTemplatesCardProps {
   initialSubjectId?: string | number;
+  embedded?: boolean;
 }
 
-export function MessageTemplatesCard({ initialSubjectId }: MessageTemplatesCardProps = {}) {
+export function MessageTemplatesCard({ initialSubjectId, embedded = false }: MessageTemplatesCardProps = {}) {
   const subjectsQuery = trpc.subjects.list.useQuery();
   const subjects = subjectsQuery.data ?? [];
 
@@ -1008,8 +1009,9 @@ export function MessageTemplatesCard({ initialSubjectId }: MessageTemplatesCardP
                         key={emoji}
                         type="button"
                         onClick={() => handleInsertEmoji(emoji)}
-                        className="size-6 rounded hover:bg-secondary grid place-items-center text-xs transition-transform active:scale-90"
+                        className="size-8 sm:size-7 rounded-lg hover:bg-secondary grid place-items-center text-sm transition-transform active:scale-90"
                         title={`Insert ${emoji}`}
+                        aria-label={`Insert emoji ${emoji}`}
                       >
                         {emoji}
                       </button>
@@ -1035,7 +1037,7 @@ export function MessageTemplatesCard({ initialSubjectId }: MessageTemplatesCardP
                             key={cat}
                             type="button"
                             onClick={() => setActiveEmojiCategory(cat)}
-                            className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                            className={`min-h-8 inline-flex items-center px-2.5 py-1 text-xs sm:text-[10px] font-bold rounded-lg transition-all shrink-0 ${
                               isActive
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground bg-card/60 border border-border/50"
@@ -1055,8 +1057,9 @@ export function MessageTemplatesCard({ initialSubjectId }: MessageTemplatesCardP
                         key={emoji}
                         type="button"
                         onClick={() => handleInsertEmoji(emoji)}
-                        className="size-7 rounded-md hover:bg-card hover:border hover:border-border grid place-items-center text-sm transition-all active:scale-90"
+                        className="size-8 sm:size-7 rounded-lg hover:bg-card hover:border hover:border-border grid place-items-center text-base sm:text-sm transition-all active:scale-90"
                         title={`Insert ${emoji}`}
+                        aria-label={`Insert emoji ${emoji}`}
                       >
                         {emoji}
                       </button>
