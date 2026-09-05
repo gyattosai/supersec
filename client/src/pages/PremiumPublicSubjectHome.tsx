@@ -364,7 +364,7 @@ export function PremiumPublicSubjectHome() {
         </section>
 
         {/* Quick summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 pt-1">
           <button
             type="button"
             onClick={() => setActiveCategory("announcements")}
@@ -432,7 +432,7 @@ export function PremiumPublicSubjectHome() {
           <button
             type="button"
             onClick={() => setActiveCategory("students")}
-            className={`col-span-2 sm:col-span-1 p-3 rounded-xl border text-left transition-all ${
+            className={`p-3 rounded-xl border text-left transition-all ${
               activeCategory === "students"
                 ? "border-indigo-500/50 bg-indigo-500/10 ring-1 ring-indigo-500/30"
                 : "border-border/60 bg-secondary/20 hover:border-indigo-500/30 hover:bg-secondary/40"
@@ -456,7 +456,7 @@ export function PremiumPublicSubjectHome() {
 
       {/* Interactive Search, Sorting & Filter Control Toolbar */}
       <section className="mt-7 space-y-3.5">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="rounded-2xl border border-border/80 bg-card/70 p-3 sm:p-0 sm:border-0 sm:bg-transparent shadow-sm sm:shadow-none flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -466,7 +466,7 @@ export function PremiumPublicSubjectHome() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search announcements, files, Q&amp;As, or attendance..."
-              className="w-full min-h-12 h-12 sm:h-11 pl-10 pr-14 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm"
+              className="w-full min-h-12 h-12 sm:h-11 pl-10 pr-14 rounded-xl border border-border/80 bg-background/80 sm:bg-card/90 backdrop-blur-sm text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm"
             />
             {searchQuery ? (
               <button
@@ -486,32 +486,34 @@ export function PremiumPublicSubjectHome() {
           </div>
 
           {/* Sort Selector & View Mode Toggle */}
-          <div className="flex items-center gap-2">
-            <div className="relative shrink-0">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <label htmlFor="subject-sort" className="sr-only">Sort by</label>
-              <div className="flex items-center gap-1.5 min-h-12 h-12 sm:h-11 px-3 rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm shadow-sm text-xs font-semibold text-foreground">
-                <ArrowUpDown className="size-3.5 text-primary shrink-0" />
-                <select
-                  id="subject-sort"
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value as SortOption)}
-                  className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
-                >
-                  <option value="newest" className="bg-popover text-popover-foreground">Newest First</option>
-                  <option value="oldest" className="bg-popover text-popover-foreground">Oldest First</option>
-                  <option value="title_asc" className="bg-popover text-popover-foreground">Title (A → Z)</option>
-                  <option value="title_desc" className="bg-popover text-popover-foreground">Title (Z → A)</option>
-                </select>
+              <div className="flex items-center justify-between sm:justify-start gap-1.5 min-h-12 h-12 sm:h-11 px-3.5 rounded-xl border border-border/80 bg-background/80 sm:bg-card/90 backdrop-blur-sm shadow-sm text-xs font-semibold text-foreground w-full">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ArrowUpDown className="size-3.5 text-primary shrink-0" />
+                  <select
+                    id="subject-sort"
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as SortOption)}
+                    className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1 truncate"
+                  >
+                    <option value="newest" className="bg-popover text-popover-foreground">Newest First</option>
+                    <option value="oldest" className="bg-popover text-popover-foreground">Oldest First</option>
+                    <option value="title_asc" className="bg-popover text-popover-foreground">Title (A → Z)</option>
+                    <option value="title_desc" className="bg-popover text-popover-foreground">Title (Z → A)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {/* View Mode Toggle when browsing all items without active search */}
             {activeCategory === "all" && !isSearchActive && (
-              <div className="flex items-center rounded-xl border border-border/80 bg-card/90 p-1 min-h-12 h-12 sm:h-11 shadow-sm">
+              <div className="flex items-center rounded-xl border border-border/80 bg-background/80 sm:bg-card/90 p-1 min-h-12 h-12 sm:h-11 shadow-sm shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode("categorized")}
-                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-3 h-full rounded-lg text-xs font-bold transition-all ${
                     viewMode === "categorized"
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -524,7 +526,7 @@ export function PremiumPublicSubjectHome() {
                 <button
                   type="button"
                   onClick={() => setViewMode("feed")}
-                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-3 h-full rounded-lg text-xs font-bold transition-all ${
                     viewMode === "feed"
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"

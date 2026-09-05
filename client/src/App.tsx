@@ -26,6 +26,7 @@ const FocusedStudentsPage = lazy(() => import("@/pages/FocusedStudentsPage").the
 const FocusedAttendancePage = lazy(() => import("@/pages/FocusedSchedulePage").then(m => ({ default: m.FocusedAttendancePage })));
 const LegacyScheduleRedirect = lazy(() => import("@/pages/FocusedSchedulePage").then(m => ({ default: m.LegacyScheduleRedirect })));
 const AttendancePage = lazy(() => import("@/pages/AttendancePage"));
+const NoClassSessionEditPage = lazy(() => import("@/pages/NoClassSessionEditPage"));
 const FocusedContentPage = lazy(() => import("@/pages/FocusedContentPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const ArchivePage = lazy(() => import("@/pages/ArchivePage"));
@@ -63,6 +64,7 @@ function Router() {
         <Route path="/app/subjects/:subjectId/:kind" component={FocusedContentPage} />
         <Route path="/app/subjects/:subjectId" component={IndependentSubjectWorkspacePage} />
         <Route path="/app/attendance">{() => <Redirect to="/app/subjects" />}</Route>
+        <Route path="/app/attendance/:sessionId/no-class" component={NoClassSessionEditPage} />
         <Route path="/app/attendance/:sessionId" component={AttendancePage} />
         <Route path="/app/content/:subjectId/:kind" component={LegacyContentRedirect} />
         <Route path="/app/templates" component={MessageTemplatesPage} />

@@ -459,6 +459,12 @@ export function PublicAttendancePage() {
               </Badge>
               <span className="truncate text-xs sm:text-sm font-semibold text-foreground/90">{details.subject.name}</span>
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+            <h1 className="signal-title text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight break-words">
+              {isNoClass ? "Class Suspended / No Classes" : "Attendance Record"}
+            </h1>
             <div className="flex items-center gap-2 shrink-0">
               {isNoClass ? (
                 <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:text-amber-400 shadow-sm">
@@ -471,10 +477,6 @@ export function PublicAttendancePage() {
               </Badge>
             </div>
           </div>
-
-          <h1 className="signal-title mt-3 block w-full text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight break-words">
-            {isNoClass ? "Class Suspended / No Classes" : "Attendance Record"}
-          </h1>
 
           {/* Large Visible Time & Date Card */}
           <div className={`mt-3.5 flex items-center gap-3 rounded-xl sm:rounded-2xl border p-3 sm:p-4 ${
@@ -589,7 +591,7 @@ export function PublicAttendancePage() {
         {/* Instant Class Alerts Card & Push Subscription */}
         <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-4 sm:p-5 shadow-md shadow-primary/5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3 min-w-0 mb-3 sm:mb-0">
+            <div className="flex items-center sm:items-start gap-3 min-w-0 mb-3 sm:mb-0">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                 <BellRing className="size-5" />
               </span>

@@ -336,81 +336,17 @@ export default function AttendancePage() {
             )
           }
           action={
-            activeScreen === "main" ? (
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleDownloadPdf}
-                  disabled={isExportingPdf || !records.data?.length}
-                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-3.5 sm:px-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
-                >
-                  <FileDown className="mr-2 h-4 w-4 text-primary" />
-                  {isExportingPdf ? "Exporting PDF…" : "Attendance Sheet (PDF)"}
-                </Button>
-                <Link
-                  href={`/app/reports?sessionId=${sessionId}`}
-                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
-                >
-                  <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
-                </Link>
-                {session.data?.publishState === "published" ? (
-                  <>
-                    <a
-                      href={`/attendance/${session.data.publicId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />View shared
-                    </a>
-                    <button
-                      type="button"
-                      onClick={copyPublicAttendance}
-                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
-                    >
-                      <Copy className="mr-2 h-4 w-4" />Copy link
-                    </button>
-                  </>
-                ) : null}
-                {!isNoClass && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setNoClassReasonDraft("");
-                      setNoClassModalOpen(true);
-                    }}
-                    className="signal-action inline-flex min-h-11 items-center justify-center border border-amber-500/40 bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-amber-400 hover:bg-amber-500/10 rounded-xl"
-                  >
-                    <CalendarX className="mr-2 size-4 text-amber-400" />
-                    Mark No Class
-                  </Button>
-                )}
-                <Button
-                  onClick={() => publish.mutate({ sessionId: sessionQueryParam })}
-                  disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0}
-                  className="min-h-11 px-5 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/25"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {unresolvedSuggestionCount
-                    ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}`
-                    : session.data?.publishState === "published"
-                    ? `Update & Publish (v${(session.data?.version || 1) + 1})`
-                    : "Publish Attendance (v1)"}
-                </Button>
-              </div>
-            ) : (
+            activeScreen !== "main" ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setActiveScreen("main")}
-                className="gap-2 font-semibold rounded-xl min-h-11"
+                className="gap-2 font-semibold rounded-xl min-h-11 px-5"
               >
                 <ArrowLeft className="size-4" />
                 Back to Attendance
               </Button>
-            )
+            ) : undefined
           }
         >
           {/* Session Status & Meta Bar */}
@@ -440,6 +376,88 @@ export default function AttendancePage() {
             </div>
           )}
         </WorkspacePageHeader>
+
+        {/* Dedicated Action Buttons Section (Above Tabs) */}
+        {activeScreen === "main" && (
+          <section aria-label="Session Actions" className="mt-4 rounded-2xl border border-border/80 bg-card/60 p-3 sm:p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2.5 sm:gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDownloadPdf}
+                disabled={isExportingPdf || !records.data?.length}
+                className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-border bg-card px-5 sm:px-6 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
+              >
+                <FileDown className="mr-2 h-4 w-4 text-primary shrink-0" />
+                <span>{isExportingPdf ? "Exporting PDF…" : "Attendance Sheet (PDF)"}</span>
+              </Button>
+              <Link
+                href={`/app/reports?sessionId=${sessionId}`}
+                className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-border bg-card px-5 sm:px-6 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
+              >
+                <ChartNoAxesCombined className="mr-2 h-4 w-4 shrink-0" />
+                <span>View report</span>
+              </Link>
+              {session.data?.publishState === "published" ? (
+                <>
+                  <a
+                    href={`/attendance/${session.data.publicId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-border bg-card px-5 sm:px-6 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4 shrink-0" />
+                    <span>View shared</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={copyPublicAttendance}
+                    className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-border bg-card px-5 sm:px-6 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
+                  >
+                    <Copy className="mr-2 h-4 w-4 shrink-0" />
+                    <span>Copy link</span>
+                  </button>
+                </>
+              ) : null}
+              {isNoClass ? (
+                <Link
+                  href={`/app/attendance/${sessionId}/no-class`}
+                  className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-amber-500/40 bg-amber-500/10 px-5 sm:px-6 text-xs sm:text-sm font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 rounded-xl"
+                >
+                  <CalendarX className="mr-2 size-4 text-amber-500 shrink-0" />
+                  <span>Edit No Class Notice</span>
+                </Link>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setNoClassReasonDraft("");
+                    setNoClassModalOpen(true);
+                  }}
+                  className="signal-action inline-flex min-h-11 items-center justify-center text-center border border-amber-500/40 bg-card px-5 sm:px-6 text-xs sm:text-sm font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 rounded-xl"
+                >
+                  <CalendarX className="mr-2 size-4 text-amber-500 shrink-0" />
+                  <span>Mark No Class</span>
+                </Button>
+              )}
+              <Button
+                onClick={() => publish.mutate({ sessionId: sessionQueryParam })}
+                disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0}
+                className="min-h-11 px-6 sm:px-7 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/25 inline-flex items-center justify-center text-center"
+              >
+                <Upload className="mr-2 h-4 w-4 shrink-0" />
+                <span>
+                  {unresolvedSuggestionCount
+                    ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}`
+                    : session.data?.publishState === "published"
+                    ? `Update & Publish (v${(session.data?.version || 1) + 1})`
+                    : "Publish Attendance (v1)"}
+                </span>
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* Context Navigation Switcher */}
         <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/60 p-1.5 shadow-sm">

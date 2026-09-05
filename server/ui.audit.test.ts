@@ -200,4 +200,55 @@ describe("UI/UX Audit and Layout Overhaul Validations", () => {
     expect(authContent).toContain("min-h-11 sm:min-h-9");
     expect(authContent).toContain("min-h-11 min-w-11");
   });
+
+  it("verifies No Class card layout uncompressed buttons and dedicated editing page", () => {
+    const schedulePath = path.join(rootDir, "client/src/pages/FocusedSchedulePage.tsx");
+    const scheduleContent = fs.readFileSync(schedulePath, "utf8");
+    // Verified: custom reason text is removed from the card to prevent layout issues
+    expect(scheduleContent).not.toMatch(/session\.noClassReason\s*&&/);
+    expect(scheduleContent).toContain("Manage No Class");
+    expect(scheduleContent).toContain("/app/attendance/${session.id}/no-class");
+    expect(scheduleContent).toContain("Restore class");
+
+    // Verified: dedicated page exists and is wired in App.tsx
+    const noClassPagePath = path.join(rootDir, "client/src/pages/NoClassSessionEditPage.tsx");
+    expect(fs.existsSync(noClassPagePath)).toBe(true);
+    const noClassPageContent = fs.readFileSync(noClassPagePath, "utf8");
+    expect(noClassPageContent).toContain("Typhoon / Severe Weather Suspension");
+    expect(noClassPageContent).toContain("Save Notice Changes");
+    expect(noClassPageContent).toContain("Copy Notice Link");
+
+    const appPath = path.join(rootDir, "client/src/App.tsx");
+    const appContent = fs.readFileSync(appPath, "utf8");
+    expect(appContent).toContain('/app/attendance/:sessionId/no-class');
+  });
+
+  it("verifies PublicPages and PremiumPublicSubjectHome mobile layouts and version pill placement", () => {
+    const publicPath = path.join(rootDir, "client/src/pages/PublicPages.tsx");
+    const publicContent = fs.readFileSync(publicPath, "utf8");
+    // Version pill sits directly beside Attendance Record
+    expect(publicContent).toMatch(/signal-title[^>]*>[^<]*Attendance Record[^<]*<\/h1>\s*<div[^>]*>\s*\{isNoClass/s);
+    // Bell icon vertically centered on mobile
+    expect(publicContent).toContain("flex items-center sm:items-start gap-3 min-w-0 mb-3 sm:mb-0");
+
+    const homePath = path.join(rootDir, "client/src/pages/PremiumPublicSubjectHome.tsx");
+    const homeContent = fs.readFileSync(homePath, "utf8");
+    // Metrics 1-column on mobile
+    expect(homeContent).toContain("grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 pt-1");
+    // Search, sort, view toggle combined in one section card on mobile
+    expect(homeContent).toContain("rounded-2xl border border-border/80 bg-card/70 p-3 sm:p-0 sm:border-0 sm:bg-transparent");
+  });
+
+  it("verifies AttendancePage dedicated actions section above tabs and global button padding", () => {
+    const attPath = path.join(rootDir, "client/src/pages/AttendancePage.tsx");
+    const attContent = fs.readFileSync(attPath, "utf8");
+    expect(attContent).toContain('aria-label="Session Actions"');
+    expect(attContent).toContain("Attendance Sheet (PDF)");
+    expect(attContent).toContain("Edit No Class Notice");
+
+    const btnPath = path.join(rootDir, "client/src/components/ui/button.tsx");
+    const btnContent = fs.readFileSync(btnPath, "utf8");
+    expect(btnContent).toContain("h-11 px-5 py-2.5 has-[>svg]:px-4.5");
+    expect(btnContent).toContain("text-center");
+  });
 });
