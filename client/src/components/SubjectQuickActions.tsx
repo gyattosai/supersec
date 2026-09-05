@@ -53,7 +53,7 @@ export function SubjectQuickActions({
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border/70 ${
+      className={`flex flex-wrap items-center justify-between gap-2 pt-2 ${
         compact ? "text-xs" : ""
       }`}
       onClick={handleStopPropagation}

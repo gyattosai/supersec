@@ -37,7 +37,7 @@ import { Link, useLocation, useRoute } from "wouter";
 const tabs = [
   { key: "announcements", label: "Announcements", singular: "Announcement", icon: Megaphone, description: "Write, publish, and share class updates." },
   { key: "resources", label: "Resources", singular: "Resource", icon: BookOpen, description: "Keep class links, files, forms, and meeting links." },
-  { key: "questions", label: "Questions & Answers", singular: "Question & Answer", icon: CircleHelp, description: "Save answers you can share again." },
+  { key: "questions", label: "Q&A", singular: "Q&A", icon: CircleHelp, description: "Save answers you can share again." },
   { key: "notes", label: "Notes", singular: "Note", icon: StickyNote, description: "Personal drafts, meeting minutes, and subject-specific memos." },
   { key: "snippets", label: "Snippets", singular: "Snippet", icon: Sparkles, description: "Quick message templates and canned responses for class blasts." },
 ] as const;
@@ -186,7 +186,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   const crossPostQuestion = trpc.content.questions.crossPost.useMutation({
     onSuccess: async res => {
       await refresh();
-      toast.success(`Question & Answer published and cross-posted to ${res.count} subject(s)`);
+      toast.success(`Q&A published and cross-posted to ${res.count} subject(s)`);
       setCrossPostTargetItem(null);
     },
     onError: err => toast.error(err.message),
@@ -210,17 +210,17 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   const questionCreate = trpc.content.questions.create.useMutation({
     onSuccess: async () => {
       await refresh();
-      toast.success(selectedCrossPostSubjectIds.length > 0 ? `Question & Answer published and cross-posted to ${selectedCrossPostSubjectIds.length} other subject(s)` : "Question & Answer saved as draft");
+      toast.success(selectedCrossPostSubjectIds.length > 0 ? `Q&A published and cross-posted to ${selectedCrossPostSubjectIds.length} other subject(s)` : "Q&A saved as draft");
       backToList();
     },
     onError: error => toast.error(error.message),
   });
   const announcementUpdate = trpc.content.announcements.update.useMutation({ onSuccess: async () => { await refresh(); toast.success("Announcement updated as a new version"); backToList(); }, onError: error => toast.error(error.message) });
   const resourceUpdate = trpc.content.resources.update.useMutation({ onSuccess: async () => { await refresh(); toast.success("Resource updated as a new version"); backToList(); }, onError: error => toast.error(error.message) });
-  const questionUpdate = trpc.content.questions.update.useMutation({ onSuccess: async () => { await refresh(); toast.success("Question & Answer updated as a new version"); backToList(); }, onError: error => toast.error(error.message) });
+  const questionUpdate = trpc.content.questions.update.useMutation({ onSuccess: async () => { await refresh(); toast.success("Q&A updated as a new version"); backToList(); }, onError: error => toast.error(error.message) });
   const publishAnnouncement = trpc.content.announcements.publish.useMutation({ onMutate: input => { setPendingContentAction({ type: "publish", id: input.id }); }, onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Announcement published"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
   const publishResource = trpc.content.resources.publish.useMutation({ onMutate: input => { setPendingContentAction({ type: "publish", id: input.id }); }, onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Resource published"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
-  const publishQuestion = trpc.content.questions.publish.useMutation({ onMutate: input => { setPendingContentAction({ type: "publish", id: input.id }); }, onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Question & Answer published"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
+  const publishQuestion = trpc.content.questions.publish.useMutation({ onMutate: input => { setPendingContentAction({ type: "publish", id: input.id }); }, onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Q&A published"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
   const archiveAnnouncement = trpc.content.announcements.archive.useMutation({ onMutate: input => setPendingContentAction({ type: "archive", id: input.id }), onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Moved to Archive"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
   const archiveResource = trpc.content.resources.archive.useMutation({ onMutate: input => setPendingContentAction({ type: "archive", id: input.id }), onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Moved to Archive"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
   const archiveQuestion = trpc.content.questions.archive.useMutation({ onMutate: input => setPendingContentAction({ type: "archive", id: input.id }), onSuccess: async () => { await refresh(); setPendingContentAction(null); toast.success("Moved to Archive"); }, onError: error => { setPendingContentAction(null); toast.error(error.message); } });
@@ -259,7 +259,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
       await refresh();
       setPendingContentAction(null);
       setItemToDelete(null);
-      toast.success("Question & Answer deleted permanently");
+      toast.success("Q&A deleted permanently");
     },
     onError: error => {
       setPendingContentAction(null);
@@ -349,7 +349,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
       else resourceCreate.mutate({ subjectId: effectiveSubjectId, title, description: body, category, resourceType, destinationUrl, fallbackMediaAssetId: mediaAssetId, socialPreviewMediaAssetId: socialImage, attachmentAssetIds, targetSubjectIds: selectedCrossPostSubjectIds });
     }
     if (kind === "questions") {
-      if (editing) questionUpdate.mutate({ id: effectiveItemId, question, answer, tagsText: tags, isOfficial, socialPreviewMediaAssetId, summary: changeSummary.trim() || "Updated Question & Answer", targetSubjectIds: selectedCrossPostSubjectIds });
+      if (editing) questionUpdate.mutate({ id: effectiveItemId, question, answer, tagsText: tags, isOfficial, socialPreviewMediaAssetId, summary: changeSummary.trim() || "Updated Q&A", targetSubjectIds: selectedCrossPostSubjectIds });
       else questionCreate.mutate({ subjectId: effectiveSubjectId, question, answer, tagsText: tags, isOfficial, socialPreviewMediaAssetId, targetSubjectIds: selectedCrossPostSubjectIds });
     }
   };
@@ -399,32 +399,6 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
               <ArrowLeft className="size-4" />
               Back to {tab.label}
             </Link>
-          }
-          action={
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
-              >
-                <Link href={`/app/notes?subjectId=${subjectId}`}>
-                  <StickyNote className="size-3.5 text-primary" />
-                  <span>Notes</span>
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
-              >
-                <Link href={`/app/snippets?subjectId=${subjectId}`}>
-                  <Sparkles className="size-3.5 text-amber-400" />
-                  <span>Snippets</span>
-                </Link>
-              </Button>
-            </div>
           }
         />
         <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden">
@@ -625,42 +599,14 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             </Link>
           }
           action={
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className={`rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10 ${
-                  kind === "notes" ? "border-primary/50 text-primary" : ""
-                }`}
-              >
-                <Link href={`/app/notes?subjectId=${subjectId}`}>
-                  <StickyNote className="size-3.5 text-primary" />
-                  <span>Notes</span>
+            kind !== "notes" && kind !== "snippets" ? (
+              <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
+                <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
+                  <Send className="mr-1.5 size-4" />
+                  New {tab.singular}
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className={`rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10 ${
-                  kind === "snippets" ? "border-amber-400/50 text-amber-400" : ""
-                }`}
-              >
-                <Link href={`/app/snippets?subjectId=${subjectId}`}>
-                  <Sparkles className="size-3.5 text-amber-400" />
-                  <span>Snippets</span>
-                </Link>
-              </Button>
-              {kind !== "notes" && kind !== "snippets" && (
-                <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
-                  <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
-                    <Send className="mr-1.5 size-4" />
-                    New {tab.singular}
-                  </Link>
-                </Button>
-              )}
-            </div>
+            ) : null
           }
         />
 
@@ -668,7 +614,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
         <div
           role="tablist"
           aria-label="Subject Workspaces"
-          className="signal-inset flex gap-1 p-1.5 rounded-2xl bg-secondary/50 border border-border/80 overflow-x-auto no-scrollbar scroll-shadow-x"
+          className="signal-inset flex flex-wrap sm:flex-nowrap gap-1.5 p-1.5 rounded-2xl bg-secondary/50 border border-border/80"
         >
           {tabs.map(t => {
             const TabIcon = t.icon;
@@ -681,7 +627,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
                 aria-selected={isActive}
                 aria-controls={`panel-${t.key}`}
                 href={`/app/subjects/${subjectId}/${t.key}`}
-                className={`signal-action inline-flex min-h-11 flex-1 items-center justify-center gap-2.5 rounded-xl px-3 text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                className={`signal-action inline-flex min-h-11 flex-1 min-w-[5.5rem] sm:min-w-0 items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl px-2.5 sm:px-3 text-xs sm:text-sm font-bold transition-all ${
                   isActive
                     ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground"

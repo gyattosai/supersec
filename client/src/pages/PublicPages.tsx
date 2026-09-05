@@ -177,7 +177,7 @@ export function PublicSubjectQuestionsPage() {
       <section className="mt-4 sm:mt-6 space-y-4">
         <div>
           <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-primary">Class Knowledgebase</p>
-          <h1 className="signal-title mt-1 text-xl sm:text-2xl font-black tracking-tight text-foreground">Questions &amp; Answers</h1>
+          <h1 className="signal-title mt-1 text-xl sm:text-2xl font-black tracking-tight text-foreground">Q&amp;A</h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">Search verified answers and recurring class FAQs.</p>
         </div>
 
@@ -593,16 +593,16 @@ export function PublicAttendancePage() {
                 <BellRing className="size-5" />
               </span>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-primary/50 bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <Badge variant="outline" className="border-primary/50 bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-wider shrink-0">
                     Instant Alerts
                   </Badge>
                   <span className="text-xs font-bold text-foreground">Class Push Notifications</span>
                 </div>
-                <h3 className="mt-1 text-sm sm:text-base font-bold text-foreground">
+                <h3 className="mt-1 text-sm sm:text-base font-bold text-foreground break-words">
                   Get instant roll-call &amp; class notices for {details.subject.code}
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 break-words">
                   Receive instant browser alerts when attendance opens, classes are suspended, or urgent updates are published.
                 </p>
               </div>
@@ -715,8 +715,8 @@ export function PublicAttendancePage() {
 
             {/* Filter Tabs & Live Search Toolbar */}
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between pt-1">
-              {/* Segmented Filter Pills (Scrollable on Mobile) */}
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar rounded-xl bg-secondary/50 p-1 border border-border">
+              {/* Segmented Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1 rounded-xl bg-secondary/50 p-1 border border-border">
                 {(
                   [
                     { id: "ALL", label: "All", count: details.records.length },
@@ -1484,7 +1484,7 @@ function PublicStudentMasterList({
         )}
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <button
             type="button"
             onClick={() => setFilter("all")}

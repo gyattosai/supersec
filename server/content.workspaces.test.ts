@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveLegacyContentWorkspacePath, subjectContentWorkspacePath, subjectContentWorkspaces } from "../client/src/lib/contentWorkspaces";
 
 describe("independent Subject content workspaces", () => {
-  it("defines a distinct workspace and direct destination for Announcements, Resources, Questions & Answers, Notes, and Snippets", () => {
+  it("defines a distinct workspace and direct destination for Announcements, Resources, Q&A, Notes, and Snippets", () => {
     expect(subjectContentWorkspaces.map(workspace => workspace.key)).toEqual(["announcements", "resources", "questions", "notes", "snippets"]);
     expect(new Set(subjectContentWorkspaces.map(workspace => workspace.title)).size).toBe(5);
     expect(new Set(subjectContentWorkspaces.map(workspace => workspace.action)).size).toBe(5);

@@ -202,37 +202,37 @@ export function PushNotificationSubscribeButton({
   if (variant === "card") {
     return (
       <div
-        className={`relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-secondary/30 p-5 shadow-sm ${className}`}
+        className={`relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-secondary/30 p-4 sm:p-5 shadow-sm ${className}`}
       >
-        <div className="flex items-start gap-4">
-          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+          <div className="grid size-10 sm:size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
             {isSubscribed ? <BellRing className="size-5" /> : <Bell className="size-5" />}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-primary/40 bg-primary/15 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="border-primary/40 bg-primary/15 text-primary text-[10px] font-extrabold uppercase tracking-wider shrink-0">
                 Instant Alerts
               </Badge>
               {isSubscribed && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 shrink-0">
                   <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Active
                 </span>
               )}
             </div>
-            <h3 className="mt-1 text-sm sm:text-base font-black tracking-tight text-foreground">
+            <h3 className="mt-1 text-sm sm:text-base font-black tracking-tight text-foreground break-words">
               {isSubscribed ? "Notifications Enabled" : "Never Miss Class Updates"}
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed break-words">
               {isSubscribed
                 ? `You are receiving automated push alerts whenever ${subjectCode} publishes announcements, attendance, or resources.`
                 : `Get instant phone and desktop alerts for urgent class announcements, no-class notices, lecture resources, and attendance.`}
             </p>
-            <div className="mt-3.5 flex items-center gap-2">
+            <div className="mt-3.5 flex flex-wrap items-center gap-2">
               <Button
                 onClick={handleOpenDialog}
                 size="sm"
-                className="font-bold text-xs rounded-xl shadow-sm"
+                className="font-bold text-xs rounded-xl shadow-sm w-full sm:w-auto min-h-10 sm:min-h-9"
               >
                 {isSubscribed ? "Manage Preferences" : "Enable Push Notifications"}
               </Button>
@@ -250,7 +250,7 @@ export function PushNotificationSubscribeButton({
         <button
           onClick={handleOpenDialog}
           aria-label="Push notifications"
-          className={`relative grid size-9 place-items-center rounded-xl border border-border/80 bg-background/80 hover:bg-secondary/60 text-foreground transition-all ${className}`}
+          className={`relative grid size-10 sm:size-9 place-items-center rounded-xl border border-border/80 bg-background/80 hover:bg-secondary/60 text-foreground transition-all ${className}`}
         >
           {isSubscribed ? (
             <>
@@ -271,7 +271,7 @@ export function PushNotificationSubscribeButton({
     <>
       <button
         onClick={handleOpenDialog}
-        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] ${
+        className={`inline-flex items-center justify-center gap-2 min-h-10 sm:min-h-9 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] ${
           isSubscribed
             ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
             : permission === "denied"

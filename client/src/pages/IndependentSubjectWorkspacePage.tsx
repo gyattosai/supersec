@@ -146,8 +146,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
   const workflowSteps = [
     {
       stepNumber: "01",
-      tag: "SET UP",
-      tagColor: "text-primary",
       title: "Class details",
       description: "Check the Subject code, professor, and term.",
       href: `/app/subjects/${subjectId}/details`,
@@ -156,8 +154,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "02",
-      tag: "SET UP",
-      tagColor: "text-primary",
       title: "Students (Master List)",
       description: "Add students, notes, and schedule conflicts.",
       href: `/app/subjects/${subjectId}/students`,
@@ -166,8 +162,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "03",
-      tag: "RUN CLASS",
-      tagColor: "text-amber-400",
       title: "Attendance",
       description: "Add class dates, mark No Class, and take Attendance.",
       href: `/app/subjects/${subjectId}/attendance`,
@@ -176,8 +170,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "04",
-      tag: "POST",
-      tagColor: "text-sky-400",
       title: "Announcements",
       description: "Write, publish, and share class updates.",
       href: `/app/subjects/${subjectId}/announcements`,
@@ -186,8 +178,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "05",
-      tag: "POST",
-      tagColor: "text-sky-400",
       title: "Resources",
       description: "Keep class links, files, forms, and meeting links.",
       href: `/app/subjects/${subjectId}/resources`,
@@ -196,9 +186,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "06",
-      tag: "POST",
-      tagColor: "text-sky-400",
-      title: "Questions & Answers",
+      title: "Q&A",
       description: "Save answers you can publish and share again.",
       href: `/app/subjects/${subjectId}/questions`,
       icon: GraduationCap,
@@ -206,13 +194,27 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     {
       stepNumber: "07",
-      tag: "SHARE",
-      tagColor: "text-emerald-400",
       title: "Sharing",
       description: "Review public student portal, copy Messenger link, and share QR code.",
       href: `/app/subjects/${subjectId}/sharing`,
       icon: Clipboard,
       liveCount: isPublished ? "Published" : "Draft",
+    },
+    {
+      stepNumber: "08",
+      title: "Notes",
+      description: "Class notes, lecture outlines, formulas, and memos.",
+      href: `/app/subjects/${subjectId}/notes`,
+      icon: StickyNote,
+      liveCount: "Notes",
+    },
+    {
+      stepNumber: "09",
+      title: "Snippets",
+      description: "Reusable copy templates, reminders, and group chat notices.",
+      href: `/app/subjects/${subjectId}/snippets`,
+      icon: Sparkles,
+      liveCount: "Snippets",
     },
   ];
 
@@ -287,7 +289,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
           badge: `${resCount}`,
         },
         {
-          label: "Questions & Answers",
+          label: "Q&A",
           desc: `${qaCount} published ${qaCount === 1 ? "FAQ" : "FAQs"}`,
           href: `/app/subjects/${subjectId}/questions`,
           icon: GraduationCap,
@@ -361,7 +363,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
           </div>
 
           {/* Schedule Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/70">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar className="size-3.5 text-primary" />
               <span className="font-semibold text-foreground">Schedule:</span>
@@ -443,7 +445,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
         </div>
 
         {/* Quick Commands Bar */}
-        <div className="signal-panel p-4 sm:p-5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 py-1">
           <div className="flex items-center gap-2.5">
             <Sparkles className="size-4 text-primary" />
             <span className="text-xs sm:text-sm font-bold text-foreground">Quick Launch:</span>
@@ -479,22 +481,22 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
               <p className="signal-kicker">Operations Suite</p>
               <h2 className="signal-heading text-xl font-bold mt-0.5">Subject Workflow &amp; Desks</h2>
             </div>
-            <div className="flex items-center gap-1 rounded-xl bg-secondary/60 p-1 border border-border">
+            <div className="flex w-full sm:w-auto items-center gap-1 rounded-xl bg-secondary/60 p-1 border border-border">
               <button
                 type="button"
                 onClick={() => setViewMode("workflow")}
-                className={`signal-action rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                className={`signal-action flex-1 sm:flex-initial min-h-11 sm:min-h-10 px-5 text-sm font-bold rounded-lg transition-all ${
                   viewMode === "workflow"
                     ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                7-Step Workflow
+                Workflow Steps
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("suites")}
-                className={`signal-action rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                className={`signal-action flex-1 sm:flex-initial min-h-11 sm:min-h-10 px-5 text-sm font-bold rounded-lg transition-all ${
                   viewMode === "suites"
                     ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground"
@@ -506,7 +508,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
           </div>
 
           {viewMode === "workflow" ? (
-            /* 7-Step Workflow Stack matching User Design */
+            /* Workflow Stack matching User Design */
             <div className="space-y-3 pt-1">
               {workflowSteps.map(step => {
                 const Icon = step.icon;
@@ -524,9 +526,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs font-extrabold text-primary tracking-wider">
                             {step.stepNumber}
-                          </span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${step.tagColor}`}>
-                            {step.tag}
                           </span>
                           {step.liveCount ? (
                             <span className="hidden sm:inline-flex rounded-full bg-secondary/80 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -566,7 +565,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
                     <p className="text-xs text-muted-foreground leading-relaxed">{suite.description}</p>
                   </div>
 
-                  <div className="space-y-2 border-t border-border/70 pt-3">
+                  <div className="space-y-2 pt-1">
                     {suite.items.map(item => {
                       const Icon = item.icon;
                       return (

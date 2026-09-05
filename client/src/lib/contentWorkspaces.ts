@@ -13,9 +13,9 @@ export const subjectContentWorkspaces = [
   },
   {
     key: "questions",
-    title: "Questions & Answers",
+    title: "Q&A",
     description: "Save answers you can publish and share again.",
-    action: "Open Questions & Answers",
+    action: "Open Q&A",
   },
   {
     key: "notes",

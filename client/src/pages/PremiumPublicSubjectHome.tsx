@@ -319,21 +319,21 @@ export function PremiumPublicSubjectHome() {
 
         {/* Active No Class Suspension Notice */}
         {subject.noClass && (
-          <section className="signal-inset flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-amber-500/40 bg-amber-500/10">
+          <section className="signal-inset flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 min-w-0">
             <div className="flex items-center gap-3 min-w-0">
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-amber-500/20 text-amber-400">
                 <CalendarX className="size-5" />
               </span>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/20 text-[10px] font-extrabold text-amber-300">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/20 text-[10px] font-extrabold text-amber-300 shrink-0">
                     NO CLASSES
                   </Badge>
                   <span className="text-[11px] font-bold text-amber-400 truncate">
                     {new Date(subject.noClass.startsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-foreground truncate">
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-foreground break-words">
                   {subject.noClass.reason || "Class suspended / No classes scheduled"}
                 </p>
               </div>
@@ -341,7 +341,7 @@ export function PremiumPublicSubjectHome() {
             {(latestAttendance as any)?.sessionState === "no_class" && (
               <Link
                 href={`/attendance/${latestAttendance.publicId}`}
-                className="shrink-0 text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline inline-flex items-center gap-1"
+                className="shrink-0 text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline inline-flex items-center justify-center sm:justify-start gap-1 min-h-9 sm:min-h-0 py-1"
               >
                 View Notice
                 <ChevronRight className="size-3.5" />
@@ -540,7 +540,7 @@ export function PremiumPublicSubjectHome() {
         </div>
 
         {/* Category Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+        <div className="flex flex-wrap items-center gap-2 pb-1 pt-0.5">
           {categories.map(cat => {
             const isActive = activeCategory === cat.id;
             const Icon = cat.icon;

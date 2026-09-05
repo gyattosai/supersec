@@ -418,9 +418,9 @@ export default function AttendancePage() {
         {session.data && (
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
             {isNoClass ? (
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+              <span className="inline-flex items-center gap-1.5 min-h-6 max-w-full px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                 <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-500 dark:bg-amber-400" />
-                No Class • {noClassReason || "Suspended"}
+                <span className="truncate">No Class • {noClassReason || "Suspended"}</span>
               </span>
             ) : (session.data as any)?.sessionState === "completed" ? (
               <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
@@ -522,10 +522,10 @@ export default function AttendancePage() {
                   <CalendarX className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 min-h-6 max-w-full px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
                       <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
-                      No Class • {noClassReason || "Suspended"}
+                      <span className="truncate">No Class • {noClassReason || "Suspended"}</span>
                     </span>
                     <span className="text-xs font-bold text-amber-400">Notice Active</span>
                   </div>
@@ -667,8 +667,8 @@ export default function AttendancePage() {
               </div>
 
               {/* Status Filter Tabs & Bulk Draft Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
-                <div className="signal-inset flex min-w-0 gap-1.5 overflow-x-auto p-1 rounded-xl" role="group" aria-label="Filter Students by Attendance status">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
+                <div className="signal-inset flex flex-wrap min-w-0 gap-1.5 p-1 rounded-xl" role="group" aria-label="Filter Students by Attendance status">
                   {statusFilters.map(filter => (
                     <button
                       key={filter}

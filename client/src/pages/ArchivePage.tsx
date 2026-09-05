@@ -111,7 +111,7 @@ export default function ArchivePage() {
   const restoreQuestion = trpc.content.questions.restore.useMutation({
     onSuccess: async () => {
       await refresh();
-      toast.success("Question & Answer restored as draft");
+      toast.success("Q&A restored as draft");
     },
     onError: error => toast.error(error.message),
   });
@@ -142,7 +142,7 @@ export default function ArchivePage() {
     onSuccess: async () => {
       await refresh();
       setItemToDelete(null);
-      toast.success("Question & Answer deleted permanently");
+      toast.success("Q&A deleted permanently");
     },
     onError: error => toast.error(error.message),
   });
@@ -255,7 +255,7 @@ export default function ArchivePage() {
                 key={`q-${item.id}`}
                 icon={MessageCircleQuestion}
                 title={item.title}
-                detail={`Question & Answer · ${item.subjectName}`}
+                detail={`Q&A · ${item.subjectName}`}
                 version={item.version}
                 onRestore={() => restoreQuestion.mutate({ id: item.id })}
                 onDelete={() => setItemToDelete({ id: item.id, title: item.title, kind: "question" })}
@@ -263,7 +263,7 @@ export default function ArchivePage() {
               />
             ))}
             {!archivedContentCount ? (
-              <EmptyArchive label="No archived announcements, resources, or Questions & Answers." />
+              <EmptyArchive label="No archived announcements, resources, or Q&A." />
             ) : null}
           </ArchiveSection>
         </section>
@@ -277,7 +277,7 @@ export default function ArchivePage() {
                   ? "Announcement"
                   : itemToDelete?.kind === "resource"
                   ? "Resource"
-                  : "Question & Answer"}{" "}
+                  : "Q&A"}{" "}
                 Permanently?
               </AlertDialogTitle>
               <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
