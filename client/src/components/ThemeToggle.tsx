@@ -39,10 +39,10 @@ export function ThemeToggle({
             onClick={() => setTheme(value)}
             className={`relative flex items-center justify-center rounded-[10px] transition-all duration-200 ${
               fullWidth
-                ? "flex-1 min-h-8 gap-1.5 px-2 py-1.5"
+                ? "flex-1 min-h-11 sm:min-h-8 gap-1.5 px-2 py-1.5"
                 : compact
-                ? "size-8"
-                : "min-h-8 gap-1.5 px-2.5 py-1.5"
+                ? "size-11 sm:size-8"
+                : "min-h-11 sm:min-h-8 gap-1.5 px-3 sm:px-2.5 py-1.5"
             } ${
               active
                 ? "bg-card text-foreground shadow-sm ring-1 ring-border/50"

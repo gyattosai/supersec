@@ -153,7 +153,7 @@ export default function AuthPage({ initialMode = "login" }: { initialMode?: "log
     <main className="signal-canvas flex min-h-screen flex-col text-foreground">
       {/* Top Navigation */}
       <header className="glass-header sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/70 px-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex min-h-11 items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-primary text-[10px] font-extrabold text-primary-foreground shadow-sm shadow-primary/30">
             SS
           </span>
@@ -161,7 +161,7 @@ export default function AuthPage({ initialMode = "login" }: { initialMode?: "log
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link href="/" className="signal-action text-xs font-semibold text-muted-foreground hover:text-foreground">
+          <Link href="/" className="signal-action inline-flex min-h-11 min-w-11 items-center justify-center px-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
             Home
           </Link>
         </div>
@@ -225,7 +225,7 @@ export default function AuthPage({ initialMode = "login" }: { initialMode?: "log
                     key={m}
                     type="button"
                     onClick={() => { setMode(m); setErrorMsg(null); }}
-                    className={`signal-action min-h-9 flex-1 rounded-[10px] text-xs font-semibold transition-colors ${
+                    className={`signal-action min-h-11 sm:min-h-9 flex-1 rounded-[10px] text-xs font-semibold transition-colors ${
                       mode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -282,16 +282,16 @@ export default function AuthPage({ initialMode = "login" }: { initialMode?: "log
                     <input
                       type={showPassword ? "text" : "password"}
                       required
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="••••••••"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="signal-action w-full rounded-xl border border-input bg-secondary/40 py-2.5 pl-10 pr-10 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="signal-action w-full rounded-xl border border-input bg-secondary/40 py-2.5 pl-10 pr-11 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 size-11 flex items-center justify-center text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>

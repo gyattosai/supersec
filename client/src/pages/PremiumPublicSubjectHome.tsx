@@ -511,7 +511,7 @@ export function PremiumPublicSubjectHome() {
                 <button
                   type="button"
                   onClick={() => setViewMode("categorized")}
-                  className={`flex items-center gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
                     viewMode === "categorized"
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -524,7 +524,7 @@ export function PremiumPublicSubjectHome() {
                 <button
                   type="button"
                   onClick={() => setViewMode("feed")}
-                  className={`flex items-center gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center min-w-10 sm:min-w-0 min-h-10 sm:min-h-0 gap-1 px-2.5 h-full rounded-lg text-xs font-bold transition-all ${
                     viewMode === "feed"
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -549,7 +549,7 @@ export function PremiumPublicSubjectHome() {
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`shrink-0 inline-flex items-center gap-2 min-h-10 sm:min-h-9 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`shrink-0 inline-flex items-center gap-2 min-h-11 sm:min-h-9 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 scale-[1.02]"
                     : "bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border/60"
@@ -591,7 +591,7 @@ export function PremiumPublicSubjectHome() {
                   <div className="mt-3.5 flex justify-end">
                     <Link
                       href={topAnno.href}
-                      className="inline-flex items-center gap-1.5 text-xs font-black text-white bg-amber-700 hover:bg-amber-800 dark:text-amber-200 dark:hover:text-white dark:bg-amber-900/80 dark:hover:bg-amber-800 px-3.5 py-1.5 rounded-xl border border-amber-600/40 dark:border-amber-400/40 transition-colors shadow-sm"
+                      className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 text-xs font-black text-white bg-amber-700 hover:bg-amber-800 dark:text-amber-200 dark:hover:text-white dark:bg-amber-900/80 dark:hover:bg-amber-800 px-4 py-2 sm:py-1.5 rounded-xl border border-amber-600/40 dark:border-amber-400/40 transition-colors shadow-sm"
                     >
                       Read full announcement <ArrowRight className="size-3.5" />
                     </Link>
@@ -912,7 +912,7 @@ function CategoryBentoCard({
             {allHref ? (
               <Link
                 href={allHref}
-                className={`signal-action inline-flex min-h-8 items-center gap-1.5 text-xs font-extrabold ${theme.browseText} hover:underline`}
+                className={`signal-action inline-flex min-h-11 sm:min-h-8 items-center gap-1.5 text-xs font-extrabold ${theme.browseText} hover:underline`}
               >
                 Search &amp; browse all <ArrowRight className="size-3" />
               </Link>
@@ -920,7 +920,7 @@ function CategoryBentoCard({
               <button
                 type="button"
                 onClick={onViewAll}
-                className={`signal-action inline-flex min-h-8 items-center gap-1.5 text-xs font-extrabold ${theme.browseText} hover:underline cursor-pointer`}
+                className={`signal-action inline-flex min-h-11 sm:min-h-8 items-center gap-1.5 text-xs font-extrabold ${theme.browseText} hover:underline cursor-pointer`}
               >
                 View all {count} updates <ArrowRight className="size-3" />
               </button>
@@ -974,14 +974,14 @@ function FeedItemCard({ item }: { item: UnifiedItem }) {
           {item.kind === "attendance" && (
             <Link
               href={`${item.href}/proof`}
-              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all"
+              className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all min-h-10 sm:min-h-8"
             >
               <Camera className="size-3" /> Submit Proof
             </Link>
           )}
           <Link
             href={item.href}
-            className={`inline-flex items-center gap-1 text-xs font-bold ${theme.browseText} hover:underline`}
+            className={`inline-flex items-center gap-1 text-xs font-bold ${theme.browseText} hover:underline min-h-11 sm:min-h-8`}
           >
             <span>{item.actionLabel}</span>
             <ChevronRight className="size-3.5 group-hover:translate-x-0.5 transition-all" />
@@ -1242,7 +1242,7 @@ function StudentMasterListSection({
             <button
               type="button"
               onClick={() => setStatusFilter("all")}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`min-h-11 sm:min-h-8 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
                 statusFilter === "all"
                   ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 scale-[1.02]"
                   : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary/80 border border-border/60"
@@ -1253,7 +1253,7 @@ function StudentMasterListSection({
             <button
               type="button"
               onClick={() => setStatusFilter("regular")}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`min-h-11 sm:min-h-8 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
                 statusFilter === "regular"
                   ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/25 scale-[1.02]"
                   : "bg-secondary/50 text-muted-foreground hover:text-emerald-400 hover:bg-secondary/80 border border-border/60"
@@ -1264,7 +1264,7 @@ function StudentMasterListSection({
             <button
               type="button"
               onClick={() => setStatusFilter("conflict")}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`min-h-11 sm:min-h-8 px-3.5 py-2 sm:py-1.5 rounded-full text-xs font-bold transition-all ${
                 statusFilter === "conflict"
                   ? "bg-amber-600 text-white shadow-sm shadow-amber-600/25 scale-[1.02]"
                   : "bg-secondary/50 text-muted-foreground hover:text-amber-400 hover:bg-secondary/80 border border-border/60"

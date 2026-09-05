@@ -178,4 +178,15 @@ describe("UI/UX Audit and Layout Overhaul Validations", () => {
     const tableContent = fs.readFileSync(tablePath, "utf8");
     expect(tableContent).toContain("overscroll-x-contain touch-pan-x");
   });
+
+  it("verifies ThemeToggle and AuthPage enforce responsive 44px mobile touch targets", () => {
+    const themePath = path.join(rootDir, "client/src/components/ThemeToggle.tsx");
+    const themeContent = fs.readFileSync(themePath, "utf8");
+    expect(themeContent).toContain("min-h-11 sm:min-h-8");
+
+    const authPath = path.join(rootDir, "client/src/pages/AuthPage.tsx");
+    const authContent = fs.readFileSync(authPath, "utf8");
+    expect(authContent).toContain("min-h-11 sm:min-h-9");
+    expect(authContent).toContain("min-h-11 min-w-11");
+  });
 });
