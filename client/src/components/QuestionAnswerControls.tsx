@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { AnnouncementEditor } from "@/components/AnnouncementEditor";
+import { Loader2, Sparkles } from "lucide-react";
 
 type QuestionAnswerControlsProps = {
   question?: string;
@@ -12,6 +13,8 @@ type QuestionAnswerControlsProps = {
   changeSummary: string;
   onChangeSummaryChange: (value: string) => void;
   showChangeSummary: boolean;
+  onAutoDraft?: () => void;
+  isDrafting?: boolean;
 };
 
 export function QuestionAnswerControls({
@@ -25,6 +28,8 @@ export function QuestionAnswerControls({
   changeSummary,
   onChangeSummaryChange,
   showChangeSummary,
+  onAutoDraft,
+  isDrafting,
 }: QuestionAnswerControlsProps) {
   const contextDescription = question
     ? `Question: ${question}${tagsText ? ` · Topics: ${tagsText}` : ""}`
@@ -67,7 +72,20 @@ export function QuestionAnswerControls({
         <p id="question-official-help" className="mt-1 pl-7 text-xs leading-5 text-muted-foreground">Shown on the shared page.</p>
         {showChangeSummary ? (
           <div className="mt-3">
-            <label htmlFor="question-change-summary" className="text-sm font-medium text-foreground">Public change summary</label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="question-change-summary" className="text-sm font-medium text-foreground">Public change summary</label>
+              {onAutoDraft ? (
+                <button
+                  type="button"
+                  onClick={onAutoDraft}
+                  disabled={isDrafting}
+                  className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline disabled:opacity-50 cursor-pointer"
+                >
+                  {isDrafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                  {isDrafting ? "Drafting..." : "Auto-Draft with AI"}
+                </button>
+              ) : null}
+            </div>
             <Input
               id="question-change-summary"
               value={changeSummary}
@@ -75,7 +93,7 @@ export function QuestionAnswerControls({
               className="mt-2"
               placeholder="For example, clarified the deadline"
             />
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Shown in public History. Leave blank for the standard message.</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Shown in public History. Leave blank for AI to auto-draft on save.</p>
           </div>
         ) : null}
       </div>

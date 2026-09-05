@@ -2369,10 +2369,73 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     const doc: any = await resolveContentDoc("questionsAnswers", id);
     if (doc) {
       await appwriteDatabases.deleteDocument(DB_ID, "questionsAnswers", doc.$id);
-    } else {
-      await appwriteDatabases.deleteDocument(DB_ID, "questionsAnswers", id).catch(() => null);
     }
     return { success: true };
+  }
+
+  if (path === "content.autoDraftVersionHistory") {
+    const version = input.version ?? 1;
+    const isInitial = version <= 1 || input.action === "published";
+    let summary = "";
+    if (isInitial) {
+      if (input.kind === "resource") {
+        const attachInfo = input.attachmentsCount ? ` with ${input.attachmentsCount} file attachment${input.attachmentsCount > 1 ? "s" : ""}` : "";
+        summary = `Initial publication of course resource${input.category ? ` [${input.category}]` : ""}${attachInfo}.`;
+      } else if (input.kind === "question") {
+        summary = "Initial publication of verified question & answer entry.";
+      } else {
+        summary = `Initial publication: ${input.title}`;
+      }
+    } else {
+      const notes: string[] = [];
+      if (input.previousTitle && input.previousTitle.trim() !== input.title.trim()) {
+        notes.push(`Updated title to "${input.title.slice(0, 40)}"`);
+      }
+      if (input.previousBody) {
+        const diff = input.body.length - input.previousBody.length;
+        if (Math.abs(diff) > 40) {
+          notes.push(diff > 0 ? "Expanded content details" : "Refined and condensed content");
+        } else {
+          notes.push("Revised content text");
+        }
+      } else {
+        notes.push("Updated content text");
+      }
+      if (input.attachmentsCount !== undefined && input.attachmentsCount !== null) {
+        notes.push(`Resource attachments updated (${input.attachmentsCount} file${input.attachmentsCount === 1 ? "" : "s"})`);
+      }
+      summary = `v${version}: ${notes.join("; ") || `Updated ${input.title}`}`;
+    }
+    return { summary: summary.slice(0, 200) };
+  }
+
+  if (path === "content.updateHistoryEntrySummary") {
+    const colName = input.entityType === "announcement" ? "announcements" : input.entityType === "resource" ? "resources" : "questionsAnswers";
+    const id = String(input.entityId);
+    const doc: any = await resolveContentDoc(colName, id);
+    if (doc) {
+      try {
+        const entries = await appwriteDatabases.listDocuments(DB_HISTORY_ID, "historyEntries", [
+          Query.equal("entityType", input.entityType),
+          Query.equal("entityId", doc.$id),
+          Query.equal("version", input.version),
+          Query.limit(1),
+        ]);
+        if (entries.documents[0]) {
+          await appwriteDatabases.updateDocument(DB_HISTORY_ID, "historyEntries", entries.documents[0].$id, {
+            publicChangeSummary: input.summary,
+          });
+        }
+      } catch (err) {
+        console.warn("[Appwrite DB] Update historyEntry error:", err);
+      }
+      if (doc.version === input.version) {
+        await appwriteDatabases.updateDocument(DB_ID, colName, doc.$id, {
+          publicChangeSummary: input.summary,
+        });
+      }
+    }
+    return { success: true, version: input.version, summary: input.summary };
   }
 
   if (path === "content.archiveList") {
@@ -3068,10 +3131,62 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
   }
 
   if (path === "foundation.publicHistory") {
-    return {
-      available: true,
-      history: [],
-    };
+    const kind = input.kind;
+    const publicId = String(input.publicId);
+    const colName = kind === "announcement" ? "announcements" : kind === "resource" ? "resources" : "questionsAnswers";
+    try {
+      const doc: any = await resolveContentDoc(colName, publicId);
+      if (!doc) {
+        return { available: true, history: [] };
+      }
+
+      const entriesRes = await appwriteDatabases.listDocuments(DB_HISTORY_ID, "historyEntries", [
+        Query.equal("entityType", kind === "question" ? "question" : kind),
+        Query.equal("entityId", doc.$id),
+        Query.orderAsc("version"),
+        Query.limit(50),
+      ]).catch(() => ({ documents: [] }));
+
+      if (entriesRes.documents && entriesRes.documents.length > 0) {
+        return {
+          available: true,
+          history: entriesRes.documents.map((d: any) => ({
+            version: d.version || 1,
+            action: d.action || "published",
+            summary: d.publicChangeSummary || "",
+            createdAt: new Date(d.$createdAt || doc.$createdAt || Date.now()),
+          })),
+        };
+      }
+
+      // Fallback: synthesize from document
+      const currentVer = doc.version || 1;
+      const historyList: any[] = [];
+      historyList.push({
+        version: 1,
+        action: "published",
+        summary: currentVer === 1 && doc.publicChangeSummary ? doc.publicChangeSummary : `Initial publication of ${doc.title || doc.question || "content"}`,
+        createdAt: new Date(doc.publishedAt || doc.$createdAt || Date.now()),
+      });
+      if (currentVer > 1 && doc.publicChangeSummary) {
+        historyList.push({
+          version: currentVer,
+          action: "updated",
+          summary: doc.publicChangeSummary,
+          createdAt: new Date(doc.publishedAt || doc.$updatedAt || Date.now()),
+        });
+      }
+
+      return {
+        available: true,
+        history: historyList,
+      };
+    } catch {
+      return {
+        available: true,
+        history: [],
+      };
+    }
   }
 
   if (path === "foundation.publicReport") {

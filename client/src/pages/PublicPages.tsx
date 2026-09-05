@@ -1,9 +1,13 @@
 import { AnnouncementPreview } from "@/components/AnnouncementPreview";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ViewOnlyHeader } from "@/components/ViewOnlyHeader";
 import { formatDateTime12Hour, formatTimeRange12Hour } from "@/lib/time";
 import { trpc } from "@/lib/trpc";
 import { usePageMeta } from "@/lib/meta";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import { formatSocialTitle, formatSocialDescription, formatShorthandDate, formatFullDate } from "@shared/socialTitle";
 import { sortPublicAttendanceRecords, type PublicAttendanceSortMode } from "@shared/attendanceSorting";
 import {
@@ -13,6 +17,7 @@ import {
   BookOpen,
   CalendarDays,
   CalendarX,
+  Check,
   CheckCircle2,
   ChevronRight,
   CircleAlert,
@@ -21,7 +26,9 @@ import {
   ExternalLink,
   FileText,
   History,
+  Loader2,
   MessageCircleMore,
+  Pencil,
   Search,
   ShieldCheck,
   Sparkles,
@@ -1063,7 +1070,14 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
           </div>
         </div>
       </article>
-      <HistoryLedger entries={history.data?.available ? history.data.history : []} />
+      <HistoryLedger
+        entries={history.data?.available ? history.data.history : []}
+        itemKind={kind}
+        entityId={details.publicId}
+        itemTitle={visibleTitle}
+        itemBody={details.body}
+        onHistoryUpdated={() => history.refetch()}
+      />
     </PublicShell>
   );
 }
@@ -1124,22 +1138,194 @@ function ReportMetric({ label, value, tone }: { label: string; value: number; to
     </div>
   );
 }
-function HistoryLedger({ entries }: { entries: Array<{ version: number; action: string; summary: string; createdAt: Date }> }) {
+export function HistoryLedger({
+  entries,
+  itemKind,
+  entityId,
+  itemTitle,
+  itemBody,
+  onHistoryUpdated,
+}: {
+  entries: Array<{ version: number; action: string; summary: string; createdAt: Date }>;
+  itemKind?: "announcement" | "resource" | "question";
+  entityId?: string;
+  itemTitle?: string;
+  itemBody?: string;
+  onHistoryUpdated?: () => void;
+}) {
+  const { user } = useAuth();
+  const canEdit = Boolean(user && itemKind && entityId);
+  const [editingVersion, setEditingVersion] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [draftingVersion, setDraftingVersion] = useState<number | null>(null);
+
+  const autoDraftMutation = (trpc as any).content?.autoDraftVersionHistory?.useMutation ? trpc.content.autoDraftVersionHistory.useMutation() : ({} as any);
+  const updateSummaryMutation = (trpc as any).content?.updateHistoryEntrySummary?.useMutation ? trpc.content.updateHistoryEntrySummary.useMutation() : ({} as any);
+
   if (!entries.length) return null;
+
+  const handleAutoDraft = async (entry: { version: number; action: string; summary: string }) => {
+    if (!itemKind || !entityId) return;
+    setDraftingVersion(entry.version);
+    try {
+      const res = await autoDraftMutation.mutateAsync({
+        kind: itemKind,
+        title: itemTitle || "Content",
+        body: itemBody || "",
+        version: entry.version,
+        action: entry.action,
+      });
+      const generated = res.summary;
+      if (editingVersion === entry.version) {
+        setEditText(generated);
+      } else {
+        await updateSummaryMutation.mutateAsync({
+          entityType: itemKind,
+          entityId,
+          version: entry.version,
+          summary: generated,
+        });
+        toast.success(`v${entry.version} summary updated with AI`);
+        onHistoryUpdated?.();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to auto-draft summary");
+    } finally {
+      setDraftingVersion(null);
+    }
+  };
+
+  const handleSaveManual = async (version: number) => {
+    if (!itemKind || !entityId) return;
+    const clean = editText.trim();
+    if (clean.length < 3) {
+      toast.error("Summary must be at least 3 characters");
+      return;
+    }
+    try {
+      await updateSummaryMutation.mutateAsync({
+        entityType: itemKind,
+        entityId,
+        version,
+        summary: clean,
+      });
+      toast.success(`v${version} summary saved`);
+      setEditingVersion(null);
+      setEditText("");
+      onHistoryUpdated?.();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save summary");
+    }
+  };
+
   return (
     <section className="mt-7 border-t border-border pt-5">
-      <div className="flex items-center gap-2">
-        <History className="h-4 w-4 text-primary" />
-        <h2 className="text-xs sm:text-sm font-bold text-foreground">Update History</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <History className="h-4 w-4 text-primary" />
+          <h2 className="text-xs sm:text-sm font-bold text-foreground">Update History</h2>
+        </div>
+        {canEdit && (
+          <span className="text-[11px] font-medium text-primary/80">
+            Secretary Mode · AI drafting enabled
+          </span>
+        )}
       </div>
       <ol className="mt-3 divide-y divide-border/60">
-        {entries.map(entry => (
-          <li key={`${entry.version}-${entry.createdAt}`} className="py-3">
-            <p className="text-xs sm:text-sm font-bold">v{entry.version} · {entry.action}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{entry.summary}</p>
-            <p className="mt-1 text-[10px] text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString()}</p>
-          </li>
-        ))}
+        {entries.map(entry => {
+          const isThisDrafting = draftingVersion === entry.version;
+          const isThisEditing = editingVersion === entry.version;
+
+          return (
+            <li key={`${entry.version}-${entry.createdAt}`} className="py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-bold text-foreground">
+                    v{entry.version} · {entry.action}
+                  </p>
+                  {isThisEditing ? (
+                    <div className="mt-2 space-y-2">
+                      <Input
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        placeholder="Version summary..."
+                        className="h-8 text-xs rounded-lg"
+                      />
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs px-2.5"
+                          onClick={() => handleSaveManual(entry.version)}
+                          disabled={updateSummaryMutation.isPending}
+                        >
+                          <Check className="size-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs px-2 text-primary"
+                          onClick={() => handleAutoDraft(entry)}
+                          disabled={isThisDrafting}
+                        >
+                          {isThisDrafting ? <Loader2 className="size-3 animate-spin mr-1" /> : <Sparkles className="size-3 mr-1 text-primary" />}
+                          Re-draft with AI
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs px-2"
+                          onClick={() => { setEditingVersion(null); setEditText(""); }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-muted-foreground">{entry.summary}</p>
+                  )}
+                  <p className="mt-1 text-[10px] text-muted-foreground font-mono">
+                    {new Date(entry.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                {canEdit && !isThisEditing && (
+                  <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAutoDraft(entry)}
+                      disabled={isThisDrafting}
+                      className="h-7 gap-1 px-2 text-[11px] font-semibold border-primary/30 text-primary hover:bg-primary/10"
+                      title="Auto-draft details with Gemini AI"
+                    >
+                      {isThisDrafting ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="size-3" />
+                      )}
+                      <span>{isThisDrafting ? "Drafting..." : "AI Auto-Draft"}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setEditingVersion(entry.version); setEditText(entry.summary); }}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      title="Edit note manually"
+                    >
+                      <Pencil className="size-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

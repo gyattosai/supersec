@@ -3,9 +3,10 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { announcements, historyEntries, mediaAssets, questionsAnswers, resourceAttachments, resources, subjects } from "../../drizzle/schema";
 import { getDb } from "../db";
-import { router } from "../_core/trpc";
+import { router, publicProcedure } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
 import { dispatchAutomatedPush } from "../pushNotifications";
+import { generateVersionHistorySummary } from "../_core/versionHistoryAI";
 
 async function databaseOrThrow() { const database = await getDb(); if (!database) throw new Error("Database is not available"); return database; }
 
@@ -82,8 +83,38 @@ async function dispatchContentPush(
 async function assertPublicMedia(db: Awaited<ReturnType<typeof databaseOrThrow>>, ownerId: number, assetId?: number | null) { if (!assetId) return null; const row = await db.select({ id: mediaAssets.id }).from(mediaAssets).where(and(eq(mediaAssets.id, assetId), eq(mediaAssets.ownerId, ownerId), eq(mediaAssets.publicUse, true))).limit(1); if (!row[0]) throw new Error("Public media must be an owned asset marked for public use"); return assetId; }
 const subjectInput = z.object({ subjectId: z.union([z.string(), z.number()]) });
 const publicMediaInput = z.number().int().positive().nullable().optional();
+const updateSummary = z.string().trim().max(280).default("");
+
+async function resolveVersionSummary(params: {
+  kind: "announcement" | "resource" | "question";
+  providedSummary?: string | null;
+  title: string;
+  body: string;
+  previousTitle?: string | null;
+  previousBody?: string | null;
+  version: number;
+  action: "published" | "updated";
+  category?: string | null;
+  attachmentsCount?: number | null;
+}): Promise<string> {
+  const clean = (params.providedSummary || "").trim();
+  const genericPlaceholders = ["updated", "published", "updated question & answer", "update", "publish", "new version", "draft"];
+  if (clean && !genericPlaceholders.includes(clean.toLowerCase())) {
+    return clean;
+  }
+  return generateVersionHistorySummary({
+    kind: params.kind,
+    title: params.title,
+    body: params.body,
+    previousTitle: params.previousTitle,
+    previousBody: params.previousBody,
+    version: params.version,
+    action: params.action,
+    category: params.category,
+    attachmentsCount: params.attachmentsCount,
+  });
+}
 const resourceAttachmentInput = z.array(z.number().int().positive()).max(6).default([]);
-const updateSummary = z.string().trim().min(3).max(280);
 const targetSubjectIdsInput = z.array(z.union([z.string(), z.number()])).default([]);
 const crossPostInput = z.object({
   id: z.union([z.string(), z.number()]),
@@ -267,14 +298,24 @@ export const contentRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const db = await databaseOrThrow();
       const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
-      const row = await db.select({ id: announcements.id, version: announcements.version, subjectId: announcements.subjectId, title: announcements.title, publicId: announcements.publicId }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      const row = await db.select({ id: announcements.id, version: announcements.version, subjectId: announcements.subjectId, title: announcements.title, body: announcements.body, publicId: announcements.publicId }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
       if (!row[0]) throw new Error("Announcement not found");
       await assertPublicMedia(db, ctx.user.id, input.mediaAssetId);
       await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
       const version = row[0].version + 1;
-      await db.update(announcements).set({ title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id));
-      await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
-      dispatchContentPush(db, row[0].subjectId, "announcement", input.title, input.summary, `/a/${row[0].publicId}`);
+      const effectiveSummary = await resolveVersionSummary({
+        kind: "announcement",
+        providedSummary: input.summary,
+        title: input.title,
+        body: input.body,
+        previousTitle: row[0].title,
+        previousBody: row[0].body,
+        version,
+        action: "updated",
+      });
+      await db.update(announcements).set({ title: input.title, body: input.body, mediaAssetId: input.mediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id));
+      await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "updated", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id });
+      dispatchContentPush(db, row[0].subjectId, "announcement", input.title, effectiveSummary, `/a/${row[0].publicId}`);
 
       // If target subjects are specified, sync update without duplicating
       if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
@@ -292,7 +333,7 @@ export const contentRouter = router({
                 publishState: "published",
                 version: targetVer,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               }).where(eq(announcements.id, existing[0].id));
             } else {
               await db.insert(announcements).values({
@@ -305,16 +346,16 @@ export const contentRouter = router({
                 publishState: "published",
                 version: 1,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               });
             }
           }
         }
       }
 
-      return { version };
+      return { version, summary: effectiveSummary };
     }),
-    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id, version: announcements.version, subjectId: announcements.subjectId, title: announcements.title, publicId: announcements.publicId }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); const version = row[0].version + 1; await db.update(announcements).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "announcement", row[0].title, input.summary, `/a/${row[0].publicId}`); return { version }; }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id, version: announcements.version, subjectId: announcements.subjectId, title: announcements.title, body: announcements.body, publicId: announcements.publicId }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); const version = row[0].version + 1; const effectiveSummary = await resolveVersionSummary({ kind: "announcement", providedSummary: input.summary, title: row[0].title, body: row[0].body, version, action: "published" }); await db.update(announcements).set({ publishState: "published", version, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(announcements.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "announcement", entityId: row[0].id, version, action: "published", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "announcement", row[0].title, effectiveSummary, `/a/${row[0].publicId}`); return { version, summary: effectiveSummary }; }),
     archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "archived" }).where(eq(announcements.id, row[0].id)); return { success: true as const }; }),
     restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: announcements.id }).from(announcements).innerJoin(subjects, eq(announcements.subjectId, subjects.id)).where(and(numId > 0 ? eq(announcements.id, numId) : eq(announcements.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Announcement not found"); await db.update(announcements).set({ publishState: "draft" }).where(eq(announcements.id, row[0].id)); return { success: true as const }; }),
     delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
@@ -478,15 +519,27 @@ export const contentRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const db = await databaseOrThrow();
       const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
-      const row = await db.select({ id: resources.id, version: resources.version, subjectId: resources.subjectId, title: resources.title, publicId: resources.publicId }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      const row = await db.select({ id: resources.id, version: resources.version, subjectId: resources.subjectId, title: resources.title, description: resources.description, publicId: resources.publicId }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
       if (!row[0]) throw new Error("Resource not found");
       await assertPublicMedia(db, ctx.user.id, input.fallbackMediaAssetId);
       await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
       const version = row[0].version + 1;
-      await db.update(resources).set({ title: input.title, description: input.description, category: input.category, resourceType: input.resourceType, destinationUrl: input.destinationUrl, sourceDomain: new URL(input.destinationUrl).hostname, fallbackMediaAssetId: input.fallbackMediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, row[0].id));
+      const effectiveSummary = await resolveVersionSummary({
+        kind: "resource",
+        providedSummary: input.summary,
+        title: input.title,
+        body: input.description,
+        previousTitle: row[0].title,
+        previousBody: row[0].description,
+        version,
+        action: "updated",
+        category: input.category,
+        attachmentsCount: input.attachmentAssetIds?.length,
+      });
+      await db.update(resources).set({ title: input.title, description: input.description, category: input.category, resourceType: input.resourceType, destinationUrl: input.destinationUrl, sourceDomain: new URL(input.destinationUrl).hostname, fallbackMediaAssetId: input.fallbackMediaAssetId ?? null, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(resources.id, row[0].id));
       await replaceResourceAttachments(db, ctx.user.id, row[0].id, input.attachmentAssetIds);
-      await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
-      dispatchContentPush(db, row[0].subjectId, "resource", input.title, input.summary, `/r/${row[0].publicId}`);
+      await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "updated", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id });
+      dispatchContentPush(db, row[0].subjectId, "resource", input.title, effectiveSummary, `/r/${row[0].publicId}`);
 
       // If target subjects are specified, sync update without duplicating
       if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
@@ -508,7 +561,7 @@ export const contentRouter = router({
                 publishState: "published",
                 version: targetVer,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               }).where(eq(resources.id, existing[0].id));
               await replaceResourceAttachments(db, ctx.user.id, existing[0].id, input.attachmentAssetIds);
             } else {
@@ -526,7 +579,7 @@ export const contentRouter = router({
                 publishState: "published",
                 version: 1,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               }).$returningId();
               await replaceResourceAttachments(db, ctx.user.id, targetRow.id, input.attachmentAssetIds);
             }
@@ -534,9 +587,9 @@ export const contentRouter = router({
         }
       }
 
-      return { version };
+      return { version, summary: effectiveSummary };
     }),
-    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id, version: resources.version, subjectId: resources.subjectId, title: resources.title, publicId: resources.publicId }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); const version = row[0].version + 1; await db.update(resources).set({ publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(resources.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "resource", row[0].title, input.summary, `/r/${row[0].publicId}`); return { version }; }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id, version: resources.version, subjectId: resources.subjectId, title: resources.title, description: resources.description, publicId: resources.publicId }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); const version = row[0].version + 1; const effectiveSummary = await resolveVersionSummary({ kind: "resource", providedSummary: input.summary, title: row[0].title, body: row[0].description, version, action: "published" }); await db.update(resources).set({ publishState: "published", version, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(resources.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "resource", entityId: row[0].id, version, action: "published", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "resource", row[0].title, effectiveSummary, `/r/${row[0].publicId}`); return { version, summary: effectiveSummary }; }),
     archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "archived" }).where(eq(resources.id, row[0].id)); return { success: true as const }; }),
     restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: resources.id }).from(resources).innerJoin(subjects, eq(resources.subjectId, subjects.id)).where(and(numId > 0 ? eq(resources.id, numId) : eq(resources.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Resource not found"); await db.update(resources).set({ publishState: "draft" }).where(eq(resources.id, row[0].id)); return { success: true as const }; }),
     delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
@@ -676,13 +729,23 @@ export const contentRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const db = await databaseOrThrow();
       const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1;
-      const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, subjectId: questionsAnswers.subjectId, question: questionsAnswers.question, publicId: questionsAnswers.publicId }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
+      const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, subjectId: questionsAnswers.subjectId, question: questionsAnswers.question, answer: questionsAnswers.answer, publicId: questionsAnswers.publicId }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1);
       if (!row[0]) throw new Error("Question & Answer not found");
       await assertPublicMedia(db, ctx.user.id, input.socialPreviewMediaAssetId);
       const version = row[0].version + 1;
-      await db.update(questionsAnswers).set({ question: input.question, answer: input.answer, tagsText: input.tagsText ?? null, isOfficial: input.isOfficial, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id));
-      await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "updated", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
-      dispatchContentPush(db, row[0].subjectId, "qa", input.question, input.summary, `/q/${row[0].publicId}`);
+      const effectiveSummary = await resolveVersionSummary({
+        kind: "question",
+        providedSummary: input.summary,
+        title: input.question,
+        body: input.answer,
+        previousTitle: row[0].question,
+        previousBody: row[0].answer,
+        version,
+        action: "updated",
+      });
+      await db.update(questionsAnswers).set({ question: input.question, answer: input.answer, tagsText: input.tagsText ?? null, isOfficial: input.isOfficial, socialPreviewMediaAssetId: input.socialPreviewMediaAssetId ?? null, publishState: "published", version, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id));
+      await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "updated", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id });
+      dispatchContentPush(db, row[0].subjectId, "qa", input.question, effectiveSummary, `/q/${row[0].publicId}`);
 
       // If target subjects are specified, sync update without duplicating
       if (input.targetSubjectIds && input.targetSubjectIds.length > 0) {
@@ -701,7 +764,7 @@ export const contentRouter = router({
                 publishState: "published",
                 version: targetVer,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               }).where(eq(questionsAnswers.id, existing[0].id));
             } else {
               await db.insert(questionsAnswers).values({
@@ -715,16 +778,16 @@ export const contentRouter = router({
                 publishState: "published",
                 version: 1,
                 publishedAt: new Date(),
-                publicChangeSummary: input.summary,
+                publicChangeSummary: effectiveSummary,
               });
             }
           }
         }
       }
 
-      return { version };
+      return { version, summary: effectiveSummary };
     }),
-    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary, official: z.boolean().optional() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, isOfficial: questionsAnswers.isOfficial, subjectId: questionsAnswers.subjectId, question: questionsAnswers.question, publicId: questionsAnswers.publicId }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); const version = row[0].version + 1; const finalOfficial = typeof input.official === "boolean" ? input.official : row[0].isOfficial; await db.update(questionsAnswers).set({ publishState: "published", version, isOfficial: finalOfficial, publicChangeSummary: input.summary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "qa", row[0].question, input.summary, `/q/${row[0].publicId}`); return { version }; }),
+    publish: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]), summary: updateSummary, official: z.boolean().optional() })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id, version: questionsAnswers.version, isOfficial: questionsAnswers.isOfficial, subjectId: questionsAnswers.subjectId, question: questionsAnswers.question, answer: questionsAnswers.answer, publicId: questionsAnswers.publicId }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); const version = row[0].version + 1; const finalOfficial = typeof input.official === "boolean" ? input.official : row[0].isOfficial; const effectiveSummary = await resolveVersionSummary({ kind: "question", providedSummary: input.summary, title: row[0].question, body: row[0].answer, version, action: "published" }); await db.update(questionsAnswers).set({ publishState: "published", version, isOfficial: finalOfficial, publicChangeSummary: effectiveSummary, publishedAt: new Date() }).where(eq(questionsAnswers.id, row[0].id)); await db.insert(historyEntries).values({ entityType: "question", entityId: row[0].id, version, action: "published", publicChangeSummary: effectiveSummary, actorUserId: ctx.user.id }); dispatchContentPush(db, row[0].subjectId, "qa", row[0].question, effectiveSummary, `/q/${row[0].publicId}`); return { version, summary: effectiveSummary }; }),
     archive: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "archived" }).where(eq(questionsAnswers.id, row[0].id)); return { success: true as const }; }),
     restore: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => { const db = await databaseOrThrow(); const numId = typeof input.id === "number" || (!isNaN(Number(input.id)) && !isNaN(parseInt(String(input.id), 10))) ? Number(input.id) : -1; const row = await db.select({ id: questionsAnswers.id }).from(questionsAnswers).innerJoin(subjects, eq(questionsAnswers.subjectId, subjects.id)).where(and(numId > 0 ? eq(questionsAnswers.id, numId) : eq(questionsAnswers.publicId, String(input.id)), eq(subjects.ownerId, ctx.user.id))).limit(1); if (!row[0]) throw new Error("Question & Answer not found"); await db.update(questionsAnswers).set({ publishState: "draft" }).where(eq(questionsAnswers.id, row[0].id)); return { success: true as const }; }),
     delete: ownerProcedure.input(z.object({ id: z.union([z.number().int().positive(), z.string()]) })).mutation(async ({ ctx, input }) => {
@@ -737,4 +800,68 @@ export const contentRouter = router({
       return { success: true as const };
     }),
   }),
+  autoDraftVersionHistory: publicProcedure
+    .input(
+      z.object({
+        kind: z.enum(["announcement", "resource", "question"]),
+        title: z.string().trim().min(1).max(300),
+        body: z.string().trim().default(""),
+        previousTitle: z.string().trim().nullable().optional(),
+        previousBody: z.string().trim().nullable().optional(),
+        version: z.number().int().positive().nullable().optional(),
+        action: z.string().trim().nullable().optional(),
+        category: z.string().trim().nullable().optional(),
+        attachmentsCount: z.number().int().min(0).nullable().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const summary = await generateVersionHistorySummary({
+        kind: input.kind,
+        title: input.title,
+        body: input.body,
+        previousTitle: input.previousTitle,
+        previousBody: input.previousBody,
+        version: input.version,
+        action: input.action,
+        category: input.category,
+        attachmentsCount: input.attachmentsCount,
+      });
+      return { summary };
+    }),
+  updateHistoryEntrySummary: ownerProcedure
+    .input(
+      z.object({
+        entityType: z.enum(["announcement", "resource", "question"]),
+        entityId: z.union([z.number().int().positive(), z.string()]),
+        version: z.number().int().positive(),
+        summary: z.string().trim().min(3).max(280),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await databaseOrThrow();
+      const numId = typeof input.entityId === "number" || (!isNaN(Number(input.entityId)) && !isNaN(parseInt(String(input.entityId), 10))) ? Number(input.entityId) : -1;
+      const table = input.entityType === "announcement" ? announcements : input.entityType === "resource" ? resources : questionsAnswers;
+      const row = await db.select({ id: table.id, version: table.version })
+        .from(table)
+        .innerJoin(subjects, eq(table.subjectId, subjects.id))
+        .where(and(numId > 0 ? eq(table.id, numId) : eq(table.publicId, String(input.entityId)), eq(subjects.ownerId, ctx.user.id)))
+        .limit(1);
+      if (!row[0]) throw new Error("Content item not found or unauthorized");
+
+      await db.update(historyEntries)
+        .set({ publicChangeSummary: input.summary })
+        .where(and(
+          eq(historyEntries.entityType, input.entityType),
+          eq(historyEntries.entityId, row[0].id),
+          eq(historyEntries.version, input.version)
+        ));
+
+      if (row[0].version === input.version) {
+        await db.update(table)
+          .set({ publicChangeSummary: input.summary })
+          .where(eq(table.id, row[0].id));
+      }
+
+      return { success: true, version: input.version, summary: input.summary };
+    }),
 });

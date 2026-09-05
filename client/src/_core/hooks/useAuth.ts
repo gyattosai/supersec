@@ -23,7 +23,7 @@ export type AppUser = {
 
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
-  const utils = trpc.useUtils();
+  const utils = typeof trpc?.useUtils === "function" ? trpc.useUtils() : (undefined as any);
   const [appwriteUser, setAppwriteUser] = useState<AppUser | null>(null);
   const [checkingAppwrite, setCheckingAppwrite] = useState(true);
 
@@ -60,17 +60,21 @@ export function useAuth(options?: UseAuthOptions) {
     };
   }, []);
 
-  const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
-    refetchOnWindowFocus: false,
-    enabled: !appwriteUser,
-  });
+  const meQuery = (trpc as any).auth?.me?.useQuery
+    ? (trpc as any).auth.me.useQuery(undefined, {
+        retry: false,
+        refetchOnWindowFocus: false,
+        enabled: !appwriteUser,
+      })
+    : { data: null, isLoading: false, error: null };
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
-    },
-  });
+  const logoutMutation = (trpc as any).auth?.logout?.useMutation
+    ? (trpc as any).auth.logout.useMutation({
+        onSuccess: () => {
+          utils?.auth?.me?.setData?.(undefined, null);
+        },
+      })
+    : ({} as any);
 
   const logout = useCallback(async () => {
     try {

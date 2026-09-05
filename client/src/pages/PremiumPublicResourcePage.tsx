@@ -8,7 +8,7 @@ import { formatSocialTitle, formatSocialDescription, formatShorthandDate } from 
 import { ArrowLeft, ExternalLink, FileText, Globe, History, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useRoute } from "wouter";
-import { PublicShell, PublicUnavailable } from "./PublicPages";
+import { HistoryLedger, PublicShell, PublicUnavailable } from "./PublicPages";
 import { PushNotificationSubscribeButton } from "@/components/PushNotificationSubscribeButton";
 
 export function PremiumPublicResourcePage() {
@@ -164,27 +164,14 @@ export function PremiumPublicResourcePage() {
       </article>
 
       {/* Version History */}
-      {history.data?.available && history.data.history.length ? (
-        <section className="mt-8 border-t border-border pt-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <History className="size-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">Publication History</h2>
-          </div>
-          <ol className="divide-y divide-border/60">
-            {history.data.history.map(entry => (
-              <li key={`${entry.version}-${entry.createdAt}`} className="py-3.5 space-y-1">
-                <p className="text-xs sm:text-sm font-bold text-foreground">
-                  Version {entry.version} · {entry.action}
-                </p>
-                <p className="text-xs text-muted-foreground">{entry.summary}</p>
-                <p className="text-[10px] text-muted-foreground font-mono">
-                  {new Date(entry.createdAt).toLocaleDateString()}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
+      <HistoryLedger
+        entries={history.data?.available ? history.data.history : []}
+        itemKind="resource"
+        entityId={details.publicId}
+        itemTitle={details.title}
+        itemBody={details.body}
+        onHistoryUpdated={() => history.refetch()}
+      />
     </PublicShell>
   );
 }

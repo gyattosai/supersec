@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
-import { Archive, ArchiveRestore, ArrowLeft, BookOpen, Check, CircleHelp, Copy, ExternalLink, Eye, FileText, Image, Layers, Megaphone, Paperclip, Pencil, Send, Share2, Sparkles, Trash2, Upload } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, BookOpen, Check, CircleHelp, Copy, ExternalLink, Eye, FileText, Image, Layers, Loader2, Megaphone, Paperclip, Pencil, Send, Share2, Sparkles, Trash2, Upload } from "lucide-react";
 import React, { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation, useRoute } from "wouter";
@@ -270,7 +270,46 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
     if (kind === "questions") deleteQuestion.mutate({ id: itemToDelete.id });
   };
 
-  const busy = uploadMedia.isPending || announcementCreate.isPending || resourceCreate.isPending || questionCreate.isPending || announcementUpdate.isPending || resourceUpdate.isPending || questionUpdate.isPending || crossPostAnnouncement.isPending || crossPostResource.isPending || crossPostQuestion.isPending || deleteAnnouncement.isPending || deleteResource.isPending || deleteQuestion.isPending;
+  const autoDraft = trpc.content.autoDraftVersionHistory.useMutation({
+    onSuccess: data => {
+      setChangeSummary(data.summary);
+      toast.success("AI auto-drafted version history note");
+    },
+    onError: error => {
+      toast.error(error.message || "Could not auto-draft version summary");
+    },
+  });
+
+  const handleAutoDraft = () => {
+    const isQuestion = kind === "questions";
+    const currTitle = isQuestion ? question.trim() : title.trim();
+    const currBody = isQuestion ? answer.trim() : body.trim();
+    if (!currTitle && !currBody) {
+      toast.error("Please provide title or content first before auto-drafting");
+      return;
+    }
+
+    const prevTitle = selectedItem
+      ? (isQuestion ? (selectedItem as any).question : (selectedItem as any).title)
+      : undefined;
+    const prevBody = selectedItem
+      ? (isQuestion ? (selectedItem as any).answer : (kind === "resources" ? (selectedItem as any).description : (selectedItem as any).body))
+      : undefined;
+
+    autoDraft.mutate({
+      kind: isQuestion ? "question" : (kind === "resources" ? "resource" : "announcement"),
+      title: currTitle || "Untitled",
+      body: currBody || "",
+      previousTitle: prevTitle || null,
+      previousBody: prevBody || null,
+      version: selectedItem?.version ? selectedItem.version + 1 : 2,
+      action: editing ? "updated" : "published",
+      category: kind === "resources" ? category : null,
+      attachmentsCount: kind === "resources" ? attachmentAssets.length : null,
+    });
+  };
+
+  const busy = uploadMedia.isPending || announcementCreate.isPending || resourceCreate.isPending || questionCreate.isPending || announcementUpdate.isPending || resourceUpdate.isPending || questionUpdate.isPending || crossPostAnnouncement.isPending || crossPostResource.isPending || crossPostQuestion.isPending || deleteAnnouncement.isPending || deleteResource.isPending || deleteQuestion.isPending || autoDraft.isPending;
 
   const uploadAsset = async (event: ChangeEvent<HTMLInputElement>, target: "cover" | "social" | "attachment") => {
     const file = event.target.files?.[0];
@@ -341,7 +380,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   };
 
   if (isAuthoring) return <DashboardLayout><section className="mx-auto max-w-4xl"><WorkspacePageHeader eyebrow={tab.label} title={`${editing ? "Edit" : "New"} ${tab.singular}`} description={editing ? "Save changes as a new version." : "Create a draft. Publish it when ready."} back={<Link href={`/app/subjects/${subjectId}/${kind}`} className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"><ArrowLeft className="size-4" />Back to {tab.label}</Link>} />
-    <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden"><div className="border-b border-border bg-secondary/65 p-5 sm:p-6"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"><Icon className="size-4" /></span><div><p className="signal-kicker">Editor</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">{editing ? `Edit ${tab.singular}` : `Create ${tab.singular}`}</h2></div></div></div>{editing && !selectedItem ? <p className="signal-inset m-5 p-4 text-sm text-muted-foreground">Loading item…</p> : <div className="flex flex-col gap-5 p-5 sm:p-6">{kind === "announcements" ? <AnnouncementFields title={title} body={body} previewOpen={previewOpen} onTitleChange={setTitle} onBodyChange={setBody} onPreview={() => setPreviewOpen(value => !value)} /> : null}{kind === "resources" ? <ResourceFields title={title} body={body} category={category} resourceType={resourceType} destinationUrl={destinationUrl} onTitleChange={setTitle} onBodyChange={setBody} onCategoryChange={setCategory} onResourceTypeChange={setResourceType} onDestinationUrlChange={setDestinationUrl} /> : null}{kind === "questions" ? <QuestionFields question={question} answer={answer} tagsText={tagsText} isOfficial={isOfficial} changeSummary={changeSummary} editing={editing} onQuestionChange={setQuestion} onAnswerChange={setAnswer} onTagsChange={setTagsText} onOfficialChange={setIsOfficial} onSummaryChange={setChangeSummary} /> : null}<MediaFields kind={kind} coverAsset={coverAsset} socialAsset={socialAsset} attachmentAssets={attachmentAssets} imageAltText={imageAltText} busy={uploadMedia.isPending} onImageAltTextChange={setImageAltText} onUpload={uploadAsset} onRemoveCover={() => { setMediaAssetId(null); setCoverAsset(null); }} onRemoveSocial={() => { setSocialPreviewMediaAssetId(null); setSocialAsset(null); }} onRemoveAttachment={assetId => setAttachmentAssets(current => current.filter(asset => asset.id !== assetId))} />{otherSubjects.length > 0 ? <CrossPostFormSection isEditing={editing} otherSubjects={otherSubjects} selectedSubjectIds={selectedCrossPostSubjectIds} onChange={setSelectedCrossPostSubjectIds} /> : null}{editing && kind !== "questions" ? <ChangeSummary value={changeSummary} onChange={setChangeSummary} /> : null}<div className="signal-inset border-l-2 border-l-primary p-4 text-sm text-muted-foreground"><Check className="mr-2 inline size-4 text-primary" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Saves a new public version and syncs updates to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a new public version.") : selectedCrossPostSubjectIds.length > 0 ? `Publishes and cross-posts to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a private draft."}</div><div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="outline" onClick={backToList}>Cancel</Button><Button disabled={busy}><Send className="size-4" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Save & Sync (${selectedCrossPostSubjectIds.length + 1})` : "Save new version") : selectedCrossPostSubjectIds.length > 0 ? `Publish & Cross-Post (${selectedCrossPostSubjectIds.length + 1})` : "Save draft"}</Button></div></div>}</form>
+    <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden"><div className="border-b border-border bg-secondary/65 p-5 sm:p-6"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"><Icon className="size-4" /></span><div><p className="signal-kicker">Editor</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">{editing ? `Edit ${tab.singular}` : `Create ${tab.singular}`}</h2></div></div></div>{editing && !selectedItem ? <p className="signal-inset m-5 p-4 text-sm text-muted-foreground">Loading item…</p> : <div className="flex flex-col gap-5 p-5 sm:p-6">{kind === "announcements" ? <AnnouncementFields title={title} body={body} previewOpen={previewOpen} onTitleChange={setTitle} onBodyChange={setBody} onPreview={() => setPreviewOpen(value => !value)} /> : null}{kind === "resources" ? <ResourceFields title={title} body={body} category={category} resourceType={resourceType} destinationUrl={destinationUrl} onTitleChange={setTitle} onBodyChange={setBody} onCategoryChange={setCategory} onResourceTypeChange={setResourceType} onDestinationUrlChange={setDestinationUrl} /> : null}{kind === "questions" ? <QuestionFields question={question} answer={answer} tagsText={tagsText} isOfficial={isOfficial} changeSummary={changeSummary} editing={editing} onQuestionChange={setQuestion} onAnswerChange={setAnswer} onTagsChange={setTagsText} onOfficialChange={setIsOfficial} onSummaryChange={setChangeSummary} onAutoDraft={handleAutoDraft} isDrafting={autoDraft.isPending} /> : null}<MediaFields kind={kind} coverAsset={coverAsset} socialAsset={socialAsset} attachmentAssets={attachmentAssets} imageAltText={imageAltText} busy={uploadMedia.isPending} onImageAltTextChange={setImageAltText} onUpload={uploadAsset} onRemoveCover={() => { setMediaAssetId(null); setCoverAsset(null); }} onRemoveSocial={() => { setSocialPreviewMediaAssetId(null); setSocialAsset(null); }} onRemoveAttachment={assetId => setAttachmentAssets(current => current.filter(asset => asset.id !== assetId))} />{otherSubjects.length > 0 ? <CrossPostFormSection isEditing={editing} otherSubjects={otherSubjects} selectedSubjectIds={selectedCrossPostSubjectIds} onChange={setSelectedCrossPostSubjectIds} /> : null}{editing && kind !== "questions" ? <ChangeSummary value={changeSummary} onChange={setChangeSummary} onAutoDraft={handleAutoDraft} isDrafting={autoDraft.isPending} /> : null}<div className="signal-inset border-l-2 border-l-primary p-4 text-sm text-muted-foreground"><Check className="mr-2 inline size-4 text-primary" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Saves a new public version and syncs updates to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a new public version.") : selectedCrossPostSubjectIds.length > 0 ? `Publishes and cross-posts to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a private draft."}</div><div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="outline" onClick={backToList}>Cancel</Button><Button disabled={busy}><Send className="size-4" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Save & Sync (${selectedCrossPostSubjectIds.length + 1})` : "Save new version") : selectedCrossPostSubjectIds.length > 0 ? `Publish & Cross-Post (${selectedCrossPostSubjectIds.length + 1})` : "Save draft"}</Button></div></div>}</form>
   </section></DashboardLayout>;
 
 
@@ -715,6 +754,8 @@ function QuestionFields({
   onTagsChange,
   onOfficialChange,
   onSummaryChange,
+  onAutoDraft,
+  isDrafting,
 }: {
   question: string;
   answer: string;
@@ -727,6 +768,8 @@ function QuestionFields({
   onTagsChange: (value: string) => void;
   onOfficialChange: (value: boolean) => void;
   onSummaryChange: (value: string) => void;
+  onAutoDraft?: () => void;
+  isDrafting?: boolean;
 }) {
   return (
     <>
@@ -762,6 +805,8 @@ function QuestionFields({
         changeSummary={changeSummary}
         onChangeSummaryChange={onSummaryChange}
         showChangeSummary={editing}
+        onAutoDraft={onAutoDraft}
+        isDrafting={isDrafting}
       />
     </>
   );
@@ -955,9 +1000,37 @@ function MediaFields({
   );
 }
 
-function ChangeSummary({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function ChangeSummary({
+  value,
+  onChange,
+  onAutoDraft,
+  isDrafting,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onAutoDraft?: () => void;
+  isDrafting?: boolean;
+}) {
   return (
-    <Field label="Version Change Log Note (optional)" htmlFor="public-change-summary">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor="public-change-summary" className="text-xs font-bold uppercase tracking-wider text-foreground">
+          Version Change Log Note (optional)
+        </Label>
+        {onAutoDraft ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onAutoDraft}
+            disabled={isDrafting}
+            className="h-7 gap-1.5 px-2.5 text-xs text-primary font-medium hover:bg-primary/10 transition-colors"
+          >
+            {isDrafting ? <Loader2 className="size-3.5 animate-spin text-primary" /> : <Sparkles className="size-3.5 text-primary" />}
+            {isDrafting ? "Drafting..." : "Auto-Draft with AI"}
+          </Button>
+        ) : null}
+      </div>
       <Input
         id="public-change-summary"
         value={value}
@@ -965,8 +1038,8 @@ function ChangeSummary({ value, onChange }: { value: string; onChange: (value: s
         placeholder="e.g. Corrected room number and added syllabus attachment"
         className="rounded-xl"
       />
-      <p className="text-[11px] text-muted-foreground mt-0.5">Shown in the public Version History sidebar.</p>
-    </Field>
+      <p className="text-[11px] text-muted-foreground mt-0.5">Shown in the public Version History sidebar. Left blank, AI will auto-draft on save.</p>
+    </div>
   );
 }
 
