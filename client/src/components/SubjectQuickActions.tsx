@@ -53,7 +53,7 @@ export function SubjectQuickActions({
 
   return (
     <div
-      className={`flex items-center gap-2 pt-4 sm:pt-5 ${
+      className={`flex items-center gap-2.5 flex-wrap pt-4 sm:pt-5 ${
         compact ? "text-xs pt-3" : ""
       }`}
       onClick={handleStopPropagation}
@@ -62,7 +62,7 @@ export function SubjectQuickActions({
       <Button
         asChild
         size="sm"
-        className="min-h-11 sm:min-h-9 px-3.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
+        className="min-h-11 sm:min-h-9 px-5 sm:px-6 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
         onClick={handleStopPropagation}
       >
         <Link href={`/app/subjects/${subjectId}`}>
@@ -76,7 +76,7 @@ export function SubjectQuickActions({
           <Button
             size="sm"
             variant="outline"
-            className="min-h-11 sm:min-h-9 px-3 rounded-xl text-xs font-semibold border-border/80 text-foreground hover:bg-secondary"
+            className="min-h-11 sm:min-h-9 px-5 sm:px-6 rounded-xl text-xs font-semibold border-border/80 text-foreground hover:bg-secondary"
           >
             Actions
             <ChevronDown className="size-3 ml-1.5 opacity-60" />

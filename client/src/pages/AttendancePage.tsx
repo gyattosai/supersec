@@ -331,26 +331,26 @@ export default function AttendancePage() {
                 className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ArrowLeft className="h-4 w-4" />
-                ← Back to Attendance
+                Back to Attendance
               </button>
             )
           }
           action={
             activeScreen === "main" ? (
-              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleDownloadPdf}
                   disabled={isExportingPdf || !records.data?.length}
-                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary"
+                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-3.5 sm:px-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
                 >
                   <FileDown className="mr-2 h-4 w-4 text-primary" />
                   {isExportingPdf ? "Exporting PDF…" : "Attendance Sheet (PDF)"}
                 </Button>
                 <Link
                   href={`/app/reports?sessionId=${sessionId}`}
-                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
                 >
                   <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
                 </Link>
@@ -360,14 +360,14 @@ export default function AttendancePage() {
                       href={`/attendance/${session.data.publicId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />View shared
                     </a>
                     <button
                       type="button"
                       onClick={copyPublicAttendance}
-                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary rounded-xl"
                     >
                       <Copy className="mr-2 h-4 w-4" />Copy link
                     </button>
@@ -381,7 +381,7 @@ export default function AttendancePage() {
                       setNoClassReasonDraft("");
                       setNoClassModalOpen(true);
                     }}
-                    className="signal-action inline-flex min-h-11 items-center justify-center border border-amber-500/40 bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-amber-400 hover:bg-amber-500/10"
+                    className="signal-action inline-flex min-h-11 items-center justify-center border border-amber-500/40 bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-amber-400 hover:bg-amber-500/10 rounded-xl"
                   >
                     <CalendarX className="mr-2 size-4 text-amber-400" />
                     Mark No Class
@@ -390,7 +390,7 @@ export default function AttendancePage() {
                 <Button
                   onClick={() => publish.mutate({ sessionId: sessionQueryParam })}
                   disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0}
-                  className="col-span-2 min-h-11 sm:col-auto"
+                  className="min-h-11 px-5 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/25"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {unresolvedSuggestionCount
@@ -405,41 +405,41 @@ export default function AttendancePage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setActiveScreen("main")}
-                className="gap-2 font-semibold"
+                className="gap-2 font-semibold rounded-xl min-h-11"
               >
                 <ArrowLeft className="size-4" />
-                ← Back to Attendance
+                Back to Attendance
               </Button>
             )
           }
-        />
-
-        {/* Session Status & Meta Bar */}
-        {session.data && (
-          <div className="mt-3 flex flex-wrap items-center gap-2.5">
-            {isNoClass ? (
-              <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-500 dark:bg-amber-400" />
-                <span>No Class</span>
-              </span>
-            ) : (session.data as any)?.sessionState === "completed" ? (
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 dark:bg-emerald-400" />
-                Attendance completed
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground" />
-                Ready for Attendance
-              </span>
-            )}
-            {session.data.startsAt && (
-              <span className="text-xs text-muted-foreground font-medium">
-                {formatDateTime12Hour(session.data.startsAt)}
-              </span>
-            )}
-          </div>
-        )}
+        >
+          {/* Session Status & Meta Bar */}
+          {session.data && (
+            <div className="flex flex-wrap items-center gap-2.5">
+              {isNoClass ? (
+                <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                  <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-500 dark:bg-amber-400" />
+                  <span>No Class</span>
+                </span>
+              ) : (session.data as any)?.sessionState === "completed" ? (
+                <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                  <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-500 dark:bg-emerald-400" />
+                  Attendance completed
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                  <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground" />
+                  Ready for Attendance
+                </span>
+              )}
+              {session.data.startsAt && (
+                <span className="text-xs text-muted-foreground font-medium">
+                  {formatDateTime12Hour(session.data.startsAt)}
+                </span>
+              )}
+            </div>
+          )}
+        </WorkspacePageHeader>
 
         {/* Context Navigation Switcher */}
         <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/60 p-1.5 shadow-sm">

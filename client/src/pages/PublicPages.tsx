@@ -632,7 +632,7 @@ export function PublicAttendancePage() {
         ) : (
           <>
             {/* Clickable Status Metric Cards */}
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <button
                 type="button"
                 onClick={() => setSelectedStatus(selectedStatus === "PRESENT" ? "ALL" : "PRESENT")}
@@ -700,7 +700,7 @@ export function PublicAttendancePage() {
               <button
                 type="button"
                 onClick={() => setSelectedStatus(selectedStatus === "NOT_SET" ? "ALL" : "NOT_SET")}
-                className={`col-span-2 sm:col-span-1 p-3 sm:p-4 text-left transition-all cursor-pointer rounded-xl sm:rounded-2xl border active:scale-[0.98] ${
+                className={`p-3 sm:p-4 text-left transition-all cursor-pointer rounded-xl sm:rounded-2xl border active:scale-[0.98] ${
                   selectedStatus === "NOT_SET"
                     ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/15 shadow-md shadow-amber-950/20"
                     : "border-border/80 bg-card hover:border-amber-500/40"

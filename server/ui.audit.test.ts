@@ -163,7 +163,7 @@ describe("UI/UX Audit and Layout Overhaul Validations", () => {
     const filePath = path.join(rootDir, "client/src/components/SubjectQuickActions.tsx");
     const content = fs.readFileSync(filePath, "utf8");
 
-    expect(content).toContain("min-h-11 sm:min-h-9 px-3.5");
+    expect(content).toContain("min-h-11 sm:min-h-9 px-5 sm:px-6");
     expect(content).not.toContain('className="h-8 px-3 rounded-xl');
   });
 

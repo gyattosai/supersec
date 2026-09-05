@@ -12,7 +12,6 @@ import {
   BookOpen,
   CalendarCheck,
   CalendarX,
-  Camera,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -992,15 +991,7 @@ function FeedItemCard({ item }: { item: UnifiedItem }) {
           ) : null}
         </div>
 
-        <div className="shrink-0 pt-1 flex flex-col sm:flex-row items-end sm:items-center gap-2">
-          {item.kind === "attendance" && (
-            <Link
-              href={`${item.href}/proof`}
-              className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all min-h-10 sm:min-h-8"
-            >
-              <Camera className="size-3" /> Submit Proof
-            </Link>
-          )}
+        <div className="shrink-0 pt-1 flex items-center gap-2">
           <Link
             href={item.href}
             className={`inline-flex items-center gap-1 text-xs font-bold ${theme.browseText} hover:underline min-h-11 sm:min-h-8`}
