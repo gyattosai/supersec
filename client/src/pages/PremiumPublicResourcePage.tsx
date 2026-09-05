@@ -87,8 +87,9 @@ export function PremiumPublicResourcePage() {
               href={`/s/${details.subject.publicId}`}
               className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
             >
-              <ArrowLeft className="size-3.5" />
-              {details.subject.code} · {details.subject.name}
+              <ArrowLeft className="size-3.5 shrink-0" />
+              <span className="md:hidden">Back</span>
+              <span className="hidden md:inline">{details.subject.code} · {details.subject.name}</span>
             </Link>
             <PushNotificationSubscribeButton
               subjectPublicId={details.subject.publicId}

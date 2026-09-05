@@ -1,15 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
-import { SubjectQuickActions } from "@/components/SubjectQuickActions";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  resolveLegacyContentWorkspacePath,
-  subjectContentWorkspacePath,
-  subjectContentWorkspaces,
-  type SubjectContentWorkspaceKey,
-} from "@/lib/contentWorkspaces";
-import { attendanceWorkspacePath } from "@/lib/attendanceWorkspace";
+import { resolveLegacyContentWorkspacePath } from "@/lib/contentWorkspaces";
 import { formatTimeRange12Hour } from "@/lib/time";
 import { trpc } from "@/lib/trpc";
 import {
@@ -19,24 +11,16 @@ import {
   BookOpen,
   Calendar,
   CalendarDays,
-  Check,
-  ChevronRight,
   Clipboard,
   ClipboardCheck,
-  Copy,
-  ExternalLink,
-  FileDown,
   GraduationCap,
   Megaphone,
   Pencil,
-  QrCode,
   ShieldCheck,
   Sparkles,
   StickyNote,
   Users,
-  Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, Redirect, useLocation, useRoute } from "wouter";
 
@@ -69,8 +53,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
   const resources = trpc.content.resources.list.useQuery({ subjectId: subjectQueryParam }, { enabled: validSubject, staleTime: 0, refetchOnMount: "always" });
   const questions = trpc.content.questions.list.useQuery({ subjectId: subjectQueryParam }, { enabled: validSubject, staleTime: 0, refetchOnMount: "always" });
 
-  const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<"workflow" | "suites">("workflow");
   const utils = trpc.useUtils();
 
   const archive = trpc.subjects.archive.useMutation({
@@ -81,18 +63,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
     onError: error => toast.error(error.message),
   });
-
-  const copyPublicLink = async () => {
-    if (!subject.data?.publicId) return;
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${subject.data.publicId}`);
-      setCopied(true);
-      toast.success("Public student portal link copied for Messenger");
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      toast.error("Could not copy the link");
-    }
-  };
 
   if (!validSubject) {
     return <Redirect to="/app/subjects" />;
@@ -218,115 +188,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
     },
   ];
 
-  const suites = [
-    {
-      kicker: "Class Setup",
-      title: "Roster & Schedule Foundation",
-      description: "Manage enrolled students master list and repeating weekly class schedule.",
-      items: [
-        {
-          label: "Master Student Roster",
-          desc: `${studentCount} enrolled ${studentCount === 1 ? "student" : "students"}`,
-          href: `/app/subjects/${subjectId}/students`,
-          icon: Users,
-          badge: `${studentCount} students`,
-        },
-        {
-          label: "Class Sessions & Schedule",
-          desc: `${sessionCount} scheduled ${sessionCount === 1 ? "date" : "dates"}`,
-          href: `/app/subjects/${subjectId}/schedule`,
-          icon: CalendarDays,
-          badge: `${sessionCount} sessions`,
-        },
-        {
-          label: "Class Details & Rhythm",
-          desc: `${subject.data.professorName} · ${subject.data.code}`,
-          href: `/app/subjects/${subjectId}/details`,
-          icon: Pencil,
-          badge: "Settings",
-        },
-      ],
-    },
-    {
-      kicker: "Attendance Desk",
-      title: "Live Attendance & Verifications",
-      description: "Record attendance, reconcile Zoom AI screenshots, and resolve excuse letters.",
-      items: [
-        {
-          label: "Live Attendance Workspace",
-          desc: "Take attendance, launch Zoom AI matcher & log records",
-          href: attendanceWorkspacePath(subjectId as any),
-          icon: Zap,
-          badge: "Action",
-          highlight: true,
-        },
-        {
-          label: "Reports & PDF Export",
-          desc: "One-click compiled PDF & CSV attendance sheets",
-          href: `/app/reports`,
-          icon: FileDown,
-          badge: "Export",
-        },
-      ],
-    },
-    {
-      kicker: "Class Resources",
-      title: "Updates, Links & Knowledgebase",
-      description: "Publish announcements, drive links, syllabus resources, and answer Messenger FAQs.",
-      items: [
-        {
-          label: "Announcements",
-          desc: `${annoCount} class ${annoCount === 1 ? "update" : "updates"}`,
-          href: `/app/subjects/${subjectId}/announcements`,
-          icon: Megaphone,
-          badge: `${annoCount}`,
-        },
-        {
-          label: "Resources & Course Links",
-          desc: `${resCount} shared ${resCount === 1 ? "resource" : "resources"}`,
-          href: `/app/subjects/${subjectId}/resources`,
-          icon: BookOpen,
-          badge: `${resCount}`,
-        },
-        {
-          label: "Q&A",
-          desc: `${qaCount} published ${qaCount === 1 ? "FAQ" : "FAQs"}`,
-          href: `/app/subjects/${subjectId}/questions`,
-          icon: GraduationCap,
-          badge: `${qaCount}`,
-        },
-        {
-          label: "Subject Notes & Memos",
-          desc: "Personal lecture notes, formulas, and meeting minutes",
-          href: `/app/subjects/${subjectId}/notes`,
-          icon: StickyNote,
-          badge: "Notes",
-        },
-        {
-          label: "Message Snippets",
-          desc: "Quick copy templates and group chat notices",
-          href: `/app/subjects/${subjectId}/snippets`,
-          icon: Sparkles,
-          badge: "Snippets",
-        },
-      ],
-    },
-    {
-      kicker: "Student Distribution",
-      title: "Public View-Only Portal",
-      description: "Share the read-only student portal link and configure custom class branding.",
-      items: [
-        {
-          label: "Sharing & Public Settings",
-          desc: isPublished ? "Public portal is live & ready to share" : "Subject is currently private",
-          href: `/app/subjects/${subjectId}/sharing`,
-          icon: Clipboard,
-          badge: isPublished ? "Live" : "Draft",
-        },
-      ],
-    },
-  ];
-
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-5xl space-y-7 pb-14">
@@ -385,13 +246,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
               </Button>
             </div>
           </div>
-
-          {/* Categorized Quick Actions Suite */}
-          <SubjectQuickActions
-            subjectId={subjectId}
-            publicId={subject.data.publicId}
-            publishState={subject.data.publishState}
-          />
         </header>
 
         {/* Live Subject Metrics HUD */}
@@ -444,156 +298,55 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
           </Link>
         </div>
 
-        {/* Quick Commands Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 py-1">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="size-4 text-primary" />
-            <span className="text-xs sm:text-sm font-bold text-foreground">Quick Launch:</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild size="sm" className="rounded-xl bg-primary text-primary-foreground font-bold shadow-sm shadow-primary/25">
-              <Link href={attendanceWorkspacePath(subjectId as any)}>
-                <Zap className="mr-1.5 size-3.5 text-amber-300" /> Take Live Attendance
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-semibold">
-              <Link href={`/app/subjects/${subjectId}/students`}>
-                <Users className="mr-1.5 size-3.5 text-sky-400" /> Manage Roster
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-semibold">
-              <Link href={`/app/subjects/${subjectId}/announcements/new`}>
-                <Megaphone className="mr-1.5 size-3.5 text-amber-400" /> New Announcement
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-semibold">
-              <Link href={`/app/subjects/${subjectId}/sharing`}>
-                <QrCode className="mr-1.5 size-3.5 text-emerald-400" /> Sharing &amp; QR
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* Workflow & Suites Section */}
+        {/* Operations Workflow Stack */}
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="signal-kicker">Operations Suite</p>
-              <h2 className="signal-heading text-xl font-bold mt-0.5">Subject Workflow &amp; Desks</h2>
-            </div>
-            <div className="flex w-full sm:w-auto items-center gap-1 rounded-xl bg-secondary/60 p-1 border border-border">
-              <button
-                type="button"
-                onClick={() => setViewMode("workflow")}
-                className={`signal-action flex-1 sm:flex-initial min-h-11 sm:min-h-10 px-5 text-sm font-bold rounded-lg transition-all ${
-                  viewMode === "workflow"
-                    ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Workflow Steps
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("suites")}
-                className={`signal-action flex-1 sm:flex-initial min-h-11 sm:min-h-10 px-5 text-sm font-bold rounded-lg transition-all ${
-                  viewMode === "suites"
-                    ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Category Suites
-              </button>
-            </div>
+          <div>
+            <p className="signal-kicker">Operations Suite</p>
+            <h2 className="signal-heading text-xl font-bold mt-0.5">Subject Workflow &amp; Desks</h2>
           </div>
 
-          {viewMode === "workflow" ? (
-            /* Workflow Stack matching User Design */
-            <div className="space-y-3 pt-1">
-              {workflowSteps.map(step => {
-                const Icon = step.icon;
-                return (
-                  <Link
-                    key={step.stepNumber}
-                    href={step.href}
-                    className="signal-action group relative flex min-h-[5.5rem] items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/80 bg-card p-4 sm:p-5 hover:border-primary/50 hover:bg-card/90 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
-                  >
-                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-                      <span className="grid size-11 sm:size-12 shrink-0 place-items-center rounded-xl bg-secondary/80 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        <Icon className="size-5" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-extrabold text-primary tracking-wider">
-                            {step.stepNumber}
-                          </span>
-                          {step.liveCount ? (
-                            <span className="hidden sm:inline-flex rounded-full bg-secondary/80 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-                              {step.liveCount}
-                            </span>
-                          ) : null}
-                        </div>
-                        <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors mt-0.5 truncate">
-                          {step.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground truncate max-w-xl">
-                          {step.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-2">
-                      <span className="grid size-9 sm:size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/25 group-hover:scale-105 group-hover:translate-x-0.5 transition-all">
-                        <ArrowRight className="size-4 sm:size-4.5" />
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            /* Category Suites Grid */
-            <div className="grid gap-5 sm:grid-cols-2 pt-1">
-              {suites.map(suite => (
-                <section
-                  key={suite.kicker}
-                  className="signal-panel flex flex-col justify-between overflow-hidden rounded-2xl p-5 sm:p-6 space-y-4"
+          <div className="space-y-3 pt-1">
+            {workflowSteps.map(step => {
+              const Icon = step.icon;
+              return (
+                <Link
+                  key={step.stepNumber}
+                  href={step.href}
+                  className="signal-action group relative flex min-h-[5.5rem] items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/80 bg-card p-4 sm:p-5 hover:border-primary/50 hover:bg-card/90 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
                 >
-                  <div className="space-y-1.5">
-                    <span className="signal-kicker">{suite.kicker}</span>
-                    <h3 className="text-base font-bold text-foreground">{suite.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{suite.description}</p>
+                  <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                    <span className="grid size-11 sm:size-12 shrink-0 place-items-center rounded-xl bg-secondary/80 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                      <Icon className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-extrabold text-primary tracking-wider">
+                          {step.stepNumber}
+                        </span>
+                        {step.liveCount ? (
+                          <span className="hidden sm:inline-flex rounded-full bg-secondary/80 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                            {step.liveCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors mt-0.5 truncate">
+                        {step.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate max-w-xl">
+                        {step.description}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-2 pt-1">
-                    {suite.items.map(item => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          className={`signal-action group flex min-h-12 items-center justify-between gap-3 rounded-xl border p-3 text-xs font-semibold transition-all ${
-                            (item as any).highlight
-                              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
-                              : "border-border/70 bg-secondary/30 text-foreground hover:border-primary/40 hover:bg-secondary/60"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Icon className="size-4 shrink-0 text-primary" />
-                            <div className="min-w-0">
-                              <p className="font-bold text-foreground truncate">{item.label}</p>
-                              <p className="text-[11px] text-muted-foreground truncate">{item.desc}</p>
-                            </div>
-                          </div>
-                          <ChevronRight className="size-4 shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                        </Link>
-                      );
-                    })}
+                  <div className="shrink-0 flex items-center gap-2">
+                    <span className="grid size-9 sm:size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/25 group-hover:scale-105 group-hover:translate-x-0.5 transition-all">
+                      <ArrowRight className="size-4 sm:size-4.5" />
+                    </span>
                   </div>
-                </section>
-              ))}
-            </div>
-          )}
+                </Link>
+              );
+            })}
+          </div>
         </section>
       </section>
     </DashboardLayout>

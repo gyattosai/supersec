@@ -42,10 +42,21 @@ describe("UI/UX Audit and Layout Overhaul Validations", () => {
     expect(content).toContain('title: "Snippets"');
 
     expect(content).not.toMatch(/signal-panel[^>]*Quick Launch/);
-    expect(content).toContain("Workflow Steps");
-    expect(content).toContain("Category Suites");
+    expect(content).not.toContain("<SubjectQuickActions");
+    expect(content).not.toContain("Category Suites");
+    expect(content).toContain("Subject Workflow &amp; Desks");
     expect(content).not.toContain("7-Step Workflow");
-    expect(content).toContain('label: "Q&A"');
+  });
+
+  it("verifies DashboardLayout provides desktop collapsible sidebar with persistence", () => {
+    const filePath = path.join(rootDir, "client/src/components/DashboardLayout.tsx");
+    const content = fs.readFileSync(filePath, "utf8");
+
+    expect(content).toContain("supersec_sidebar_collapsed");
+    expect(content).toContain("PanelLeftClose");
+    expect(content).toContain("PanelLeftOpen");
+    expect(content).toContain("isCollapsed ? \"w-20\" : \"w-72\"");
+    expect(content).toContain("isCollapsed ? \"lg:ml-20\" : \"lg:ml-72\"");
   });
 
   it("verifies SubjectPages streamlines workflow, integrates Notes/Snippets, and removes splitters", () => {

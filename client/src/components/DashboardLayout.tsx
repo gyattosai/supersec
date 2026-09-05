@@ -13,6 +13,8 @@ import {
   Menu,
   MessageSquare,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Settings,
   Sparkles,
@@ -47,7 +49,7 @@ const secondaryMobileItems = [
   { icon: Settings, label: "Settings", path: "/app/settings", desc: "Class secretary profile and preferences" },
 ];
 
-function NavItems({ onNavigate }: { onNavigate?: () => void }) {
+function NavItems({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const [location] = useLocation();
   return (
     <nav aria-label="Secretary navigation" className="space-y-1">
@@ -59,29 +61,44 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
             key={item.path}
             href={item.path}
             onClick={onNavigate}
+            title={collapsed ? item.label : undefined}
+            aria-label={collapsed ? item.label : undefined}
             aria-current={active ? "page" : undefined}
-            className={`signal-action group relative flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-all ${
+            className={`signal-action group relative flex min-h-12 items-center rounded-xl text-sm font-semibold transition-all ${
+              collapsed
+                ? "justify-center px-0 w-12 mx-auto"
+                : "gap-3 px-3.5"
+            } ${
               active
                 ? "bg-secondary text-foreground shadow-sm ring-1 ring-border/50"
                 : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
             }`}
           >
-            <span
-              className={`w-5 font-mono text-[10px] font-bold tracking-wider ${
-                active ? "text-primary" : "text-muted-foreground/50"
-              }`}
-            >
-              {item.cue}
-            </span>
+            {!collapsed && (
+              <span
+                className={`w-5 font-mono text-[10px] font-bold tracking-wider ${
+                  active ? "text-primary" : "text-muted-foreground/50"
+                }`}
+              >
+                {item.cue}
+              </span>
+            )}
             <Icon
-              className={`h-4 w-4 shrink-0 transition-transform ${
+              className={`h-4.5 w-4.5 shrink-0 transition-transform ${
                 active ? "text-primary scale-110" : "group-hover:scale-105"
               }`}
               aria-hidden="true"
             />
-            <span className="flex-1 truncate">{item.label}</span>
+            {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
             {active ? (
-              <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-primary" aria-hidden="true" />
+              <span
+                className={`absolute bg-primary ${
+                  collapsed
+                    ? "left-0 top-2 bottom-2 w-1 rounded-r-full"
+                    : "inset-y-2 left-0 w-1 rounded-r-full"
+                }`}
+                aria-hidden="true"
+              />
             ) : null}
           </Link>
         );
@@ -95,6 +112,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [location] = useLocation();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("supersec_sidebar_collapsed") === "true";
+    }
+    return false;
+  });
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("supersec_sidebar_collapsed", String(next));
+      }
+      return next;
+    });
+  };
 
   const subjects = trpc.subjects.list.useQuery(undefined, { enabled: Boolean(user), staleTime: 0, refetchOnMount: "always" });
   const activeSubjects = subjects.data?.filter(s => s.status === "active") ?? [];
@@ -174,96 +207,181 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="signal-canvas min-h-screen text-foreground overflow-x-hidden">
       {/* Desktop Sidebar */}
-      <aside className="signal-sidebar-surface fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-sidebar-border lg:flex shadow-sm z-30">
+      <aside
+        className={`signal-sidebar-surface fixed inset-y-0 left-0 hidden flex-col border-r border-sidebar-border lg:flex shadow-sm z-30 transition-[width] duration-200 ${
+          isCollapsed ? "w-20" : "w-72"
+        }`}
+      >
         {/* Sidebar Header */}
-        <div className="border-b border-sidebar-border px-5 py-4">
-          <Link
-            href="/app"
-            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-12"
-          >
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-xs font-extrabold text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
-              SS
-            </span>
-            <span className="min-w-0">
-              <span className="block font-[Manrope] text-base font-extrabold tracking-[-0.04em] text-foreground">
-                supersec
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">Class secretary workspace</span>
-            </span>
-          </Link>
+        <div
+          className={`border-b border-sidebar-border flex items-center min-h-16 transition-all ${
+            isCollapsed ? "justify-center p-3" : "justify-between px-5 py-4"
+          }`}
+        >
+          {isCollapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <Link
+                href="/app"
+                className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="supersec workspace"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-xs font-extrabold text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
+                  SS
+                </span>
+              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                title="Expand sidebar"
+                aria-label="Expand sidebar"
+              >
+                <PanelLeftOpen className="size-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/app"
+                className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-12 min-w-0"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-xs font-extrabold text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
+                  SS
+                </span>
+                <span className="min-w-0 truncate">
+                  <span className="block font-[Manrope] text-base font-extrabold tracking-[-0.04em] text-foreground truncate">
+                    supersec
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">Class secretary workspace</span>
+                </span>
+              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="size-8 rounded-lg text-muted-foreground hover:text-foreground shrink-0 ml-1"
+                title="Collapse sidebar"
+                aria-label="Collapse sidebar"
+              >
+                <PanelLeftClose className="size-4" />
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Navigation Menu */}
-        <div className="px-3 pb-3 pt-5">
-          <p className="signal-kicker px-3">Workspace</p>
-          <div className="mt-2.5">
-            <NavItems />
-          </div>
+        <div className={`pb-3 pt-4 ${isCollapsed ? "px-2" : "px-3"}`}>
+          {!isCollapsed && <p className="signal-kicker px-3 mb-2">Workspace</p>}
+          <NavItems collapsed={isCollapsed} />
         </div>
 
         {/* Quick Subjects Jump List */}
         {activeSubjects.length > 0 && (
-          <div className="px-3 py-3 border-t border-sidebar-border/80">
-            <div className="flex items-center justify-between px-3 pb-2">
-              <p className="signal-kicker">Active Desks</p>
-              <Link href="/app/subjects/new" className="text-muted-foreground hover:text-primary transition-colors p-1" title="New Subject">
-                <Plus className="size-4" />
-              </Link>
-            </div>
-            <div className="space-y-0.5 max-h-44 overflow-y-auto hide-scrollbar">
-              {activeSubjects.slice(0, 5).map(s => {
-                const isCurrent = location.includes(`/app/subjects/${s.id}`);
-                return (
-                  <Link
-                    key={s.id}
-                    href={`/app/subjects/${s.id}`}
-                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-10 ${
-                      isCurrent
-                        ? "bg-primary/10 text-primary font-bold"
-                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="size-1.5 rounded-full bg-primary/70 shrink-0" />
-                      <span className="truncate">{s.code}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground/70 font-mono truncate max-w-20">
-                      {s.professorName.split(" ").pop()}
-                    </span>
+          <div className={`py-3 border-t border-sidebar-border/80 ${isCollapsed ? "px-2" : "px-3"}`}>
+            {isCollapsed ? (
+              <div className="flex flex-col items-center gap-1.5">
+                <Link
+                  href="/app/subjects"
+                  className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-primary transition-colors"
+                  title="All Active Desks"
+                >
+                  <BookOpen className="size-4" />
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between px-3 pb-2">
+                  <p className="signal-kicker">Active Desks</p>
+                  <Link href="/app/subjects/new" className="text-muted-foreground hover:text-primary transition-colors p-1" title="New Subject">
+                    <Plus className="size-4" />
                   </Link>
-                );
-              })}
-            </div>
+                </div>
+                <div className="space-y-0.5 max-h-44 overflow-y-auto hide-scrollbar">
+                  {activeSubjects.slice(0, 5).map(s => {
+                    const isCurrent = location.includes(`/app/subjects/${s.id}`);
+                    return (
+                      <Link
+                        key={s.id}
+                        href={`/app/subjects/${s.id}`}
+                        className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-10 ${
+                          isCurrent
+                            ? "bg-primary/10 text-primary font-bold"
+                            : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="size-1.5 rounded-full bg-primary/70 shrink-0" />
+                          <span className="truncate">{s.code}</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground/70 font-mono truncate max-w-20">
+                          {s.professorName.split(" ").pop()}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Sidebar Footer */}
-        <div className="mt-auto border-t border-sidebar-border px-4 py-4 bg-sidebar/50">
-          <div className="flex items-center justify-between gap-2 mb-3 px-1">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Appearance</span>
-            <ThemeToggle compact />
-          </div>
-
-          <div className="rounded-xl border border-border/70 bg-card/60 p-3 shadow-sm">
-            <div className="flex items-center gap-2.5">
-              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary text-xs font-bold">
+        <div className={`mt-auto border-t border-sidebar-border bg-sidebar/50 ${
+          isCollapsed ? "p-2.5 flex flex-col items-center gap-3" : "px-4 py-4"
+        }`}>
+          {isCollapsed ? (
+            <>
+              <SimpleThemeToggle />
+              <div
+                className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary text-xs font-bold"
+                title={user.name || "Class Secretary"}
+              >
                 {(user.name?.[0] || "S").toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-foreground">{user.name || "Class Secretary"}</p>
-                <p className="truncate text-[11px] text-muted-foreground">{user.email || "Secretary account"}</p>
               </div>
               <Button
                 onClick={logout}
                 variant="ghost"
                 size="icon"
-                className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                className="size-9 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 title="Sign out"
+                aria-label="Sign out"
               >
                 <LogOut className="size-4" />
               </Button>
-            </div>
-          </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2 mb-3 px-1">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Appearance</span>
+                <ThemeToggle compact />
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-card/60 p-3 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary text-xs font-bold">
+                    {(user.name?.[0] || "S").toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-bold text-foreground">{user.name || "Class Secretary"}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{user.email || "Secretary account"}</p>
+                  </div>
+                  <Button
+                    onClick={logout}
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                    title="Sign out"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </aside>
 
@@ -407,7 +525,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Main Content Area */}
-      <main className="min-h-screen px-3.5 sm:px-6 md:px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-5 sm:pt-7 lg:ml-72 lg:px-10 lg:pb-16 lg:pt-10">
+      <main
+        className={`min-h-screen px-3.5 sm:px-6 md:px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-5 sm:pt-7 lg:px-10 lg:pb-16 lg:pt-10 transition-[margin-left] duration-200 ${
+          isCollapsed ? "lg:ml-20" : "lg:ml-72"
+        }`}
+      >
         {children}
       </main>
 

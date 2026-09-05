@@ -418,9 +418,9 @@ export default function AttendancePage() {
         {session.data && (
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
             {isNoClass ? (
-              <span className="inline-flex items-center gap-1.5 min-h-6 max-w-full px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+              <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                 <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-500 dark:bg-amber-400" />
-                <span className="truncate">No Class • {noClassReason || "Suspended"}</span>
+                <span>No Class</span>
               </span>
             ) : (session.data as any)?.sessionState === "completed" ? (
               <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">

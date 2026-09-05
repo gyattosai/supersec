@@ -17,12 +17,12 @@ export function WorkspacePageHeader({ eyebrow, kicker, title, description, back,
   return (
     <header className={cn("pb-3 sm:pb-5", className)}>
       {back ? <div className="mb-4 sm:mb-5">{back}</div> : null}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-        <div className="min-w-0 max-w-3xl flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 w-full">
+        <div className="min-w-0 max-w-3xl flex-1 w-full">
           {showEyebrow ? (
             <p className="signal-kicker mb-2 sm:mb-3">{label}</p>
           ) : null}
-          <h1 className="signal-heading text-xl sm:text-2xl md:text-3xl font-extrabold tracking-[-0.05em] break-words">
+          <h1 className="signal-heading block w-full text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight break-words">
             {title}
           </h1>
           {description ? (

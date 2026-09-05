@@ -14,6 +14,7 @@ import {
   CalendarX,
   Camera,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleAlert,
   Clock,
@@ -539,8 +540,29 @@ export function PremiumPublicSubjectHome() {
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-2 pb-1 pt-0.5">
+        {/* Mobile Category Filter Dropdown */}
+        <div className="md:hidden relative w-full pt-0.5 pb-1">
+          <label htmlFor="mobile-category-select" className="sr-only">Filter by category</label>
+          <div className="flex items-center gap-2 w-full min-h-11 rounded-xl border border-border/80 bg-card/90 px-3 shadow-sm">
+            <span className="text-xs font-bold text-muted-foreground shrink-0">Category:</span>
+            <select
+              id="mobile-category-select"
+              value={activeCategory}
+              onChange={e => setActiveCategory(e.target.value as CategoryFilter)}
+              className="w-full bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer py-2"
+            >
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id} className="bg-popover text-popover-foreground">
+                  {cat.label} ({cat.count})
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="size-4 text-muted-foreground shrink-0 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Desktop Category Filter Tabs */}
+        <div className="hidden md:flex flex-wrap items-center gap-2 pb-1 pt-0.5">
           {categories.map(cat => {
             const isActive = activeCategory === cat.id;
             const Icon = cat.icon;
@@ -1237,8 +1259,27 @@ function StudentMasterListSection({
             </div>
           )}
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          {/* Mobile Status Filter Dropdown */}
+          <div className="md:hidden relative w-full pt-1">
+            <label htmlFor="mobile-student-status-select" className="sr-only">Filter student status</label>
+            <div className="flex items-center gap-2 w-full min-h-11 rounded-xl border border-border/80 bg-card/90 px-3 shadow-sm">
+              <span className="text-xs font-bold text-muted-foreground shrink-0">Filter:</span>
+              <select
+                id="mobile-student-status-select"
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as "all" | "regular" | "conflict")}
+                className="w-full bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer py-2"
+              >
+                <option value="all" className="bg-popover text-popover-foreground">All Enrolled ({students.length})</option>
+                <option value="regular" className="bg-popover text-popover-foreground">Regular / Clear ({regularCount})</option>
+                <option value="conflict" className="bg-popover text-popover-foreground">With Schedule Conflict ({conflictCount})</option>
+              </select>
+              <ChevronDown className="size-4 text-muted-foreground shrink-0 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Desktop Filter Pills */}
+          <div className="hidden md:flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
               onClick={() => setStatusFilter("all")}

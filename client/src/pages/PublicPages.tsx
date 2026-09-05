@@ -20,6 +20,7 @@ import {
   CalendarX,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleAlert,
   CircleHelp,
@@ -451,9 +452,9 @@ export function PublicAttendancePage() {
             ? "border-amber-500/40 bg-gradient-to-br from-amber-500/10 dark:from-amber-950/25 via-card to-card shadow-black/5 dark:shadow-amber-950/20"
             : "border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-primary/5"
         }`}>
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <Badge className="rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+            <div className="flex flex-row items-center gap-2 min-w-0 flex-wrap">
+              <Badge className="rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground shadow-sm shrink-0">
                 {details.subject.code}
               </Badge>
               <span className="truncate text-xs sm:text-sm font-semibold text-foreground/90">{details.subject.name}</span>
@@ -462,7 +463,7 @@ export function PublicAttendancePage() {
               {isNoClass ? (
                 <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 dark:text-amber-400 shadow-sm">
                   <CalendarX className="mr-1 size-3 text-amber-700 dark:text-amber-400" />
-                  No Classes Scheduled
+                  No Class
                 </Badge>
               ) : null}
               <Badge variant="secondary" className="rounded-full border border-border px-2.5 py-0.5 text-[11px] font-bold shadow-sm">
@@ -471,7 +472,7 @@ export function PublicAttendancePage() {
             </div>
           </div>
 
-          <h1 className="signal-title mt-3 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">
+          <h1 className="signal-title mt-3 block w-full text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight break-words">
             {isNoClass ? "Class Suspended / No Classes" : "Attendance Record"}
           </h1>
 
@@ -588,12 +589,12 @@ export function PublicAttendancePage() {
         {/* Instant Class Alerts Card & Push Subscription */}
         <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-4 sm:p-5 shadow-md shadow-primary/5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3 min-w-0">
+            <div className="flex items-start gap-3 min-w-0 mb-3 sm:mb-0">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                 <BellRing className="size-5" />
               </span>
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <div className="hidden md:inline-flex flex-wrap items-center gap-2 min-w-0">
                   <Badge variant="outline" className="border-primary/50 bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-wider shrink-0">
                     Instant Alerts
                   </Badge>
@@ -715,8 +716,30 @@ export function PublicAttendancePage() {
 
             {/* Filter Tabs & Live Search Toolbar */}
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between pt-1">
-              {/* Segmented Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1 rounded-xl bg-secondary/50 p-1 border border-border">
+              {/* Mobile Dropdown Selector */}
+              <div className="md:hidden relative w-full">
+                <label htmlFor="mobile-status-select" className="sr-only">Filter attendance status</label>
+                <div className="flex items-center gap-2 w-full min-h-11 rounded-xl border border-border bg-card px-3 shadow-xs">
+                  <span className="text-xs font-bold text-muted-foreground shrink-0">Status:</span>
+                  <select
+                    id="mobile-status-select"
+                    value={selectedStatus}
+                    onChange={e => setSelectedStatus(e.target.value as any)}
+                    className="w-full bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer py-2"
+                  >
+                    <option value="ALL" className="bg-popover text-popover-foreground">All ({details.records.length})</option>
+                    <option value="PRESENT" className="bg-popover text-popover-foreground">Present ({totals.present})</option>
+                    <option value="ABSENT" className="bg-popover text-popover-foreground">Absent ({totals.absent})</option>
+                    <option value="EXCUSED" className="bg-popover text-popover-foreground">Excused ({totals.excused})</option>
+                    <option value="CONFLICT" className="bg-popover text-popover-foreground">Conflict ({totals.conflict})</option>
+                    <option value="NOT_SET" className="bg-popover text-popover-foreground">Not set ({totals.notSet})</option>
+                  </select>
+                  <ChevronDown className="size-4 text-muted-foreground shrink-0 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Desktop Segmented Filter Pills */}
+              <div className="hidden md:flex flex-wrap items-center gap-1 rounded-xl bg-secondary/50 p-1 border border-border">
                 {(
                   [
                     { id: "ALL", label: "All", count: details.records.length },
@@ -1151,8 +1174,9 @@ function BackToSubject({ subject }: { subject?: { publicId?: string; code?: stri
         href={`/s/${subject.publicId}`}
         className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
       >
-        <ChevronRight className="size-3.5 rotate-180" />
-        {subject.code ? `${subject.code} · ` : ""}{subject.name || "Subject Home"}
+        <ChevronRight className="size-3.5 rotate-180 shrink-0" />
+        <span className="md:hidden">Back</span>
+        <span className="hidden md:inline">{subject.code ? `${subject.code} · ` : ""}{subject.name || "Subject Home"}</span>
       </Link>
     </div>
   );
