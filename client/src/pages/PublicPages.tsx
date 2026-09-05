@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Children, isValidElement, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
+import { PushNotificationSubscribeButton } from "@/components/PushNotificationSubscribeButton";
 
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -1083,9 +1084,17 @@ export function PublicShell({ children, subject }: { children: React.ReactNode; 
 function BackToSubject({ subject }: { subject?: { publicId?: string; code?: string; name?: string } | null }) {
   if (!subject?.publicId) return null;
   return (
-    <Link href={`/s/${subject.publicId}`} className="signal-action mb-5 inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 text-xs sm:text-sm font-bold text-primary hover:bg-secondary active:scale-[0.98] shadow-sm">
-      ← {subject.code || "Subject"}
-    </Link>
+    <div className="mb-5 flex items-center justify-between gap-2 flex-wrap">
+      <Link href={`/s/${subject.publicId}`} className="signal-action inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 text-xs sm:text-sm font-bold text-primary hover:bg-secondary active:scale-[0.98] shadow-sm">
+        ← {subject.code || "Subject"}
+      </Link>
+      <PushNotificationSubscribeButton
+        subjectPublicId={subject.publicId}
+        subjectName={subject.name || subject.code || "Subject"}
+        subjectCode={subject.code || "Subject"}
+        variant="pill"
+      />
+    </div>
   );
 }
 function ReaderLoading({ label }: { label: string }) {

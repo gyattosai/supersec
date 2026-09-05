@@ -1,11 +1,12 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
-import { attendanceRecords, classSessions, historyEntries, subjectMeetingDays, subjectStudents, students, zoomImports, zoomMatchSuggestions } from "../../drizzle/schema";
+import { attendanceRecords, classSessions, historyEntries, subjectMeetingDays, subjectStudents, students, subjects, zoomImports, zoomMatchSuggestions } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
 import { parseConflictConfig, isConflictSessionDay, getInitialAttendanceForStudent } from "../../shared/scheduleConflict";
+import { dispatchAutomatedPush } from "../pushNotifications";
 
 type ZoomNormalizationFlag = "reordered" | "missing_section" | "missing_comma" | "ambiguous_delimiters";
 export const bulkDraftStatuses = ["PRESENT", "ABSENT", "CONFLICT", "NOT_SET"] as const;
@@ -378,6 +379,23 @@ export const attendanceRouter = router({
     await database.update(attendanceRecords).set({ publishState: "published", publishedVersion: version }).where(eq(attendanceRecords.classSessionId, session.id));
     await database.update(classSessions).set({ sessionState: "completed", publishState: "published" }).where(eq(classSessions.id, session.id));
     await database.insert(historyEntries).values({ entityType: "attendance", entityId: session.id, version, action: "published", publicChangeSummary: input.summary, actorUserId: ctx.user.id });
+
+    // Automated Push Notification Dispatch
+    try {
+      const sub = await database.select({ name: subjects.name, code: subjects.code, publicId: subjects.publicId }).from(subjects).where(eq(subjects.id, session.subjectId)).limit(1);
+      if (sub[0]) {
+        const sessionDateStr = new Date(session.startsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        dispatchAutomatedPush({
+          type: "attendance",
+          title: sessionDateStr,
+          detail: input.summary || `Attendance record verified for ${sessionDateStr}.`,
+          subjectName: sub[0].name,
+          subjectCode: sub[0].code,
+          actionUrl: `/attendance/${session.publicId}`,
+        }).catch(() => {});
+      }
+    } catch {}
+
     return { version };
   }),
 });

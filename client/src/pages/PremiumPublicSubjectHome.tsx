@@ -26,6 +26,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import { PushNotificationSubscribeButton } from "@/components/PushNotificationSubscribeButton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 
@@ -302,9 +303,15 @@ export function PremiumPublicSubjectHome() {
             </p>
           </div>
 
-          {/* Quick Action: Attendance Proof */}
-          {latestAttendance && (latestAttendance as any).sessionState !== "no_class" && (
-            <div className="shrink-0 flex items-center gap-2">
+          {/* Quick Actions: Push Alerts & Attendance Proof */}
+          <div className="shrink-0 flex items-center flex-wrap gap-2">
+            <PushNotificationSubscribeButton
+              subjectPublicId={subject.publicId}
+              subjectName={subject.name}
+              subjectCode={subject.code}
+              variant="pill"
+            />
+            {latestAttendance && (latestAttendance as any).sessionState !== "no_class" && (
               <Link
                 href={`/attendance/${latestAttendance.publicId}/proof`}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs sm:text-sm hover:brightness-110 shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
@@ -313,8 +320,8 @@ export function PremiumPublicSubjectHome() {
                 <span>Submit Attendance Proof</span>
                 <ArrowRight className="size-3.5 opacity-80" />
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Active No Class Suspension Notice */}
@@ -658,6 +665,16 @@ export function PremiumPublicSubjectHome() {
                 items={sortItems(allUnifiedItems.filter(i => i.kind === "attendance"), sortBy)}
                 empty="No attendance records published yet."
                 onViewAll={() => setActiveCategory("attendance")}
+              />
+            </div>
+
+            {/* Instant Push Notifications Card */}
+            <div className="mt-6">
+              <PushNotificationSubscribeButton
+                subjectPublicId={subject.publicId}
+                subjectName={subject.name}
+                subjectCode={subject.code}
+                variant="card"
               />
             </div>
           </div>

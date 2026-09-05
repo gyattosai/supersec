@@ -305,6 +305,26 @@ async function setupAppwrite() {
   await ensureStringAttr("historyEntries", "publicChangeSummary", 280, true);
   await ensureStringAttr("historyEntries", "actorUserId", 64, true);
 
+  // PUSH SUBSCRIPTIONS
+  await ensureCollection("pushSubscriptions", "Push Subscriptions", [
+    Permission.read(Role.any()),
+    Permission.create(Role.any()),
+    Permission.update(Role.any()),
+    Permission.delete(Role.users()),
+  ]);
+  await ensureStringAttr("pushSubscriptions", "subjectPublicId", 36, true);
+  await ensureStringAttr("pushSubscriptions", "endpoint", 1024, true);
+  await ensureStringAttr("pushSubscriptions", "p256dhKey", 256, false);
+  await ensureStringAttr("pushSubscriptions", "authKey", 128, false);
+  await ensureStringAttr("pushSubscriptions", "fcmToken", 512, false);
+  await ensureStringAttr("pushSubscriptions", "firebaseUid", 128, false);
+  await ensureBoolAttr("pushSubscriptions", "allowAnnouncements", false, true);
+  await ensureBoolAttr("pushSubscriptions", "allowAttendance", false, true);
+  await ensureBoolAttr("pushSubscriptions", "allowResources", false, true);
+  await ensureBoolAttr("pushSubscriptions", "allowQa", false, true);
+  await ensureBoolAttr("pushSubscriptions", "active", false, true);
+
+
   // 3. Setup Storage Buckets
   console.log("\n🗄️ Setting up Storage Buckets...");
   const buckets = [

@@ -9,6 +9,7 @@ import { ArrowLeft, ExternalLink, FileText, Globe, History, Sparkles } from "luc
 import { useMemo } from "react";
 import { Link, useRoute } from "wouter";
 import { PublicShell, PublicUnavailable } from "./PublicPages";
+import { PushNotificationSubscribeButton } from "@/components/PushNotificationSubscribeButton";
 
 export function PremiumPublicResourcePage() {
   const [, params] = useRoute("/r/:publicId");
@@ -78,15 +79,23 @@ export function PremiumPublicResourcePage() {
 
   return (
     <PublicShell subject={details.subject}>
-      {/* Breadcrumb back to subject home */}
+      {/* Breadcrumb back to subject home & Push Alerts */}
       {details?.subject?.publicId ? (
-        <Link
-          href={`/s/${details.subject.publicId}`}
-          className="signal-action mb-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
-        >
-          <ArrowLeft className="size-3.5" />
-          {details.subject.code} · {details.subject.name}
-        </Link>
+        <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
+          <Link
+            href={`/s/${details.subject.publicId}`}
+            className="signal-action inline-flex min-h-10 items-center gap-2 rounded-xl border border-border/80 bg-card px-3 text-xs sm:text-sm font-bold text-primary hover:bg-secondary transition-all shadow-sm"
+          >
+            <ArrowLeft className="size-3.5" />
+            {details.subject.code} · {details.subject.name}
+          </Link>
+          <PushNotificationSubscribeButton
+            subjectPublicId={details.subject.publicId}
+            subjectName={details.subject.name || details.subject.code || "Subject"}
+            subjectCode={details.subject.code || "Subject"}
+            variant="pill"
+          />
+        </div>
       ) : null}
 
       {/* Main Resource Card */}

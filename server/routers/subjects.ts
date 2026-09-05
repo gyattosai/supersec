@@ -7,6 +7,7 @@ import { router } from "../_core/trpc";
 import { ownerProcedure } from "./guards";
 import { invokeLLM } from "../_core/llm";
 import { parseConflictConfig, serializeConflictConfig } from "../../shared/scheduleConflict";
+import { dispatchAutomatedPush } from "../pushNotifications";
 
 const meetingDayInput = z.object({ weekday: z.number().int().min(0).max(6), startTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(), endTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional() });
 const subjectInput = z.object({
@@ -342,17 +343,37 @@ export const subjectsRouter = router({
     }),
     createNoClass: ownerProcedure.input(z.object({ subjectId: z.coerce.number().int().positive(), startsAt: z.coerce.date(), reason: z.string().trim().min(1).max(255) })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
-      await ownerSubject(database, ctx.user.id, input.subjectId);
+      const subject = await ownerSubject(database, ctx.user.id, input.subjectId);
       const publicId = nanoid(12);
       const [created] = await database.insert(classSessions).values({ subjectId: input.subjectId, publicId, startsAt: input.startsAt, sessionState: "no_class", noClassReason: input.reason, publishState: "published" }).$returningId();
+      const dateStr = new Date(input.startsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      dispatchAutomatedPush({
+        type: "no_class",
+        title: dateStr,
+        detail: input.reason,
+        subjectName: subject.name,
+        subjectCode: subject.code,
+        actionUrl: `/s/${subject.publicId}`,
+      }).catch(() => {});
       return { id: created.id, publicId };
     }),
     setNoClass: ownerProcedure.input(z.object({ sessionId: z.coerce.number().int().positive(), noClass: z.boolean(), reason: z.string().trim().max(255).nullable().optional(), publish: z.boolean().default(true) })).mutation(async ({ ctx, input }) => {
       const database = await databaseOrThrow();
       const session = await database.select().from(classSessions).where(eq(classSessions.id, input.sessionId)).limit(1);
       if (!session[0]) throw new Error("Class session not found");
-      await ownerSubject(database, ctx.user.id, session[0].subjectId);
+      const subject = await ownerSubject(database, ctx.user.id, session[0].subjectId);
       await database.update(classSessions).set({ sessionState: input.noClass ? "no_class" : "scheduled", noClassReason: input.noClass ? (input.reason ?? "No Class") : null, publishState: input.publish ? "published" : "draft" }).where(eq(classSessions.id, input.sessionId));
+      if (input.noClass && input.publish) {
+        const dateStr = new Date(session[0].startsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        dispatchAutomatedPush({
+          type: "no_class",
+          title: dateStr,
+          detail: input.reason || "Class meeting suspended",
+          subjectName: subject.name,
+          subjectCode: subject.code,
+          actionUrl: `/s/${subject.publicId}`,
+        }).catch(() => {});
+      }
       return { success: true as const };
     }),
   }),
