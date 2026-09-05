@@ -194,6 +194,7 @@ export type PublicSubjectPayload = {
   professorName: string;
   meetingDays: Array<{ weekday: number; startTime: string | null; endTime: string | null }>;
   noClass: { startsAt: Date; reason: string } | null;
+  students?: Array<{ canonicalName: string; hasScheduleConflict: boolean }>;
   latest: {
     attendance: Array<{ publicId: string; startsAt: Date }>;
     announcements: Array<{ publicId: string; title: string }>;
@@ -253,11 +254,27 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     .orderBy(asc(classSessions.startsAt))
     .limit(1);
 
-  const [attendanceRows, announcementRows, resourceRows, questionRows] = await Promise.all([
+  const [attendanceRows, announcementRows, resourceRows, questionRows, studentRows] = await Promise.all([
     db.select({ publicId: classSessions.publicId, startsAt: classSessions.startsAt, sessionState: classSessions.sessionState, noClassReason: classSessions.noClassReason }).from(classSessions).where(and(eq(classSessions.subjectId, subject.id), eq(classSessions.publishState, "published"))).orderBy(desc(classSessions.startsAt)).limit(50),
     db.select({ publicId: announcements.publicId, title: announcements.title, body: announcements.body, publishedAt: announcements.publishedAt }).from(announcements).where(and(eq(announcements.subjectId, subject.id), eq(announcements.publishState, "published"))).orderBy(desc(announcements.publishedAt)).limit(50),
     db.select({ publicId: resources.publicId, title: resources.title, description: resources.description, category: resources.category, resourceType: resources.resourceType, sourceDomain: resources.sourceDomain, publishedAt: resources.publishedAt, thumbnailUrl: mediaAssets.servedUrl, thumbnailAltText: mediaAssets.altText }).from(resources).leftJoin(mediaAssets, and(eq(resources.fallbackMediaAssetId, mediaAssets.id), eq(mediaAssets.publicUse, true))).where(and(eq(resources.subjectId, subject.id), eq(resources.publishState, "published"))).orderBy(desc(resources.publishedAt)).limit(50),
     db.select({ publicId: questionsAnswers.publicId, title: questionsAnswers.question, question: questionsAnswers.question, answer: questionsAnswers.answer, isOfficial: questionsAnswers.isOfficial, tagsText: questionsAnswers.tagsText, publishedAt: questionsAnswers.publishedAt }).from(questionsAnswers).where(and(eq(questionsAnswers.subjectId, subject.id), eq(questionsAnswers.publishState, "published"))).orderBy(desc(questionsAnswers.publishedAt)).limit(50),
+    db.select({
+      canonicalName: students.canonicalName,
+      hasScheduleConflict: subjectStudents.hasScheduleConflict,
+      lastName: students.lastName,
+      firstName: students.firstName,
+      displayOrder: subjectStudents.displayOrder,
+    })
+      .from(subjectStudents)
+      .innerJoin(students, eq(subjectStudents.studentId, students.id))
+      .where(
+        and(
+          eq(subjectStudents.subjectId, subject.id),
+          eq(subjectStudents.membershipState, "active")
+        )
+      )
+      .orderBy(asc(students.lastName), asc(students.firstName), asc(subjectStudents.displayOrder)),
   ]);
   const noClass = noClassRows[0];
   return {
@@ -269,6 +286,10 @@ export async function getPublicSubjectById(publicId: string): Promise<PublicSubj
     professorName: subject.professorName,
     meetingDays,
     noClass: noClass && noClass.reason ? { startsAt: noClass.startsAt, reason: noClass.reason } : null,
+    students: studentRows.map(s => ({
+      canonicalName: s.canonicalName,
+      hasScheduleConflict: Boolean(s.hasScheduleConflict),
+    })),
     latest: {
       attendance: attendanceRows.map(r => ({
         publicId: r.publicId,

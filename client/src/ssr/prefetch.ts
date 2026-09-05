@@ -251,7 +251,7 @@ export async function prefetchForPath(url: string, queryClient: QueryClient, cal
     await seed(queryClient, getQueryKey(trpc.foundation.publicItem, { kind, publicId: item[2] }, "query"), data);
     if (!data.available) return { title: site, description: fallback, notFound: true };
     const itm = data.item;
-    const visual = itm.media ?? itm.socialPreviewMedia;
+    const visual = itm.socialPreviewMedia ?? itm.media;
     const dateShorthand = formatShorthandDate(itm.publishedAt) || `#${itm.version}`;
     const dateStr = itm.publishedAt ? formatFullDate(itm.publishedAt) || formatShorthandDate(itm.publishedAt) : "";
     const socialTitle = formatSocialTitle({

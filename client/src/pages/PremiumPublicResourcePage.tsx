@@ -99,8 +99,8 @@ export function PremiumPublicResourcePage() {
       ) : null}
 
       {/* Main Resource Card */}
-      <article className="signal-panel overflow-hidden border-t-2 border-t-primary rounded-2xl shadow-xl space-y-0">
-        <div className="p-6 sm:p-8 space-y-4">
+      <article className="signal-panel min-w-0 overflow-hidden border-t-2 border-t-primary rounded-2xl shadow-xl space-y-0">
+        <div className="p-4 sm:p-6 md:p-8 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="glow-badge-orange inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold">
               {details.category ?? "Resource"}
@@ -132,7 +132,7 @@ export function PremiumPublicResourcePage() {
           </div>
         ) : null}
 
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-4 sm:p-6 md:p-8 space-y-6">
           {/* Rich Body Content */}
           <div className="signal-prose border-b border-border/60 pb-6">
             <AnnouncementPreview body={details.body} />
@@ -148,7 +148,7 @@ export function PremiumPublicResourcePage() {
                 className="signal-action inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground shadow-md shadow-primary/25 active:scale-[0.98] transition-all"
               >
                 <ExternalLink className="size-4" />
-                Open Course Resource / Link
+                Open Link
               </a>
             </div>
           ) : null}

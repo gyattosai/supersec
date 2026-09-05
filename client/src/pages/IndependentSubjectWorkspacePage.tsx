@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
+import { SubjectQuickActions } from "@/components/SubjectQuickActions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -326,7 +327,7 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="signal-kicker">Subject Mission Control</span>
-                <span className="text-xs text-muted-foreground font-mono">#{subject.data.id}</span>
+                <span className="text-xs text-muted-foreground font-mono font-bold">{subject.data.code}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-[-0.04em] mt-1.5 truncate">
                 {subject.data.name}
@@ -353,24 +354,6 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {isPublished && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={copyPublicLink}
-                    className="rounded-xl text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-                  >
-                    {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
-                    {copied ? "Copied!" : "Copy Student Link"}
-                  </Button>
-                  <Button asChild size="sm" variant="ghost" className="rounded-xl text-xs font-semibold text-emerald-400 hover:text-emerald-300">
-                    <Link href={`/s/${subject.data.publicId}`} target="_blank">
-                      Student View <ExternalLink className="ml-1 size-3" />
-                    </Link>
-                  </Button>
-                </>
-              )}
               <Button
                 onClick={() =>
                   archive.mutate({ subjectId: subjectQueryParam as any, archive: subject.data.status !== "archived" })
@@ -385,6 +368,13 @@ export default function IndependentSubjectWorkspacePage(props?: { params?: { sub
               </Button>
             </div>
           </div>
+
+          {/* Categorized Quick Actions Suite */}
+          <SubjectQuickActions
+            subjectId={subjectId}
+            publicId={subject.data.publicId}
+            publishState={subject.data.publishState}
+          />
         </header>
 
         {/* Live Subject Metrics HUD */}

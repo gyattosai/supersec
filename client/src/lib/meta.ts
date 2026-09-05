@@ -129,6 +129,8 @@ export function usePageMeta({
       setMetaTag("og:image:type", imageMime, true);
       setMetaTag("og:image:alt", ogImageAlt || title || "supersec Class Management", true);
       setMetaTag("twitter:image", absoluteImage);
+      setMetaTag("twitter:image:width", "1200");
+      setMetaTag("twitter:image:height", "630");
       setMetaTag("twitter:image:alt", ogImageAlt || title || "supersec Class Management");
     }
 

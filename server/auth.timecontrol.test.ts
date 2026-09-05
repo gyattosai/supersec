@@ -143,8 +143,8 @@ describe("12-Hour Time Controls & Edge Conversions", () => {
     expect(formatTime12Hour("12:00")).toBe("12:00 PM");
     expect(formatTime12Hour("14:30")).toBe("2:30 PM");
 
-    expect(formatTimeRange12Hour("08:00", "10:30")).toBe(" · 8:00 AM–10:30 AM");
-    expect(formatTimeRange12Hour("13:00", "17:00")).toBe(" · 1:00 PM–5:00 PM");
+    expect(formatTimeRange12Hour("08:00", "10:30")).toBe(" · 8:00 AM – 10:30 AM");
+    expect(formatTimeRange12Hour("13:00", "17:00")).toBe(" · 1:00 PM – 5:00 PM");
     expect(formatTimeRange12Hour("09:00", null)).toBe(" · 9:00 AM");
     expect(formatTimeRange12Hour(null, "11:00")).toBe("");
     expect(formatTimeRange12Hour(null, null)).toBe("");

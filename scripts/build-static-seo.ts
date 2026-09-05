@@ -117,6 +117,8 @@ function injectMeta(
     `<meta name="twitter:title" content="${cleanTitle}" />`,
     `<meta name="twitter:description" content="${cleanDesc}" />`,
     `<meta name="twitter:image" content="${cleanImage}" />`,
+    `<meta name="twitter:image:width" content="1200" />`,
+    `<meta name="twitter:image:height" content="630" />`,
     jsonLd ? `<script type="application/ld+json" id="page-jsonld">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>` : "",
   ]
     .filter(Boolean)
@@ -126,7 +128,7 @@ function injectMeta(
     .replace(/<title>.*?<\/title>/gis, "")
     .replace(/<meta\s+name=["']description["'][^>]*>/gi, "")
     .replace(/<meta\s+property=["']og:(?:title|description|image|image:secure_url|image:width|image:height|image:type|image:alt|site_name|type|url|locale)["'][^>]*>/gi, "")
-    .replace(/<meta\s+name=["']twitter:(?:card|title|description|image|image:alt|site|creator|url)["'][^>]*>/gi, "")
+    .replace(/<meta\s+name=["']twitter:(?:card|title|description|image|image:width|image:height|image:alt|site|creator|url)["'][^>]*>/gi, "")
     .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "")
     .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>.*?<\/script>/gis, "");
 

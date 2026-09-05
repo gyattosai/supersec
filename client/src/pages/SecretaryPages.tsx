@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
 import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
+import { SubjectQuickActions } from "@/components/SubjectQuickActions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
@@ -258,7 +259,7 @@ export function SecretaryDashboard() {
           </div>
 
           {activeSubjects.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 w-full">
               {activeSubjects.map(subject => (
                 <div
                   key={subject.id}
@@ -267,7 +268,7 @@ export function SecretaryDashboard() {
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
                           {subject.name}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -280,32 +281,31 @@ export function SecretaryDashboard() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-border/70 flex items-center justify-between gap-2">
-                    <Button asChild size="sm" variant="ghost" className="text-xs font-semibold px-2.5 h-8">
+                  <div className="mt-4 pt-3 border-t border-border/70 flex flex-wrap items-center justify-between gap-2">
+                    <Button asChild size="sm" className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20 px-3 h-8">
                       <Link href={`/app/subjects/${subject.id}`}>
-                        Open Workspace <ChevronRight className="ml-1 size-3.5" />
+                        Enter Workspace <ChevronRight className="ml-1 size-3.5" />
                       </Link>
                     </Button>
                     <div className="flex items-center gap-1">
                       <Button asChild size="icon" variant="ghost" className="size-8 rounded-lg text-muted-foreground hover:text-foreground" title="Live Attendance">
-                        <Link href={`/app/subjects/${subject.id}?tab=sessions`}>
+                        <Link href={`/app/subjects/${subject.id}/attendance`}>
                           <Zap className="size-3.5" />
                         </Link>
                       </Button>
                       <Button asChild size="icon" variant="ghost" className="size-8 rounded-lg text-muted-foreground hover:text-foreground" title="Class Roster">
-                        <Link href={`/app/subjects/${subject.id}?tab=students`}>
+                        <Link href={`/app/subjects/${subject.id}/students`}>
                           <Users className="size-3.5" />
                         </Link>
                       </Button>
-                      {subject.publishState === "published" && (
-                        <Button asChild size="icon" variant="ghost" className="size-8 rounded-lg text-emerald-400 hover:text-emerald-300" title="View Public Portal">
-                          <Link href={`/s/${subject.publicId}`} target="_blank">
-                            <ExternalLink className="size-3.5" />
-                          </Link>
-                        </Button>
-                      )}
                     </div>
                   </div>
+
+                  <SubjectQuickActions
+                    subjectId={subject.id}
+                    publicId={subject.publicId}
+                    publishState={subject.publishState}
+                  />
                 </div>
               ))}
             </div>

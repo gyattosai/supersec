@@ -106,7 +106,12 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
   const [reason, setReason] = useState("");
   const [sessionForNoClass, setSessionForNoClass] = useState<string | number | null>(null);
   const [sortMode, setSortMode] = useState<SessionSortMode>("newest");
+  const [filterTab, setFilterTab] = useState<"all" | "class" | "no_class">("all");
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+
+  const withClassCount = useMemo(() => sessions.data?.filter(s => s.sessionState !== "no_class").length ?? 0, [sessions.data]);
+  const noClassCount = useMemo(() => sessions.data?.filter(s => s.sessionState === "no_class").length ?? 0, [sessions.data]);
+  const totalSessionCount = sessions.data?.length ?? 0;
 
   const upcomingMeetingDates = useMemo(
     () => getUpcomingMeetingDates(subject.data?.meetingDays || []),
@@ -138,35 +143,36 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
       setComposer(null);
       toast.success("No Class notice added");
     },
-    onError: error => toast.error(error.message),
+    onError: (error: any) => toast.error(error.message),
   });
   const setNoClass = trpc.subjects.sessions.setNoClass.useMutation({
     onSuccess: () => {
       refresh();
-      setReason("");
       setSessionForNoClass(null);
-      toast.success("Class session updated");
+      setReason("");
+      toast.success("No Class status updated");
     },
-    onError: error => toast.error(error.message),
+    onError: (error: any) => toast.error(error.message),
   });
   const deleteSession = trpc.attendance.deleteSession.useMutation({
     onSuccess: () => {
       refresh();
-      toast.success("Class session deleted");
+      setSelectedSessionIds(new Set());
+      toast.success("Selected sessions deleted");
     },
-    onError: error => toast.error(error.message),
+    onError: (error: any) => toast.error(error.message),
   });
-
-  const fixedSchedule =
-    subject.data?.meetingDays.map(day => `${weekdayNames[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ") ||
-    "No fixed weekday schedule";
 
   const closeComposer = () => {
     setComposer(null);
-    setSessionAt("");
-    setNoClassAt("");
+    setSessionForNoClass(null);
     setReason("");
   };
+
+  const scheduleText =
+    subject.data?.meetingDays && subject.data.meetingDays.length > 0
+      ? subject.data.meetingDays.map(day => `${weekdayNames[day.weekday]}${formatTimeRange12Hour(day.startTime, day.endTime)}`).join(" · ")
+      : "No regular weekly pattern set";
 
   const submitSession = (event: FormEvent) => {
     event.preventDefault();
@@ -197,6 +203,12 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
     return list;
   }, [sessions.data, sortMode]);
 
+  const filteredSessions = useMemo(() => {
+    if (filterTab === "class") return sortedSessions.filter(s => s.sessionState !== "no_class");
+    if (filterTab === "no_class") return sortedSessions.filter(s => s.sessionState === "no_class");
+    return sortedSessions;
+  }, [sortedSessions, filterTab]);
+
   // Bulk selection
   const toggleSession = (id: string) => {
     setSelectedSessionIds(prev => {
@@ -207,10 +219,10 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
     });
   };
   const selectAllSessions = () => {
-    setSelectedSessionIds(new Set(sortedSessions.map(s => String(s.id))));
+    setSelectedSessionIds(new Set(filteredSessions.map(s => String(s.id))));
   };
   const deselectAllSessions = () => setSelectedSessionIds(new Set());
-  const allSelected = sortedSessions.length > 0 && selectedSessionIds.size === sortedSessions.length;
+  const allSelected = filteredSessions.length > 0 && selectedSessionIds.size === filteredSessions.length;
 
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedSessionIds);
@@ -285,7 +297,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
         <div className="mt-6 space-y-5">
           <section className="signal-panel border-l-2 border-l-primary p-5 sm:p-6">
             <p className="signal-kicker">Regular class time</p>
-            <p className="mt-2 text-xl font-bold tracking-[-0.035em]">{fixedSchedule}</p>
+            <p className="mt-2 text-xl font-bold tracking-[-0.035em]">{scheduleText}</p>
             <Link
               href={`/app/subjects/${subjectId}/details`}
               className="signal-action mt-4 inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-primary hover:bg-secondary"
@@ -323,11 +335,50 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
               </div>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-lg border border-border/80 bg-muted/40 p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("all")}
+                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                    filterTab === "all"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All ({totalSessionCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("class")}
+                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                    filterTab === "class"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Session With Class ({withClassCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("no_class")}
+                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                    filterTab === "no_class"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  No Class ({noClassCount})
+                </button>
+              </div>
+            </div>
+
             <div className="mt-5 grid gap-3">
               {sessions.isLoading ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">Loading class dates…</p>
               ) : null}
-              {sortedSessions.map(session => {
+              {filteredSessions.map(session => {
                 const sId = String(session.id);
                 const isSelected = selectedSessionIds.has(sId);
                 const isNoClass = session.sessionState === "no_class";
@@ -347,9 +398,9 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             {isNoClass ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/12 px-2.5 py-0.5 text-[11px] font-bold text-amber-400">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-bold text-amber-300">
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                                No Class · {session.noClassReason}
+                                No Class • {session.noClassReason || "Suspended"}
                               </span>
                             ) : isCompleted ? (
                               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
@@ -488,6 +539,15 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                 );
               })}
 
+              {!sessions.isLoading && sessions.data?.length && !filteredSessions.length ? (
+                <div className="signal-inset py-10 text-center">
+                  <p className="text-sm font-semibold text-foreground">No sessions match the selected filter</p>
+                  <Button variant="outline" size="sm" onClick={() => setFilterTab("all")} className="mt-3">
+                    Show all sessions
+                  </Button>
+                </div>
+              ) : null}
+
               {!sessions.isLoading && !sessions.data?.length ? (
                 <div className="signal-inset py-14 text-center">
                   <CalendarDays className="mx-auto h-8 w-8 text-primary opacity-60" />
@@ -507,7 +567,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
         {/* Bulk Action Bar */}
         <BulkActionBar
           selectedCount={selectedSessionIds.size}
-          totalCount={sortedSessions.length}
+          totalCount={filteredSessions.length}
           onSelectAll={selectAllSessions}
           onDeselectAll={deselectAllSessions}
           allSelected={allSelected}

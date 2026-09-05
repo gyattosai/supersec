@@ -28,6 +28,7 @@ import { Link, useRoute } from "wouter";
 
 const statusOptions = ["PRESENT", "ABSENT", "EXCUSED", "CONFLICT", "NOT_SET"] as const;
 const statusFilters = ["ALL", ...statusOptions] as const;
+export type AttendanceScreen = "main" | "zoom" | "proofs" | "social";
 const localDateTimeValue = (date = new Date()) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
 function parseZoomNameToStudent(sourceName: string): { lastName: string; firstName: string; middleName: string } {
@@ -84,6 +85,12 @@ export default function AttendancePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set());
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [activeScreen, setActiveScreen] = useState<AttendanceScreen>("main");
+
+  const pendingProofCount = useMemo(
+    () => proofSubmissions.data?.filter((p: any) => p.reviewState === "needs_review" || p.reviewState === "pending").length ?? 0,
+    [proofSubmissions.data]
+  );
 
   const [noClassModalOpen, setNoClassModalOpen] = useState(false);
   const [noClassReasonDraft, setNoClassReasonDraft] = useState("");
@@ -297,51 +304,186 @@ export default function AttendancePage() {
     <DashboardLayout>
       <section className="mx-auto max-w-5xl">
         <WorkspacePageHeader
-          eyebrow="Class session"
-          title="Attendance"
-          back={<Link href={attendanceWorkspacePath(session.data?.subjectId || "")} className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft className="h-4 w-4" />Back to Attendance</Link>}
-          action={<div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDownloadPdf}
-              disabled={isExportingPdf || !records.data?.length}
-              className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary"
-            >
-              <FileDown className="mr-2 h-4 w-4 text-primary" />
-              {isExportingPdf ? "Exporting PDF…" : "Attendance Sheet (PDF)"}
-            </Button>
-            <Link
-              href={`/app/reports?sessionId=${sessionId}`}
-              className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
-            >
-              <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
-            </Link>
-            {session.data?.publishState === "published" ? <><a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"><ExternalLink className="mr-2 h-4 w-4" />View shared</a><button type="button" onClick={copyPublicAttendance} className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"><Copy className="mr-2 h-4 w-4" />Copy link</button></> : null}
-            {!isNoClass && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setNoClassReasonDraft("");
-                  setNoClassModalOpen(true);
-                }}
-                className="signal-action inline-flex min-h-11 items-center justify-center border border-amber-500/40 bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-amber-400 hover:bg-amber-500/10"
+          eyebrow={activeScreen === "main" ? "Class session" : "Attendance Tools"}
+          title={
+            activeScreen === "main"
+              ? "Attendance"
+              : activeScreen === "zoom"
+              ? "Match Zoom Names"
+              : activeScreen === "proofs"
+              ? "Attendance Proofs & Excuse Letters"
+              : "Messenger & Social Card Preview"
+          }
+          back={
+            activeScreen === "main" ? (
+              <Link
+                href={attendanceWorkspacePath(session.data?.subjectId || "")}
+                className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <CalendarX className="mr-2 size-4 text-amber-400" />
-                Mark No Class
+                <ArrowLeft className="h-4 w-4" />
+                Back to Attendance
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveScreen("main")}
+                className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                ← Back to Attendance
+              </button>
+            )
+          }
+          action={
+            activeScreen === "main" ? (
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={isExportingPdf || !records.data?.length}
+                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-foreground hover:bg-secondary"
+                >
+                  <FileDown className="mr-2 h-4 w-4 text-primary" />
+                  {isExportingPdf ? "Exporting PDF…" : "Attendance Sheet (PDF)"}
+                </Button>
+                <Link
+                  href={`/app/reports?sessionId=${sessionId}`}
+                  className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                >
+                  <ChartNoAxesCombined className="mr-2 h-4 w-4" />View report
+                </Link>
+                {session.data?.publishState === "published" ? (
+                  <>
+                    <a
+                      href={`/attendance/${session.data.publicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />View shared
+                    </a>
+                    <button
+                      type="button"
+                      onClick={copyPublicAttendance}
+                      className="signal-action inline-flex min-h-11 items-center justify-center border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+                    >
+                      <Copy className="mr-2 h-4 w-4" />Copy link
+                    </button>
+                  </>
+                ) : null}
+                {!isNoClass && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setNoClassReasonDraft("");
+                      setNoClassModalOpen(true);
+                    }}
+                    className="signal-action inline-flex min-h-11 items-center justify-center border border-amber-500/40 bg-card px-3 sm:px-4 text-xs sm:text-sm font-semibold text-amber-400 hover:bg-amber-500/10"
+                  >
+                    <CalendarX className="mr-2 size-4 text-amber-400" />
+                    Mark No Class
+                  </Button>
+                )}
+                <Button
+                  onClick={() => publish.mutate({ sessionId: sessionQueryParam })}
+                  disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0}
+                  className="col-span-2 min-h-11 sm:col-auto"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {unresolvedSuggestionCount
+                    ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}`
+                    : session.data?.publishState === "published"
+                    ? `Update & Publish (v${(session.data?.version || 1) + 1})`
+                    : "Publish Attendance (v1)"}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
               </Button>
-            )}
-            <Button onClick={() => publish.mutate({ sessionId: sessionQueryParam })} disabled={publish.isPending || !records.data?.length || unresolvedSuggestionCount > 0} className="col-span-2 min-h-11 sm:col-auto">
-              <Upload className="mr-2 h-4 w-4" />
-              {unresolvedSuggestionCount
-                ? `Review ${unresolvedSuggestionCount} Zoom ${unresolvedSuggestionCount === 1 ? "name" : "names"}`
-                : session.data?.publishState === "published"
-                ? `Update & Publish (v${(session.data?.version || 1) + 1})`
-                : "Publish Attendance (v1)"}
-            </Button>
-          </div>}
+            )
+          }
         />
+
+        {/* Context Navigation Switcher */}
+        <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/60 p-1.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveScreen("main")}
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all ${
+              activeScreen === "main"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            }`}
+          >
+            <CheckCheck className="size-4" />
+            Attendance Desk
+            <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px]">
+              {records.data?.length ?? 0}
+            </Badge>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveScreen("zoom")}
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all ${
+              activeScreen === "zoom"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            }`}
+          >
+            <Sparkles className="size-4 text-primary" />
+            Match Zoom Names
+            {unresolvedSuggestionCount > 0 ? (
+              <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/20 text-[10px] font-bold text-amber-300 px-1.5 py-0">
+                {unresolvedSuggestionCount} to review
+              </Badge>
+            ) : null}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveScreen("proofs")}
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all ${
+              activeScreen === "proofs"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            }`}
+          >
+            <BadgeCheck className="size-4 text-emerald-400" />
+            Attendance Proofs & Excuses
+            {pendingProofCount > 0 ? (
+              <Badge variant="outline" className="rounded-full border-amber-500/50 bg-amber-500/20 text-[10px] font-bold text-amber-300 px-1.5 py-0">
+                {pendingProofCount} pending
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="rounded-full px-1.5 py-0 text-[10px]">
+                {proofSubmissions.data?.length ?? 0}
+              </Badge>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveScreen("social")}
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all ${
+              activeScreen === "social"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            }`}
+          >
+            <Copy className="size-4 text-sky-400" />
+            Messenger & Social Card Preview
+          </button>
+        </div>
 
         {/* Prominent No Class Notice Banner */}
         {isNoClass && (
@@ -401,42 +543,45 @@ export default function AttendancePage() {
           </div>
         )}
 
-        {/* Live Attendance HUD Counters */}
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Summary
-            label="Present"
-            count={totals.present}
-            tone="text-emerald-400"
-            percentage={records.data?.length ? Math.round((totals.present / records.data.length) * 100) : 0}
-          />
-          <Summary
-            label="Absent"
-            count={totals.absent}
-            tone="text-red-400"
-            percentage={records.data?.length ? Math.round((totals.absent / records.data.length) * 100) : 0}
-          />
-          <Summary
-            label="Excused"
-            count={totals.excused}
-            tone="text-sky-400"
-            percentage={records.data?.length ? Math.round((totals.excused / records.data.length) * 100) : 0}
-          />
-          <Summary
-            label="With Schedule Conflict"
-            count={totals.conflict}
-            tone="text-purple-400"
-            percentage={records.data?.length ? Math.round((totals.conflict / records.data.length) * 100) : 0}
-          />
-          <Summary
-            label="Unmarked"
-            count={totals.unset}
-            tone="text-amber-400"
-            percentage={records.data?.length ? Math.round((totals.unset / records.data.length) * 100) : 0}
-          />
-        </div>
+        {/* Live Attendance HUD Counters (Visible on main desk) */}
+        {activeScreen === "main" && (
+          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <Summary
+              label="Present"
+              count={totals.present}
+              tone="text-emerald-400"
+              percentage={records.data?.length ? Math.round((totals.present / records.data.length) * 100) : 0}
+            />
+            <Summary
+              label="Absent"
+              count={totals.absent}
+              tone="text-red-400"
+              percentage={records.data?.length ? Math.round((totals.absent / records.data.length) * 100) : 0}
+            />
+            <Summary
+              label="Excused"
+              count={totals.excused}
+              tone="text-sky-400"
+              percentage={records.data?.length ? Math.round((totals.excused / records.data.length) * 100) : 0}
+            />
+            <Summary
+              label="With Schedule Conflict"
+              count={totals.conflict}
+              tone="text-purple-400"
+              percentage={records.data?.length ? Math.round((totals.conflict / records.data.length) * 100) : 0}
+            />
+            <Summary
+              label="Unmarked"
+              count={totals.unset}
+              tone="text-amber-400"
+              percentage={records.data?.length ? Math.round((totals.unset / records.data.length) * 100) : 0}
+            />
+          </div>
+        )}
 
-        <div className="mt-6 flex flex-col gap-6">
-          <section className="signal-panel p-5 sm:p-6 rounded-2xl space-y-5">
+        {activeScreen === "main" && (
+          <div className="mt-6 flex flex-col gap-6">
+            <section className="signal-panel p-5 sm:p-6 rounded-2xl space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="signal-kicker">Attendance Desk</p>
@@ -801,239 +946,514 @@ export default function AttendancePage() {
                 </div>
               </div>
             )}
-          </section>
+            </section>
 
-<section className="signal-panel border-t-2 border-t-primary">
-<Collapsible defaultOpen={false}>
-<CollapsibleTrigger asChild>
-<button className="flex w-full items-center justify-between p-5 sm:p-6 hover:bg-secondary/50 transition-colors">
-<div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"><Sparkles className="h-4 w-4" /></span><div className="text-left"><p className="signal-kicker">Zoom names</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Match Zoom names</h2></div></div><ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
-</button>
-</CollapsibleTrigger>
-<CollapsibleContent className="px-5 pb-5 sm:px-6 sm:pb-6">
-            
-            <p className="mt-3 text-sm text-muted-foreground">Paste one name per line, then confirm each match.</p>
-            <div className="mt-4"><label htmlFor="zoom-capture-time" className="text-sm font-medium">Participant-list capture time</label><DateTime12HourInput id="zoom-capture-time" value={captureAt} onChange={setCaptureAt} ariaLabel="Participant-list capture" /></div>
-            <Textarea value={rawNames} onChange={event => setRawNames(event.target.value)} className="mt-4 min-h-44" placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"} aria-describedby="zoom-name-count" />
-            <div id="zoom-name-count" className="mt-2 flex items-center justify-between gap-3 text-xs leading-5 text-muted-foreground"><span>{pastedNameCount ? `${pastedNameCount} pasted ${pastedNameCount === 1 ? "name" : "names"} ready for analysis` : "Paste one participant name per line"}</span>{rawNames ? <button type="button" onClick={() => setRawNames("")} className="min-h-11 px-2 text-xs font-semibold text-primary">Clear list</button> : null}</div>
-            <WorkspaceFormFooter note="Matches stay private until confirmed.">
-              <Button onClick={() => importNames.mutate({ sessionId: sessionQueryParam, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="min-h-11 w-full">
-                <Sparkles data-icon="inline-start" />{importNames.isPending ? "Analyzing private list…" : `Analyze ${pastedNameCount || "Zoom"} ${pastedNameCount === 1 ? "name" : "names"}`}
-              </Button>
-            </WorkspaceFormFooter>
-            {suggestions.data?.length ? (
-              <div className="mt-5 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">Review matches</h3>
-                    {unresolvedSuggestionCount ? (
-                      <RecordStatusBadge tone="attention">{unresolvedSuggestionCount} to review</RecordStatusBadge>
-                    ) : (
-                      <RecordStatusBadge tone="confirmed">All confirmed</RecordStatusBadge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs text-muted-foreground hover:text-destructive min-h-9"
-                      disabled={clearSuggestions.isPending}
-                      onClick={() => clearSuggestions.mutate({ sessionId: sessionQueryParam })}
+            <section className="signal-panel mt-6 border border-destructive/20 p-5 sm:p-6">
+              <p className="signal-kicker text-destructive">Danger zone</p>
+              <h2 className="mt-2 text-xl font-bold tracking-[-0.04em]">Delete this session</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Permanently delete this attendance session and all its records. This cannot be undone.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="mt-4">
+                    <Trash2 className="mr-2 h-4 w-4" />Delete session
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this attendance session?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete the session and all {records.data?.length ?? 0} attendance records. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteSession.mutate({ sessionId: sessionQueryParam })}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                      Clear list
-                    </Button>
-                    {suggestions.data.some(
-                      item => item.reviewState !== "confirmed" && (candidateSelections[item.id] || item.suggestedSubjectStudentId)
-                    ) ? (
+                      Delete permanently
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </section>
+
+            <section className="signal-inset mt-6 border-l-2 border-l-primary p-4 text-sm text-muted-foreground">
+              <Check className="mr-2 inline h-4 w-4 text-primary" />
+              Shared versions are public. Zoom review stays private.
+            </section>
+          </div>
+        )}
+
+        {/* Dedicated Context Screen: Match Zoom Names */}
+        {activeScreen === "zoom" && (
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
+            </div>
+
+            <section className="signal-panel border-t-2 border-t-primary p-5 sm:p-6 rounded-2xl">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div className="text-left">
+                  <p className="signal-kicker">Zoom names</p>
+                  <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Match Zoom names</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Paste one name per line, then confirm each match.</p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <label htmlFor="zoom-capture-time" className="text-sm font-medium">Participant-list capture time</label>
+                <DateTime12HourInput id="zoom-capture-time" value={captureAt} onChange={setCaptureAt} ariaLabel="Participant-list capture" />
+              </div>
+              <Textarea
+                value={rawNames}
+                onChange={event => setRawNames(event.target.value)}
+                className="mt-4 min-h-44"
+                placeholder={"SECTION_LAST NAME, FIRST NAME\nSECTION_LAST NAME, FIRST NAME"}
+                aria-describedby="zoom-name-count"
+              />
+              <div id="zoom-name-count" className="mt-2 flex items-center justify-between gap-3 text-xs leading-5 text-muted-foreground">
+                <span>{pastedNameCount ? `${pastedNameCount} pasted ${pastedNameCount === 1 ? "name" : "names"} ready for analysis` : "Paste one participant name per line"}</span>
+                {rawNames ? <button type="button" onClick={() => setRawNames("")} className="min-h-11 px-2 text-xs font-semibold text-primary">Clear list</button> : null}
+              </div>
+              <WorkspaceFormFooter note="Matches stay private until confirmed.">
+                <Button onClick={() => importNames.mutate({ sessionId: sessionQueryParam, rawNamesText: rawNames, captureAt: new Date(captureAt) })} disabled={importNames.isPending || !rawNames.trim() || !captureAt} className="min-h-11 w-full">
+                  <Sparkles data-icon="inline-start" />{importNames.isPending ? "Analyzing private list…" : `Analyze ${pastedNameCount || "Zoom"} ${pastedNameCount === 1 ? "name" : "names"}`}
+                </Button>
+              </WorkspaceFormFooter>
+
+              {suggestions.data?.length ? (
+                <div className="mt-6 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">Review matches</h3>
+                      {unresolvedSuggestionCount ? (
+                        <RecordStatusBadge tone="attention">{unresolvedSuggestionCount} to review</RecordStatusBadge>
+                      ) : (
+                        <RecordStatusBadge tone="confirmed">All confirmed</RecordStatusBadge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="text-xs min-h-9"
-                        disabled={confirmSuggestion.isPending}
-                        onClick={async () => {
-                          const unconfirmed = suggestions.data?.filter(
-                            item => item.reviewState !== "confirmed" && (candidateSelections[item.id] || item.suggestedSubjectStudentId)
-                          ) ?? [];
-                          for (const item of unconfirmed) {
-                            const memId = candidateSelections[item.id] ?? item.suggestedSubjectStudentId;
-                            if (memId && String(memId) !== "none") {
-                              await confirmSuggestion.mutateAsync({ suggestionId: (isNumeric ? Number(item.id) : item.id) as any, membershipId: (isNumeric ? Number(memId) : memId) as any });
-                            }
-                          }
-                          utils.attendance.suggestionsForSession.invalidate({ sessionId: sessionQueryParam });
-                          utils.attendance.list.invalidate({ sessionId: sessionQueryParam });
-                          toast.success(`Confirmed all auto-matched students`);
-                        }}
+                        variant="ghost"
+                        className="text-xs text-muted-foreground hover:text-destructive min-h-9"
+                        disabled={clearSuggestions.isPending}
+                        onClick={() => clearSuggestions.mutate({ sessionId: sessionQueryParam })}
                       >
-                        <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                        Confirm all matches
+                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                        Clear list
                       </Button>
-                    ) : null}
+                      {suggestions.data.some(
+                        item => item.reviewState !== "confirmed" && (candidateSelections[item.id] || item.suggestedSubjectStudentId)
+                      ) ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs min-h-9"
+                          disabled={confirmSuggestion.isPending}
+                          onClick={async () => {
+                            const unconfirmed = suggestions.data?.filter(
+                              item => item.reviewState !== "confirmed" && (candidateSelections[item.id] || item.suggestedSubjectStudentId)
+                            ) ?? [];
+                            for (const item of unconfirmed) {
+                              const memId = candidateSelections[item.id] ?? item.suggestedSubjectStudentId;
+                              if (memId && String(memId) !== "none") {
+                                await confirmSuggestion.mutateAsync({ suggestionId: (isNumeric ? Number(item.id) : item.id) as any, membershipId: (isNumeric ? Number(memId) : memId) as any });
+                              }
+                            }
+                            utils.attendance.suggestionsForSession.invalidate({ sessionId: sessionQueryParam });
+                            utils.attendance.list.invalidate({ sessionId: sessionQueryParam });
+                            toast.success(`Confirmed all auto-matched students`);
+                          }}
+                        >
+                          <CheckCheck className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                          Confirm all matches
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-                {suggestions.data.map(item => {
-                  const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : "");
-                  return (
-                    <div key={item.id} className="signal-inset p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">Suggestion</span>
-                          <RecordStatusBadge tone="private">Private review</RecordStatusBadge>
+                  {suggestions.data.map(item => {
+                    const selected = candidateSelections[item.id] ?? (item.suggestedSubjectStudentId ? String(item.suggestedSubjectStudentId) : "");
+                    return (
+                      <div key={item.id} className="signal-inset p-4 rounded-xl">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">Suggestion</span>
+                            <RecordStatusBadge tone="private">Private review</RecordStatusBadge>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <RecordStatusBadge tone={item.reviewState === "confirmed" ? "confirmed" : item.reviewState === "clear" ? "confirmed" : "attention"}>
+                              {item.reviewState === "confirmed" ? "Confirmed" : item.reviewState === "clear" ? "Matched" : "Needs review"}
+                            </RecordStatusBadge>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              disabled={deleteSuggestion.isPending}
+                              onClick={() => deleteSuggestion.mutate({ suggestionId: item.id })}
+                              aria-label={`Remove suggestion for ${item.sourceName}`}
+                              title="Remove from list"
+                            >
+                              <X className="size-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <RecordStatusBadge tone={item.reviewState === "confirmed" ? "confirmed" : item.reviewState === "clear" ? "confirmed" : "attention"}>
-                            {item.reviewState === "confirmed" ? "Confirmed" : item.reviewState === "clear" ? "Matched" : "Needs review"}
-                          </RecordStatusBadge>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            disabled={deleteSuggestion.isPending}
-                            onClick={() => deleteSuggestion.mutate({ suggestionId: item.id })}
-                            aria-label={`Remove suggestion for ${item.sourceName}`}
-                            title="Remove from list"
+                        <dl className="mt-3 space-y-2 text-sm">
+                          <div>
+                            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Zoom source</dt>
+                            <dd className="mt-1 break-words font-medium text-foreground">{item.sourceName}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Matched / Normalized Student</dt>
+                            <dd className="mt-1 break-words font-medium text-foreground">
+                              {item.normalizedCandidate ?? "No confident roster match"}
+                            </dd>
+                          </div>
+                        </dl>
+                        {item.reviewNote ? (
+                          <p className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs leading-5 text-amber-100">
+                            {item.reviewNote}
+                          </p>
+                        ) : null}
+                        {item.flags?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.flags.map(flag => (
+                              <Badge key={flag} variant="outline" className="rounded-full text-[11px]">
+                                {flag.replace("_", " ")}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
+                        <p className="mt-3 text-xs text-muted-foreground">Choose a Student or mark no match.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <select
+                            aria-label={`Match for ${item.sourceName}`}
+                            value={selected}
+                            onChange={event => setCandidateSelections(current => ({ ...current, [item.id]: event.target.value }))}
+                            className="min-h-11 min-w-0 flex-1 rounded-[10px] border border-input bg-card px-3 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/55"
                           >
-                            <X className="size-4" />
+                            <option value="">Choose Student</option>
+                            <option value="none">No roster match</option>
+                            {records.data?.map(record => (
+                              <option key={record.membershipId} value={record.membershipId}>
+                                {record.canonicalName}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            className="min-h-11 rounded-xl"
+                            disabled={item.reviewState === "confirmed" || confirmSuggestion.isPending || !selected}
+                            onClick={() => confirmSuggestion.mutate({ suggestionId: (isNumeric ? Number(item.id) : item.id) as any, membershipId: selected === "none" ? null : (isNumeric ? Number(selected) : selected) as any })}
+                          >
+                            {item.reviewState === "confirmed" ? "Confirmed" : "Confirm"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="min-h-11 rounded-xl gap-1.5 text-xs font-semibold"
+                            disabled={item.reviewState === "confirmed"}
+                            onClick={() => handleOpenQuickAdd(item)}
+                          >
+                            <UserPlus className="size-3.5 text-primary" />
+                            Quick add student
                           </Button>
                         </div>
                       </div>
-                      <dl className="mt-3 space-y-2 text-sm">
-                        <div>
-                          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Zoom source</dt>
-                          <dd className="mt-1 break-words font-medium text-foreground">{item.sourceName}</dd>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Dedicated Context Screen: Attendance Proofs & Excuse Letters */}
+        {activeScreen === "proofs" && (
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
+            </div>
+
+            <section className="signal-panel p-5 sm:p-6 rounded-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <BadgeCheck className="size-5" />
+                  </span>
+                  <div className="text-left">
+                    <p className="signal-kicker">Student Submissions & Excuses</p>
+                    <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Attendance Proofs & Excuse Letters</h2>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {proofSubmissions.data?.some(p => p.reviewState === "needs_review") ? (
+                    <Badge variant="outline" className="rounded-full border-amber-500/40 bg-amber-500/10 text-xs font-bold text-amber-300">
+                      {proofSubmissions.data.filter(p => p.reviewState === "needs_review").length} pending review
+                    </Badge>
+                  ) : null}
+                  <Badge variant="secondary" className="rounded-full">
+                    {proofSubmissions.data?.length ?? 0} total
+                  </Badge>
+                </div>
+              </div>
+
+              <p className="mt-3 text-sm text-muted-foreground">
+                Zoom screenshots with verified roster matches are automatically verified and marked Present by AI. Review student excuse letters and approve them with one click.
+              </p>
+
+              <div className="mt-5 space-y-3">
+                {proofSubmissions.data?.map((proof: any) => {
+                  const isExcuse = proof.isExcuseLetter || Boolean(proof.reviewSummary?.startsWith("[Excuse Letter]") || proof.proofOriginalName === "Excuse Letter" || proof.proofUrl === "text-only");
+                  const isPending = proof.reviewState === "needs_review" || proof.reviewState === "pending";
+                  const isAccepted = proof.reviewState === "accepted";
+                  const isRejected = proof.reviewState === "rejected";
+                  return (
+                    <div key={proof.id} className="signal-inset p-4 rounded-2xl border border-border/80">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-bold text-base text-foreground">{proof.submittedName}</p>
+                            {isExcuse ? (
+                              <Badge variant="outline" className="rounded-full border-sky-500/30 bg-sky-500/10 text-xs font-semibold text-sky-300">
+                                <FileText className="mr-1 size-3" />Excuse Letter
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="rounded-full border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-300">
+                                <Sparkles className="mr-1 size-3" />Zoom Screenshot
+                              </Badge>
+                            )}
+                            <RecordStatusBadge tone={isAccepted ? "confirmed" : isRejected ? "attention" : "private"}>
+                              {isAccepted ? "Accepted / Verified" : isRejected ? "Rejected" : "Needs Review"}
+                            </RecordStatusBadge>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {proof.proofOriginalName} · <AttendanceProofTimestamp createdAt={proof.createdAt} />
+                          </p>
+                          {proof.matchedName ? (
+                            <p className="mt-1.5 text-xs font-semibold text-foreground">
+                              Matched Student: <span className="text-primary">{proof.matchedName}</span>
+                            </p>
+                          ) : null}
+                          {proof.reviewSummary ? (
+                            <div className="mt-2 rounded-xl bg-card/60 p-3 text-xs leading-relaxed text-foreground border border-border/60">
+                              <p className="font-semibold text-muted-foreground mb-0.5">Submission Details / Reason:</p>
+                              <p>{proof.reviewSummary}</p>
+                            </div>
+                          ) : null}
                         </div>
-                        <div>
-                          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Matched / Normalized Student</dt>
-                          <dd className="mt-1 break-words font-medium text-foreground">
-                            {item.normalizedCandidate ?? "No confident roster match"}
-                          </dd>
-                        </div>
-                      </dl>
-                      {item.reviewNote ? (
-                        <p className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs leading-5 text-amber-100">
-                          {item.reviewNote}
-                        </p>
-                      ) : null}
-                      {item.flags?.length ? (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {item.flags.map(flag => (
-                            <Badge key={flag} variant="outline" className="rounded-full text-[11px]">
-                              {flag.replace("_", " ")}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                      <p className="mt-3 text-xs text-muted-foreground">Choose a Student or mark no match.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <select
-                          aria-label={`Match for ${item.sourceName}`}
-                          value={selected}
-                          onChange={event => setCandidateSelections(current => ({ ...current, [item.id]: event.target.value }))}
-                          className="min-h-11 min-w-0 flex-1 rounded-[10px] border border-input bg-card px-3 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/55"
-                        >
-                          <option value="">Choose Student</option>
-                          <option value="none">No roster match</option>
-                          {records.data?.map(record => (
-                            <option key={record.membershipId} value={record.membershipId}>
-                              {record.canonicalName}
-                            </option>
-                          ))}
-                        </select>
-                        <Button
-                          size="sm"
-                          className="min-h-11 rounded-xl"
-                          disabled={item.reviewState === "confirmed" || confirmSuggestion.isPending || !selected}
-                          onClick={() => confirmSuggestion.mutate({ suggestionId: (isNumeric ? Number(item.id) : item.id) as any, membershipId: selected === "none" ? null : (isNumeric ? Number(selected) : selected) as any })}
-                        >
-                          {item.reviewState === "confirmed" ? "Confirmed" : "Confirm"}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="min-h-11 rounded-xl gap-1.5 text-xs font-semibold"
-                          disabled={item.reviewState === "confirmed"}
-                          onClick={() => handleOpenQuickAdd(item)}
-                        >
-                          <UserPlus className="size-3.5 text-primary" />
-                          Quick add student
-                        </Button>
+                        {proof.proofUrl && proof.proofUrl !== "attached" && proof.proofUrl !== "zoom-screenshot" ? (
+                          <a href={proof.proofUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card px-3 text-xs font-semibold text-primary hover:bg-secondary">
+                            <ExternalLink className="mr-1.5 size-3.5" />View Attachment
+                          </a>
+                        ) : null}
                       </div>
+                      {isPending ? (
+                        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-border/60">
+                          {!proof.matchedSubjectStudentId ? (
+                            <select aria-label={`Match student for ${proof.submittedName}`} defaultValue="" id={`sel-${proof.id}`} className="min-h-10 min-w-48 flex-1 rounded-xl border border-input bg-card px-3 text-xs text-foreground">
+                              <option value="">Select Enrolled Student…</option>
+                              {records.data?.map((record: any) => (
+                                <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>
+                              ))}
+                            </select>
+                          ) : null}
+                          {isExcuse ? (
+                            <Button
+                              size="sm"
+                              className="min-h-10 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs"
+                              disabled={resolveProof.isPending}
+                              onClick={() => {
+                                const selEl = document.getElementById(`sel-${proof.id}`) as HTMLSelectElement | null;
+                                const memId = proof.matchedSubjectStudentId || selEl?.value;
+                                if (!memId) {
+                                  toast.error("Please select a student from the roster first");
+                                  return;
+                                }
+                                resolveProof.mutate({
+                                  proofId: (isNumeric ? Number(proof.id) : proof.id) as any,
+                                  decision: "accepted_excused",
+                                  membershipId: (isNumeric ? Number(memId) : memId) as any,
+                                });
+                              }}
+                            >
+                              <Check className="mr-1 size-3.5" />Approve as Excused
+                            </Button>
+                          ) : null}
+                          <Button
+                            size="sm"
+                            className="min-h-10 rounded-xl font-bold text-xs"
+                            disabled={resolveProof.isPending}
+                            onClick={() => {
+                              const selEl = document.getElementById(`sel-${proof.id}`) as HTMLSelectElement | null;
+                              const memId = proof.matchedSubjectStudentId || selEl?.value;
+                              if (!memId) {
+                                toast.error("Please select a student from the roster first");
+                                return;
+                              }
+                              resolveProof.mutate({
+                                proofId: (isNumeric ? Number(proof.id) : proof.id) as any,
+                                decision: "accepted_present",
+                                membershipId: (isNumeric ? Number(memId) : memId) as any,
+                              });
+                            }}
+                          >
+                            <Check className="mr-1 size-3.5" />Approve as Present
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="min-h-10 rounded-xl text-xs"
+                            disabled={resolveProof.isPending}
+                            onClick={() => resolveProof.mutate({ proofId: (isNumeric ? Number(proof.id) : proof.id) as any, decision: "rejected" })}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
+                {!proofSubmissions.isLoading && !proofSubmissions.data?.length ? (
+                  <div className="signal-inset p-6 text-center text-sm text-muted-foreground rounded-2xl">
+                    No attendance proof or excuse submissions for this session yet.
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </CollapsibleContent>
-</Collapsible>
-</section>
+            </section>
 
-<section className="signal-panel">
-<Collapsible defaultOpen={Boolean(proofSubmissions.data?.some(p => p.reviewState === "needs_review"))}>
-<CollapsibleTrigger asChild>
-<button className="flex w-full items-center justify-between p-5 sm:p-6 hover:bg-secondary/50 transition-colors">
-<div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><BadgeCheck className="size-5" /></span><div className="text-left"><p className="signal-kicker">Student Submissions & Excuses</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Attendance Proofs & Excuse Letters</h2></div></div><div className="flex items-center gap-2">{proofSubmissions.data?.some(p => p.reviewState === "needs_review") ? <Badge variant="outline" className="rounded-full border-amber-500/40 bg-amber-500/10 text-xs font-bold text-amber-300">{proofSubmissions.data.filter(p => p.reviewState === "needs_review").length} pending review</Badge> : null}<Badge variant="secondary" className="rounded-full">{proofSubmissions.data?.length ?? 0} total</Badge><ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" /></div>
-</button>
-</CollapsibleTrigger>
-<CollapsibleContent className="px-5 pb-5 sm:px-6 sm:pb-6"><p className="mt-2 text-sm text-muted-foreground">Zoom screenshots with verified roster matches are automatically verified and marked Present by AI. Review student excuse letters and approve them with one click.</p><div className="mt-5 space-y-3">{proofSubmissions.data?.map((proof: any) => { const isExcuse = proof.isExcuseLetter || Boolean(proof.reviewSummary?.startsWith("[Excuse Letter]") || proof.proofOriginalName === "Excuse Letter" || proof.proofUrl === "text-only"); const isPending = proof.reviewState === "needs_review" || proof.reviewState === "pending"; const isAccepted = proof.reviewState === "accepted"; const isRejected = proof.reviewState === "rejected"; return <div key={proof.id} className="signal-inset p-4 rounded-2xl border border-border/80"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-bold text-base text-foreground">{proof.submittedName}</p>{isExcuse ? <Badge variant="outline" className="rounded-full border-sky-500/30 bg-sky-500/10 text-xs font-semibold text-sky-300"><FileText className="mr-1 size-3" />Excuse Letter</Badge> : <Badge variant="outline" className="rounded-full border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-emerald-300"><Sparkles className="mr-1 size-3" />Zoom Screenshot</Badge>}<RecordStatusBadge tone={isAccepted ? "confirmed" : isRejected ? "attention" : "private"}>{isAccepted ? "Accepted / Verified" : isRejected ? "Rejected" : "Needs Review"}</RecordStatusBadge></div><p className="mt-1 text-xs text-muted-foreground">{proof.proofOriginalName} · <AttendanceProofTimestamp createdAt={proof.createdAt} /></p>{proof.matchedName ? <p className="mt-1.5 text-xs font-semibold text-foreground">Matched Student: <span className="text-primary">{proof.matchedName}</span></p> : null}{proof.reviewSummary ? <div className="mt-2 rounded-xl bg-card/60 p-3 text-xs leading-relaxed text-foreground border border-border/60"><p className="font-semibold text-muted-foreground mb-0.5">Submission Details / Reason:</p><p>{proof.reviewSummary}</p></div> : null}</div>{proof.proofUrl && proof.proofUrl !== "attached" && proof.proofUrl !== "zoom-screenshot" ? <a href={proof.proofUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card px-3 text-xs font-semibold text-primary hover:bg-secondary"><ExternalLink className="mr-1.5 size-3.5" />View Attachment</a> : null}</div>{isPending ? <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-border/60">{!proof.matchedSubjectStudentId ? <select aria-label={`Match student for ${proof.submittedName}`} defaultValue="" id={`sel-${proof.id}`} className="min-h-10 min-w-48 flex-1 rounded-xl border border-input bg-card px-3 text-xs text-foreground"><option value="">Select Enrolled Student…</option>{records.data?.map((record: any) => <option key={record.membershipId} value={record.membershipId}>{record.canonicalName}</option>)}</select> : null}{isExcuse ? <Button size="sm" className="min-h-10 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs" disabled={resolveProof.isPending} onClick={() => { const selEl = document.getElementById(`sel-${proof.id}`) as HTMLSelectElement | null; const memId = proof.matchedSubjectStudentId || selEl?.value; if (!memId) { toast.error("Please select a student from the roster first"); return; } resolveProof.mutate({ proofId: (isNumeric ? Number(proof.id) : proof.id) as any, decision: "accepted_excused", membershipId: (isNumeric ? Number(memId) : memId) as any }); }}><Check className="mr-1 size-3.5" />Approve as Excused</Button> : null}<Button size="sm" className="min-h-10 rounded-xl font-bold text-xs" disabled={resolveProof.isPending} onClick={() => { const selEl = document.getElementById(`sel-${proof.id}`) as HTMLSelectElement | null; const memId = proof.matchedSubjectStudentId || selEl?.value; if (!memId) { toast.error("Please select a student from the roster first"); return; } resolveProof.mutate({ proofId: (isNumeric ? Number(proof.id) : proof.id) as any, decision: "accepted_present", membershipId: (isNumeric ? Number(memId) : memId) as any }); }}><Check className="mr-1 size-3.5" />Approve as Present</Button><Button size="sm" variant="outline" className="min-h-10 rounded-xl text-xs" disabled={resolveProof.isPending} onClick={() => resolveProof.mutate({ proofId: (isNumeric ? Number(proof.id) : proof.id) as any, decision: "rejected" })}>Reject</Button></div> : null}</div>; })}{!proofSubmissions.isLoading && !proofSubmissions.data?.length ? <div className="signal-inset p-6 text-center text-sm text-muted-foreground rounded-2xl">No attendance proof or excuse submissions for this session yet.</div> : null}</div></CollapsibleContent>
-</Collapsible>
-</section>
-
-<section className="signal-panel mt-6 border border-destructive/20 p-5 sm:p-6">
-  <p className="signal-kicker text-destructive">Danger zone</p>
-  <h2 className="mt-2 text-xl font-bold tracking-[-0.04em]">Delete this session</h2>
-  <p className="mt-2 text-sm text-muted-foreground">
-    Permanently delete this attendance session and all its records. This cannot be undone.
-  </p>
-  <AlertDialog>
-    <AlertDialogTrigger asChild>
-      <Button variant="destructive" className="mt-4">
-        <Trash2 className="mr-2 h-4 w-4" />Delete session
-      </Button>
-    </AlertDialogTrigger>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete this attendance session?</AlertDialogTitle>
-        <AlertDialogDescription>
-          This will permanently delete the session and all {records.data?.length ?? 0} attendance records. This action cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction
-          onClick={() => deleteSession.mutate({ sessionId: sessionQueryParam })}
-          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-        >
-          Delete permanently
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-</section>
-        </div>
-        {/* Live Social Previews & Messenger Card Preview */}
-        {session.data?.publishState === "published" && session.data?.publicId && (() => {
-          const currentVersion = Math.max(...(records.data || []).map(r => r.version || 0), (session.data?.version as number) || 0, 1);
-          return (
-            <div className="mt-8">
-              <SocialPreviewCard
-                title={`[${subject.data?.code || "ATTENDANCE"}] Attendance ${formatShorthandDate(session.data.startsAt) || "Session"}`}
-                subjectCode={subject.data?.code}
-                type="attendance"
-                version={currentVersion}
-                present={totals.present}
-                absent={totals.absent}
-                excused={totals.excused}
-                date={new Date(session.data.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                description={`Class Attendance for ${subject.data?.code || "Class"} — ${subject.data?.name || "Operations Management"}. Present: ${totals.present}, Absent: ${totals.absent}, Excused: ${totals.excused}.`}
-                publicUrl={`${window.location.origin}/attendance/${session.data.publicId}`}
-              />
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
             </div>
-          );
-        })()}
+          </div>
+        )}
 
-        <section className="signal-inset mt-6 border-l-2 border-l-primary p-4 text-sm text-muted-foreground"><Check className="mr-2 inline h-4 w-4 text-primary" />Shared versions are public. Zoom review stays private.</section>
+        {/* Dedicated Context Screen: Messenger & Social Card Preview */}
+        {activeScreen === "social" && (
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
+            </div>
+
+            <section className="signal-panel p-5 sm:p-6 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <Copy className="size-5" />
+                </span>
+                <div>
+                  <p className="signal-kicker">Social Share Preview</p>
+                  <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Messenger & Social Card Preview</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Live dynamic preview of how this attendance session renders when shared across Messenger, Discord, Twitter, and Facebook.
+                  </p>
+                </div>
+              </div>
+
+              {session.data?.publishState === "published" && session.data?.publicId ? (
+                <div className="mt-6 space-y-5">
+                  {(() => {
+                    const currentVersion = Math.max(...(records.data || []).map(r => r.version || 0), (session.data?.version as number) || 0, 1);
+                    return (
+                      <SocialPreviewCard
+                        title={`[${subject.data?.code || "ATTENDANCE"}] Attendance ${formatShorthandDate(session.data.startsAt) || "Session"}`}
+                        subjectCode={subject.data?.code}
+                        type="attendance"
+                        version={currentVersion}
+                        present={totals.present}
+                        absent={totals.absent}
+                        excused={totals.excused}
+                        date={new Date(session.data.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        description={`Class Attendance for ${subject.data?.code || "Class"} — ${subject.data?.name || "Operations Management"}. Present: ${totals.present}, Absent: ${totals.absent}, Excused: ${totals.excused}.`}
+                        publicUrl={`${window.location.origin}/attendance/${session.data.publicId}`}
+                      />
+                    );
+                  })()}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
+                    <Button type="button" onClick={copyPublicAttendance} className="gap-2">
+                      <Copy className="size-4" />
+                      Copy Messenger Link
+                    </Button>
+                    <Button type="button" variant="outline" asChild>
+                      <a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="gap-2 inline-flex items-center">
+                        <ExternalLink className="size-4" />
+                        View Public Attendance
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 signal-inset p-8 text-center rounded-2xl text-muted-foreground">
+                  <p className="text-sm font-semibold text-foreground">Attendance not yet published</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Publish this session from the Attendance Desk to generate the live public link and dynamic preview card.</p>
+                </div>
+              )}
+            </section>
+
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveScreen("main")}
+                className="gap-2 font-semibold"
+              >
+                <ArrowLeft className="size-4" />
+                ← Back to Attendance
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
 
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>

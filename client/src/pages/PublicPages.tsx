@@ -32,6 +32,7 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Users,
   X,
   XCircle,
 } from "lucide-react";
@@ -108,6 +109,7 @@ export function PublicSubjectPage() {
         <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Class Records</p>
         <h2 className="signal-heading mt-1 text-lg sm:text-xl font-bold">Published Updates</h2>
         <div className="mt-4 grid gap-3 sm:gap-4 grid-cols-1">
+          <PublicStudentMasterList students={details.students || []} />
           <PublicAttendanceList items={details.latest.attendance} />
           <PublicList icon={MessageCircleMore} title="Q&A" items={details.latest.questions} pathPrefix="/q/" empty="No Q&As published yet." allHref={`/s/${details.publicId}/questions`} />
           <PublicList icon={ExternalLink} title="Announcements" items={details.latest.announcements} pathPrefix="/a/" empty="No announcements yet." />
@@ -441,7 +443,7 @@ export function PublicAttendancePage() {
   return (
     <PublicShell>
       <BackToSubject subject={details.subject} />
-      <article className="mt-4 sm:mt-6 space-y-4 sm:space-y-5">
+      <article className="min-w-0 mt-4 sm:mt-6 space-y-4 sm:space-y-5">
         {/* Prominent Header Banner */}
         <section className={`signal-panel rounded-2xl border p-4 sm:p-6 shadow-xl ${
           isNoClass
@@ -1009,7 +1011,7 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
   return (
     <PublicShell>
       <BackToSubject subject={details.subject} />
-      <article className="signal-panel mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl shadow-primary/5 p-6 sm:p-8 space-y-6">
+      <article className="signal-panel min-w-0 mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl shadow-primary/5 p-4 sm:p-6 md:p-8 space-y-6">
         <div className="space-y-3.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-primary">
@@ -1044,7 +1046,7 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
         </div>
 
         {visual ? (
-          <div className="-mx-6 sm:-mx-8 overflow-hidden border-y border-border/80 bg-black/20">
+          <div className="-mx-4 sm:-mx-6 md:-mx-8 overflow-hidden border-y border-border/80 bg-black/20">
             <img src={visual.url} alt={visual.altText ?? ""} className="max-h-[28rem] w-full object-cover" />
           </div>
         ) : null}
@@ -1058,7 +1060,7 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
             <div className="pt-2">
               <a href={details.destinationUrl} target="_blank" rel="noreferrer" className="signal-action inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground active:scale-[0.98] shadow-md shadow-primary/25">
                 <ExternalLink className="size-4" />
-                Open Resource
+                Open Link
               </a>
             </div>
           ) : null}
@@ -1330,6 +1332,191 @@ export function HistoryLedger({
     </section>
   );
 }
+
+function PublicStudentMasterList({
+  students,
+}: {
+  students: Array<{ canonicalName: string; hasScheduleConflict: boolean }>;
+}) {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "regular" | "conflict">("all");
+
+  const conflictCount = useMemo(() => students.filter(s => s.hasScheduleConflict).length, [students]);
+  const regularCount = students.length - conflictCount;
+
+  const filtered = useMemo(() => {
+    let list = students;
+    if (filter === "regular") list = list.filter(s => !s.hasScheduleConflict);
+    if (filter === "conflict") list = list.filter(s => s.hasScheduleConflict);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(s => s.canonicalName.toLowerCase().includes(q));
+    }
+    return list;
+  }, [students, filter, search]);
+
+  const searchMatch = useMemo(() => {
+    if (!search.trim()) return null;
+    const q = search.trim().toLowerCase();
+    const found = students.filter(s => s.canonicalName.toLowerCase().includes(q));
+    return {
+      count: found.length,
+      hasConflict: found.some(s => s.hasScheduleConflict),
+      exact: found.length === 1 ? found[0] : null,
+    };
+  }, [students, search]);
+
+  return (
+    <ReaderSection icon={Users} title="Student Master List">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Enrolled active students and schedule conflict verification.
+        </p>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold">
+          <span className="rounded-full bg-secondary px-2.5 py-0.5 text-foreground border border-border">
+            {students.length} Enrolled
+          </span>
+          {conflictCount > 0 && (
+            <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-amber-400 border border-amber-500/30">
+              {conflictCount} With Conflict
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Name Checker / Search Box */}
+      <div className="mt-3 space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Check your name (e.g. Dela Cruz)..."
+            className="w-full h-9 pl-9 pr-8 text-xs rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Verification banner if user searched */}
+        {search.trim() && searchMatch && (
+          <div
+            className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+              searchMatch.count > 0
+                ? searchMatch.hasConflict
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                  : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                : "bg-destructive/10 border-destructive/30 text-destructive"
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              {searchMatch.count > 0 ? (
+                searchMatch.hasConflict ? (
+                  <AlertTriangle className="size-4 shrink-0 text-amber-400" />
+                ) : (
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+                )
+              ) : (
+                <XCircle className="size-4 shrink-0 text-destructive" />
+              )}
+              <span className="font-semibold truncate">
+                {searchMatch.count > 0
+                  ? searchMatch.exact
+                    ? `Found on masterlist: ${searchMatch.exact.canonicalName} (${searchMatch.exact.hasScheduleConflict ? "With Schedule Conflict" : "Regular"})`
+                    : `Found ${searchMatch.count} matching student${searchMatch.count === 1 ? "" : "s"} on masterlist`
+                  : `"${search}" not found on active masterlist`}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              filter === "all"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary/60 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All ({students.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("regular")}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              filter === "regular"
+                ? "bg-emerald-600 text-white"
+                : "bg-secondary/60 text-muted-foreground hover:text-emerald-400"
+            }`}
+          >
+            Regular ({regularCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("conflict")}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              filter === "conflict"
+                ? "bg-amber-600 text-white"
+                : "bg-secondary/60 text-muted-foreground hover:text-amber-400"
+            }`}
+          >
+            With Conflict ({conflictCount})
+          </button>
+        </div>
+      </div>
+
+      {/* Student list */}
+      {filtered.length ? (
+        <div className="mt-3 max-h-72 overflow-y-auto divide-y divide-border/50 rounded-xl border border-border/60 bg-card/50">
+          {filtered.map((student, idx) => (
+            <div
+              key={`${student.canonicalName}-${idx}`}
+              className="flex items-center justify-between px-3 py-2 text-xs hover:bg-secondary/30 transition-colors"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-mono text-muted-foreground w-6 text-right shrink-0">
+                  #{idx + 1}
+                </span>
+                <span className="font-semibold text-foreground truncate">
+                  {student.canonicalName}
+                </span>
+              </div>
+              <span
+                className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  student.hasScheduleConflict
+                    ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                    : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                }`}
+              >
+                {student.hasScheduleConflict ? "⚠️ Conflict" : "✓ Regular"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground py-2 text-center">
+          {students.length === 0 ? "No active students enrolled in this subject." : "No students match your filter."}
+        </p>
+      )}
+
+      <p className="mt-2.5 text-[10px] text-muted-foreground/80 italic">
+        Safe public view: only enrolled active student names and schedule conflict statuses are shown. Private student records and contact details are strictly withheld.
+      </p>
+    </ReaderSection>
+  );
+}
+
 function PublicAttendanceList({ items }: { items: Array<{ publicId: string; startsAt: Date }> }) {
   return (
     <ReaderSection icon={BookOpen} title="Attendance">

@@ -358,61 +358,54 @@ export function SocialPreviewCard({
 
         {/* Quick Action Toolbar */}
         <div className="space-y-3 pt-2">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <Button
               onClick={copyFastMessengerLink}
-              className="signal-action flex-1 min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 gap-2"
+              className="signal-action min-h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 gap-2 text-xs"
             >
               {copiedFastLink ? <Check className="size-4 text-white" /> : <Zap className="size-4 text-emerald-200" />}
-              {copiedFastLink ? "Copied Fast Link!" : "Copy Fast Messenger Link (Instant Preview)"}
+              {copiedFastLink ? "Copied Fast Link!" : "Fast Messenger Link"}
             </Button>
 
             <Button
               onClick={copyFormattedMessengerText}
               variant="outline"
-              className="signal-action min-h-11 rounded-xl font-bold border-border/80 hover:bg-secondary gap-2"
+              className="signal-action min-h-11 rounded-xl font-bold border-border/80 hover:bg-secondary gap-2 text-xs"
             >
               {copiedText ? <Check className="size-4 text-emerald-400" /> : <MessageCircle className="size-4 text-primary" />}
-              {copiedText ? "Copied Formatted Post!" : "Copy Post + Link"}
+              {copiedText ? "Copied Post!" : "Copy Post + Link"}
             </Button>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/40">
             <Button
               onClick={copyUrlOnly}
-              variant="ghost"
-              size="sm"
-              className="rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground gap-1.5"
+              variant="outline"
+              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary gap-2 text-xs text-muted-foreground hover:text-foreground"
             >
-              {copiedLink ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
-              {copiedLink ? "Copied Original" : "Copy Raw URL"}
+              {copiedLink ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
+              {copiedLink ? "Copied URL!" : "Copy Raw URL"}
             </Button>
 
-            <div className="flex items-center gap-2">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="rounded-lg text-xs font-semibold text-sky-400 hover:text-sky-300 gap-1.5"
-              >
-                <a href={fbDebuggerUrl} target="_blank" rel="noreferrer" title="Force Facebook crawler to scrape this exact URL right now">
-                  <RefreshCw className="size-3 text-sky-400" />
-                  Force Facebook Re-scrape
-                </a>
-              </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary text-sky-400 hover:text-sky-300 gap-2 text-xs"
+            >
+              <a href={fbDebuggerUrl} target="_blank" rel="noreferrer" title="Force Facebook crawler to scrape this exact URL right now">
+                <RefreshCw className="size-3.5 text-sky-400" />
+                Force FB Re-scrape
+              </a>
+            </Button>
 
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground"
-              >
-                <a href={normalizedPublicUrl || publicUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink className="size-3 mr-1" />
-                  Open Live
-                </a>
-              </Button>
-            </div>
+            <Button
+              asChild
+              variant="outline"
+              className="signal-action min-h-11 rounded-xl font-semibold border-border/80 hover:bg-secondary text-muted-foreground hover:text-foreground gap-2 text-xs md:col-span-2 lg:col-span-2"
+            >
+              <a href={normalizedPublicUrl || publicUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-3.5 mr-1" />
+                Open Live Shared Page
+              </a>
+            </Button>
           </div>
         </div>
       </section>

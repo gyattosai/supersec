@@ -7,10 +7,10 @@ import { isSupportedResourceFileMimeType, isPublicImageMimeType, MAX_PUBLIC_UPLO
 
 describe("Feature Audit: 1. Subjects and Meeting Days", () => {
   it("meets 12-hour rhythm formatting requirements", () => {
-    expect(formatTimeRange12Hour("07:30", "09:00")).toBe(" · 7:30 AM–9:00 AM");
-    expect(formatTimeRange12Hour("13:00", "16:30")).toBe(" · 1:00 PM–4:30 PM");
-    expect(formatTimeRange12Hour("12:00", "13:00")).toBe(" · 12:00 PM–1:00 PM");
-    expect(formatTimeRange12Hour("00:00", "01:30")).toBe(" · 12:00 AM–1:30 AM");
+    expect(formatTimeRange12Hour("07:30", "09:00")).toBe(" · 7:30 AM – 9:00 AM");
+    expect(formatTimeRange12Hour("13:00", "16:30")).toBe(" · 1:00 PM – 4:30 PM");
+    expect(formatTimeRange12Hour("12:00", "13:00")).toBe(" · 12:00 PM – 1:00 PM");
+    expect(formatTimeRange12Hour("00:00", "01:30")).toBe(" · 12:00 AM – 1:30 AM");
     expect(formatTimeRange12Hour(null, null)).toBe("");
   });
 

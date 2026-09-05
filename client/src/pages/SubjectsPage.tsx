@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Time12HourInput } from "@/components/TimeInputs";
 import { formatTimeRange12Hour } from "@/lib/time";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
+import { SubjectQuickActions } from "@/components/SubjectQuickActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,7 +76,7 @@ export default function SubjectsPage() {
 
           {!subjects.isLoading && !subjects.data?.length && <EmptyLibrary />}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {activeSubjects.map((subject, index) => (
               <SubjectDeskCard key={subject.id} subject={subject} position={index + 1} />
             ))}
@@ -110,7 +111,7 @@ function SubjectDeskCard({
             <span className="font-mono text-[10px] font-extrabold text-muted-foreground/60 tracking-wider">
               DESK {String(position).padStart(2, "0")}
             </span>
-            <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
               {subject.name}
             </h3>
           </div>
@@ -130,8 +131,8 @@ function SubjectDeskCard({
         </div>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-border/70 flex items-center justify-between gap-2">
-        <Button asChild size="sm" className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20">
+      <div className="mt-4 pt-3 border-t border-border/70 flex flex-wrap items-center justify-between gap-2">
+        <Button asChild size="sm" className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20 px-3 h-8">
           <Link href={`/app/subjects/${subject.id}`}>
             Enter Workspace <ArrowRight className="ml-1.5 size-3.5" />
           </Link>
@@ -150,6 +151,12 @@ function SubjectDeskCard({
           </Button>
         </div>
       </div>
+
+      <SubjectQuickActions
+        subjectId={subject.id}
+        publicId={subject.publicId}
+        publishState={subject.publishState}
+      />
     </div>
   );
 }

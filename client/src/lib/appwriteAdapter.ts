@@ -2833,8 +2833,8 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
     if (!doc) return { available: false };
     const subjectId = doc.$id;
 
-    // Fetch published announcements, resources, questions, and attendance
-    const [annRes, resRes, qRes, attRes] = await Promise.all([
+    // Fetch published announcements, resources, questions, attendance, and student master list
+    const [annRes, resRes, qRes, attRes, stuMemRes, studentMap] = await Promise.all([
       appwriteDatabases.listDocuments(DB_ID, "announcements", [
         Query.equal("subjectId", subjectId),
         Query.equal("publishState", "published"),
@@ -2859,23 +2859,40 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
         Query.orderDesc("startsAt"),
         Query.limit(50),
       ]).catch(() => ({ documents: [] })),
+      appwriteDatabases.listDocuments(DB_ID, "subjectStudents", [
+        Query.equal("subjectId", subjectId),
+        Query.limit(200),
+      ]).catch(() => ({ documents: [] })),
+      getCachedStudentMap(),
     ]);
 
-        const upcomingNoClass = attRes.documents.find(
-          (d: any) => d.sessionState === "no_class" && new Date(d.startsAt).getTime() >= Date.now() - 24 * 60 * 60 * 1000
-        );
+    const studentList = (stuMemRes.documents || [])
+      .filter((l: any) => (l.membershipState || "active") === "active")
+      .map((l: any) => {
+        const s = studentMap.get(l.studentId);
         return {
-          available: true,
-          subject: {
-            id: doc.$id,
-            publicId: doc.publicId,
-            name: doc.name,
-            code: doc.code,
-            viewOnlyShortMark: doc.viewOnlyShortMark || null,
-            viewOnlyName: doc.viewOnlyName || null,
-            professorName: doc.professorName,
-            meetingDays: parseMeetingDays(doc.meetingDaysJson),
-            noClass: upcomingNoClass ? { startsAt: new Date(upcomingNoClass.startsAt), reason: upcomingNoClass.noClassReason || "No class scheduled" } : null,
+          canonicalName: s?.canonicalName || "Student",
+          hasScheduleConflict: Boolean(l.hasScheduleConflict),
+        };
+      })
+      .sort(compareByLastNameAsc);
+
+    const upcomingNoClass = attRes.documents.find(
+      (d: any) => d.sessionState === "no_class" && new Date(d.startsAt).getTime() >= Date.now() - 24 * 60 * 60 * 1000
+    );
+    return {
+      available: true,
+      subject: {
+        id: doc.$id,
+        publicId: doc.publicId,
+        name: doc.name,
+        code: doc.code,
+        viewOnlyShortMark: doc.viewOnlyShortMark || null,
+        viewOnlyName: doc.viewOnlyName || null,
+        professorName: doc.professorName,
+        meetingDays: parseMeetingDays(doc.meetingDaysJson),
+        noClass: upcomingNoClass ? { startsAt: new Date(upcomingNoClass.startsAt), reason: upcomingNoClass.noClassReason || "No class scheduled" } : null,
+        students: studentList,
             latest: {
               attendance: attRes.documents.map((d: any) => ({
                 publicId: d.publicId,
@@ -3051,6 +3068,16 @@ export async function handleAppwriteClientProcedure(path: string, input: any): P
         isOfficial: Boolean(d.isOfficial),
         publishedAt: new Date(d.$updatedAt),
       })),
+    };
+  }
+
+  if (path === "foundation.publicStudents") {
+    const res = await handleAppwriteClientProcedure("foundation.publicSubject", input);
+    if (!res?.available) return { available: false };
+    return {
+      available: true,
+      count: res.subject.students?.length ?? 0,
+      students: res.subject.students ?? [],
     };
   }
 

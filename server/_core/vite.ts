@@ -44,6 +44,8 @@ function headTags(head: HeadMeta, reqOrigin?: string) {
     `<meta name="twitter:title" content="${title}" />`,
     `<meta name="twitter:description" content="${description}" />`,
     `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
+    `<meta name="twitter:image:width" content="1200" />`,
+    `<meta name="twitter:image:height" content="630" />`,
     head.publishedTime ? `<meta property="article:published_time" content="${escapeHtml(head.publishedTime)}" />` : "",
     head.noindex || head.notFound ? `<meta name="robots" content="noindex, follow" />` : "",
     head.jsonLd ? `<script type="application/ld+json" id="page-jsonld">${JSON.stringify(head.jsonLd).replace(/</g, "\\u003c")}</script>` : "",
@@ -56,7 +58,7 @@ function composeHtml(template: string, html: string, head: HeadMeta, state: unkn
     .replace(/<title>[\s\S]*?<\/title>/gi, "")
     .replace(/<meta\s+name=["']description["'][^>]*>/gi, "")
     .replace(/<meta\s+property=["']og:(?:title|description|image|image:secure_url|image:width|image:height|image:type|image:alt|site_name|type|url|locale)["'][^>]*>/gi, "")
-    .replace(/<meta\s+name=["']twitter:(?:card|title|description|image|image:alt|site|creator|url)["'][^>]*>/gi, "")
+    .replace(/<meta\s+name=["']twitter:(?:card|title|description|image|image:width|image:height|image:alt|site|creator|url)["'][^>]*>/gi, "")
     .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "")
     .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
 
@@ -99,6 +101,19 @@ export function serveStatic(app: Express) {
   });
   app.use(express.static(distPath, { index: false, redirect: false }));
   app.use("*", async (req, res) => {
+    const cleanReqPath = req.path.replace(/^\/+/, "");
+    if (cleanReqPath) {
+      const possibleStaticFiles = [
+        path.resolve(distPath, cleanReqPath, "index.html"),
+        path.resolve(distPath, `${cleanReqPath}.html`),
+      ];
+      for (const file of possibleStaticFiles) {
+        if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+          return res.sendFile(file);
+        }
+      }
+    }
+
     const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
     const reqOrigin = `${req.protocol}://${req.get("host")}`;
     try {
@@ -108,7 +123,25 @@ export function serveStatic(app: Express) {
       res.status(output.head.notFound ? 404 : 200).set("Cache-Control", "no-cache").type("html").end(composeHtml(template, output.html, output.head, output.dehydratedState, reqOrigin));
     } catch (error) {
       console.error("[SSR] render failed, serving shell:", error);
-      res.status(200).set("Cache-Control", "no-cache").type("html").end(template.replace("<!--app-head-->", () => headTags({ title: siteName, description: "A class secretary management system." }, reqOrigin)).replace("<!--app-html-->", () => ""));
+      let fallbackTitle = `${siteName} — Class Secretary Management System`;
+      let fallbackDesc = "A class secretary management system for private class operations and published class updates.";
+      if (req.path.startsWith("/a/")) {
+        fallbackTitle = `Class Announcement · ${siteName}`;
+        fallbackDesc = "Official class announcement and updates on supersec.";
+      } else if (req.path.startsWith("/r/")) {
+        fallbackTitle = `Class Resource · ${siteName}`;
+        fallbackDesc = "Official course resource and study materials on supersec.";
+      } else if (req.path.startsWith("/q/")) {
+        fallbackTitle = `Class Q&A · ${siteName}`;
+        fallbackDesc = "Frequently asked class question and verified answer on supersec.";
+      } else if (req.path.startsWith("/s/")) {
+        fallbackTitle = `Class Portal · ${siteName}`;
+        fallbackDesc = "Official student desk and class portal on supersec.";
+      } else if (req.path.startsWith("/attendance/")) {
+        fallbackTitle = `Class Attendance · ${siteName}`;
+        fallbackDesc = "Official class session attendance roll call on supersec.";
+      }
+      res.status(200).set("Cache-Control", "no-cache").type("html").end(template.replace("<!--app-head-->", () => headTags({ title: fallbackTitle, description: fallbackDesc, canonicalPath: req.path }, reqOrigin)).replace("<!--app-html-->", () => ""));
     }
   });
 }

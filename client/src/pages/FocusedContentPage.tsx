@@ -14,6 +14,13 @@ import { formatFileSize, isPublicImageMimeType, isSupportedPublicUploadMimeType,
 import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
-import { Archive, ArchiveRestore, ArrowLeft, BookOpen, Check, CircleHelp, Copy, ExternalLink, Eye, FileText, Image, Layers, Loader2, Megaphone, Paperclip, Pencil, Send, Share2, Sparkles, Trash2, Upload } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, BookOpen, Check, CircleHelp, Copy, ExternalLink, Eye, FileText, Image, Layers, Loader2, Megaphone, Paperclip, Pencil, Send, Share2, Sparkles, StickyNote, Trash2, Upload } from "lucide-react";
 import React, { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation, useRoute } from "wouter";
@@ -51,6 +58,178 @@ function toSafeIsoString(val: unknown): string | undefined {
 
 function fileToDataUrl(file: File) { return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Unable to read the selected file")); reader.onerror = () => reject(new Error("Unable to read the selected file")); reader.readAsDataURL(file); }); }
 function assetAccepts(mimeTypes: readonly string[]) { return mimeTypes.join(","); }
+
+const DEFAULT_SNIPPET_TEMPLATES = [
+  {
+    id: "header",
+    title: "Class Header",
+    template: "📢 [{{subject_code}}] {{subject_name}} · {{date}}",
+  },
+  {
+    id: "deadline",
+    title: "Submission Deadline Reminder",
+    template: "⚠️ Reminder for [{{subject_code}}]: Please submit all deliverables by {{date}}. For inquiries, consult Prof. {{professor}}.",
+  },
+  {
+    id: "suspension",
+    title: "Class Suspension Notice",
+    template: "🛑 No Class: [{{subject_code}}] sessions on {{date}} are suspended. Please review the portal for asynchronous tasks.",
+  },
+  {
+    id: "attendance",
+    title: "Attendance Prompt",
+    template: "📋 Attendance Prompt for [{{subject_code}}] ({{date}}): Attendance is now being recorded. Please confirm your presence.",
+  },
+  {
+    id: "materials",
+    title: "New Materials Uploaded",
+    template: "📚 New Study Materials for [{{subject_code}}]: Lecture slides and references have been uploaded on the class portal.",
+  },
+];
+
+function interpolateVariables(template: string, subject?: any) {
+  const now = new Date();
+  const dateStr = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(now);
+  const timeStr = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(now);
+  return template
+    .replace(/\{\{subject_code\}\}/gi, subject?.code || "SUBJ")
+    .replace(/\{\{subject_name\}\}/gi, subject?.name || "Course")
+    .replace(/\{\{professor\}\}/gi, subject?.professorName || "Professor")
+    .replace(/\{\{term\}\}/gi, subject?.termName || "Current Term")
+    .replace(/\{\{date\}\}/gi, dateStr)
+    .replace(/\{\{time\}\}/gi, timeStr);
+}
+
+function PrivateNotesDrawer({
+  isOpen,
+  onOpenChange,
+  currentSubject,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentSubject?: any;
+}) {
+  const storageKey = `supersec_private_notes_${currentSubject?.code || currentSubject?.id || "default"}`;
+  const [noteContent, setNoteContent] = useState(() => {
+    try {
+      return localStorage.getItem(storageKey) || "";
+    } catch {
+      return "";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      setNoteContent(saved || "");
+    } catch {
+      // ignore
+    }
+  }, [storageKey]);
+
+  const handleNoteChange = (val: string) => {
+    setNoteContent(val);
+    try {
+      localStorage.setItem(storageKey, val);
+    } catch {
+      // ignore
+    }
+  };
+
+  const copyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`Copied ${label} to clipboard`);
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto p-6 space-y-6 bg-card border-border">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <StickyNote className="size-5 text-primary" />
+            Private Notes &amp; Snippets
+          </SheetTitle>
+          <SheetDescription className="text-xs text-muted-foreground">
+            Fast copyable snippets with variable interpolation ({`{{subject_code}}`}, {`{{professor}}`}, {`{{date}}`}) and private working scratchpad for {currentSubject?.code || "this subject"}.
+          </SheetDescription>
+        </SheetHeader>
+
+        {/* Private Scratchpad */}
+        <div className="space-y-2 rounded-2xl border border-border/80 bg-secondary/30 p-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="private-scratchpad" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              <FileText className="size-3.5 text-primary" />
+              Secretary Scratchpad (Private)
+            </Label>
+            {noteContent.trim() ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => copyText(noteContent, "private note")}
+                className="h-7 text-xs font-semibold text-primary hover:bg-primary/10 gap-1 px-2"
+              >
+                <Copy className="size-3" />
+                Copy Note
+              </Button>
+            ) : null}
+          </div>
+          <Textarea
+            id="private-scratchpad"
+            value={noteContent}
+            onChange={e => handleNoteChange(e.target.value)}
+            placeholder="Type private draft thoughts, reminders, or scratch notes here... Saved automatically to your browser."
+            rows={4}
+            className="rounded-xl text-xs bg-background/80 resize-y"
+          />
+          <p className="text-[10px] text-muted-foreground">Persisted in local browser storage; never visible to students.</p>
+        </div>
+
+        {/* Quick Snippets with Variable Interpolation */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              <Sparkles className="size-3.5 text-primary" />
+              Messenger &amp; Fast Snippets
+            </h4>
+            <Badge variant="outline" className="text-[10px] font-mono">
+              {currentSubject?.code || "Subject"}
+            </Badge>
+          </div>
+
+          <div className="space-y-2.5">
+            {DEFAULT_SNIPPET_TEMPLATES.map(snippet => {
+              const interpolated = interpolateVariables(snippet.template, currentSubject);
+              return (
+                <div
+                  key={snippet.id}
+                  className="rounded-xl border border-border/70 bg-secondary/20 p-3 hover:border-primary/40 transition-all space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-foreground">{snippet.title}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyText(interpolated, snippet.title)}
+                      className="h-6 text-[11px] font-semibold text-primary hover:bg-primary/10 gap-1 px-2 rounded-lg"
+                    >
+                      <Copy className="size-3" />
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="text-xs font-mono text-muted-foreground bg-background/60 p-2 rounded-lg leading-relaxed whitespace-pre-wrap select-all">
+                    {interpolated}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export default function FocusedContentPage(props?: { params?: { subjectId?: string; kind?: string; itemId?: string } }) {
   const [, listParams] = useRoute("/app/subjects/:subjectId/:kind");
@@ -99,11 +278,11 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   const [changeSummary, setChangeSummary] = useState("");
   const [mediaAssetId, setMediaAssetId] = useState<number | null>(null);
   const [socialPreviewMediaAssetId, setSocialPreviewMediaAssetId] = useState<number | null>(null);
-  const [coverAsset, setCoverAsset] = useState<AttachmentAsset | null>(null);
   const [socialAsset, setSocialAsset] = useState<AttachmentAsset | null>(null);
   const [attachmentAssets, setAttachmentAssets] = useState<AttachmentAsset[]>([]);
   const [imageAltText, setImageAltText] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
   const [pendingContentAction, setPendingContentAction] = useState<ContentRowAction | null>(null);
   const selectedItem = useMemo(() => {
     const list = kind === "announcements" ? announcements.data : kind === "resources" ? resources.data : questions.data;
@@ -113,8 +292,8 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   useEffect(() => {
     if (!editing || !selectedItem) return;
     setChangeSummary(""); setPreviewOpen(false);
-    if (kind === "announcements" && "body" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.body); setMediaAssetId(selectedItem.mediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setCoverAsset(selectedItem.coverAsset ?? null); setSocialAsset(selectedItem.socialAsset ?? null); }
-    if (kind === "resources" && "description" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.description); setCategory(selectedItem.category); setResourceType(selectedItem.resourceType); setDestinationUrl(selectedItem.destinationUrl); setMediaAssetId(selectedItem.fallbackMediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setAttachmentAssets(selectedItem.attachments ?? []); setCoverAsset(selectedItem.coverAsset ?? null); setSocialAsset(selectedItem.socialAsset ?? null); }
+    if (kind === "announcements" && "body" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.body); setMediaAssetId(selectedItem.mediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setSocialAsset(selectedItem.socialAsset ?? null); }
+    if (kind === "resources" && "description" in selectedItem) { setTitle(selectedItem.title); setBody(selectedItem.description); setCategory(selectedItem.category); setResourceType(selectedItem.resourceType); setDestinationUrl(selectedItem.destinationUrl); setMediaAssetId(selectedItem.fallbackMediaAssetId); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setAttachmentAssets(selectedItem.attachments ?? []); setSocialAsset(selectedItem.socialAsset ?? null); }
     if (kind === "questions" && "question" in selectedItem) { setQuestion(selectedItem.question); setAnswer(selectedItem.answer); setTagsText(selectedItem.tagsText ?? ""); setIsOfficial(selectedItem.isOfficial); setSocialPreviewMediaAssetId(selectedItem.socialPreviewMediaAssetId); setSocialAsset(selectedItem.socialAsset ?? null); }
   }, [editing, kind, selectedItem]);
 
@@ -143,7 +322,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
 
   useEffect(() => {
     if (!isAuthoring || editing) return;
-    setTitle(""); setBody(""); setCategory(""); setResourceType("External link"); setDestinationUrl(""); setQuestion(""); setAnswer(""); setTagsText(""); setIsOfficial(true); setChangeSummary(""); setMediaAssetId(null); setSocialPreviewMediaAssetId(null); setCoverAsset(null); setSocialAsset(null); setAttachmentAssets([]); setImageAltText(""); setPreviewOpen(false); setSelectedCrossPostSubjectIds([]);
+    setTitle(""); setBody(""); setCategory(""); setResourceType("External link"); setDestinationUrl(""); setQuestion(""); setAnswer(""); setTagsText(""); setIsOfficial(true); setChangeSummary(""); setMediaAssetId(null); setSocialPreviewMediaAssetId(null); setSocialAsset(null); setAttachmentAssets([]); setImageAltText(""); setPreviewOpen(false); setSelectedCrossPostSubjectIds([]);
   }, [editing, isAuthoring, kind]);
 
   const refresh = async () => {
@@ -311,20 +490,19 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
 
   const busy = uploadMedia.isPending || announcementCreate.isPending || resourceCreate.isPending || questionCreate.isPending || announcementUpdate.isPending || resourceUpdate.isPending || questionUpdate.isPending || crossPostAnnouncement.isPending || crossPostResource.isPending || crossPostQuestion.isPending || deleteAnnouncement.isPending || deleteResource.isPending || deleteQuestion.isPending || autoDraft.isPending;
 
-  const uploadAsset = async (event: ChangeEvent<HTMLInputElement>, target: "cover" | "social" | "attachment") => {
+  const uploadAsset = async (event: ChangeEvent<HTMLInputElement>, target: "social" | "attachment") => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     if (file.size > MAX_PUBLIC_UPLOAD_BYTES) return toast.error("Choose a file smaller than 8 MB");
-    const isImageSlot = target === "cover" || target === "social";
+    const isImageSlot = target === "social";
     if (!isSupportedPublicUploadMimeType(file.type) || (isImageSlot && !isPublicImageMimeType(file.type)) || (target === "attachment" && !isSupportedResourceFileMimeType(file.type))) return toast.error(isImageSlot ? "Choose a supported image" : "Choose a PDF, document, spreadsheet, presentation, text file, or CSV");
     if (target === "attachment" && attachmentAssets.length >= 6) return toast.error("A Resource can include up to 6 attached files");
     try {
       const uploaded = await uploadMedia.mutateAsync({ fileName: file.name, mimeType: file.type, base64Data: await fileToDataUrl(file), altText: isImageSlot ? imageAltText.trim() || title || question || null : null, publicUse: true });
       const asset: AttachmentAsset = { id: uploaded.id, url: uploaded.url, originalName: uploaded.originalName, mimeType: uploaded.mimeType, byteSize: uploaded.byteSize, altText: isImageSlot ? imageAltText.trim() || title || question || null : null };
-      if (target === "cover") { setMediaAssetId(asset.id as any); setCoverAsset(asset); toast.success("Cover image attached"); }
-      if (target === "social") { setSocialPreviewMediaAssetId(asset.id as any); setSocialAsset(asset); toast.success("Messenger image attached"); }
-      if (target === "attachment") { setAttachmentAssets(current => [...current, asset]); if (!destinationUrl) { setDestinationUrl(new URL(asset.url, window.location.origin).toString()); setResourceType("File attachment"); } toast.success("Course file attached"); }
+      if (target === "social") { setSocialPreviewMediaAssetId(asset.id as any); setSocialAsset(asset); toast.success("Messenger preview image attached"); }
+      if (target === "attachment") { setAttachmentAssets(current => [...current, asset]); if (!destinationUrl) { setDestinationUrl(new URL(asset.url, window.location.origin).toString()); setResourceType("File attachment"); } toast.success("Attachment added"); }
     } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to upload the selected file"); }
   };
 
@@ -379,9 +557,162 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
     }
   };
 
-  if (isAuthoring) return <DashboardLayout><section className="mx-auto max-w-4xl"><WorkspacePageHeader eyebrow={tab.label} title={`${editing ? "Edit" : "New"} ${tab.singular}`} description={editing ? "Save changes as a new version." : "Create a draft. Publish it when ready."} back={<Link href={`/app/subjects/${subjectId}/${kind}`} className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"><ArrowLeft className="size-4" />Back to {tab.label}</Link>} />
-    <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden"><div className="border-b border-border bg-secondary/65 p-5 sm:p-6"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"><Icon className="size-4" /></span><div><p className="signal-kicker">Editor</p><h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">{editing ? `Edit ${tab.singular}` : `Create ${tab.singular}`}</h2></div></div></div>{editing && !selectedItem ? <p className="signal-inset m-5 p-4 text-sm text-muted-foreground">Loading item…</p> : <div className="flex flex-col gap-5 p-5 sm:p-6">{kind === "announcements" ? <AnnouncementFields title={title} body={body} previewOpen={previewOpen} onTitleChange={setTitle} onBodyChange={setBody} onPreview={() => setPreviewOpen(value => !value)} /> : null}{kind === "resources" ? <ResourceFields title={title} body={body} category={category} resourceType={resourceType} destinationUrl={destinationUrl} onTitleChange={setTitle} onBodyChange={setBody} onCategoryChange={setCategory} onResourceTypeChange={setResourceType} onDestinationUrlChange={setDestinationUrl} /> : null}{kind === "questions" ? <QuestionFields question={question} answer={answer} tagsText={tagsText} isOfficial={isOfficial} changeSummary={changeSummary} editing={editing} onQuestionChange={setQuestion} onAnswerChange={setAnswer} onTagsChange={setTagsText} onOfficialChange={setIsOfficial} onSummaryChange={setChangeSummary} onAutoDraft={handleAutoDraft} isDrafting={autoDraft.isPending} /> : null}<MediaFields kind={kind} coverAsset={coverAsset} socialAsset={socialAsset} attachmentAssets={attachmentAssets} imageAltText={imageAltText} busy={uploadMedia.isPending} onImageAltTextChange={setImageAltText} onUpload={uploadAsset} onRemoveCover={() => { setMediaAssetId(null); setCoverAsset(null); }} onRemoveSocial={() => { setSocialPreviewMediaAssetId(null); setSocialAsset(null); }} onRemoveAttachment={assetId => setAttachmentAssets(current => current.filter(asset => asset.id !== assetId))} />{otherSubjects.length > 0 ? <CrossPostFormSection isEditing={editing} otherSubjects={otherSubjects} selectedSubjectIds={selectedCrossPostSubjectIds} onChange={setSelectedCrossPostSubjectIds} /> : null}{editing && kind !== "questions" ? <ChangeSummary value={changeSummary} onChange={setChangeSummary} onAutoDraft={handleAutoDraft} isDrafting={autoDraft.isPending} /> : null}<div className="signal-inset border-l-2 border-l-primary p-4 text-sm text-muted-foreground"><Check className="mr-2 inline size-4 text-primary" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Saves a new public version and syncs updates to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a new public version.") : selectedCrossPostSubjectIds.length > 0 ? `Publishes and cross-posts to ${selectedCrossPostSubjectIds.length} other subject(s).` : "Saves a private draft."}</div><div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="outline" onClick={backToList}>Cancel</Button><Button disabled={busy}><Send className="size-4" />{editing ? (selectedCrossPostSubjectIds.length > 0 ? `Save & Sync (${selectedCrossPostSubjectIds.length + 1})` : "Save new version") : selectedCrossPostSubjectIds.length > 0 ? `Publish & Cross-Post (${selectedCrossPostSubjectIds.length + 1})` : "Save draft"}</Button></div></div>}</form>
-  </section></DashboardLayout>;
+  if (isAuthoring) return (
+    <DashboardLayout>
+      <section className="mx-auto max-w-4xl">
+        <WorkspacePageHeader
+          eyebrow={tab.label}
+          title={`${editing ? "Edit" : "New"} ${tab.singular}`}
+          description={editing ? "Save changes as a new version." : "Create a draft. Publish it when ready."}
+          back={
+            <Link
+              href={`/app/subjects/${subjectId}/${kind}`}
+              className="signal-action inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" />
+              Back to {tab.label}
+            </Link>
+          }
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNotesDrawerOpen(true)}
+              className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+            >
+              <StickyNote className="size-3.5 text-primary" />
+              <span>Notes &amp; Snippets</span>
+            </Button>
+          }
+        />
+        <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden">
+          <div className="border-b border-border bg-secondary/65 p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
+                <Icon className="size-4" />
+              </span>
+              <div>
+                <p className="signal-kicker">Editor</p>
+                <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
+                  {editing ? `Edit ${tab.singular}` : `Create ${tab.singular}`}
+                </h2>
+              </div>
+            </div>
+          </div>
+          {editing && !selectedItem ? (
+            <p className="signal-inset m-5 p-4 text-sm text-muted-foreground">Loading item…</p>
+          ) : (
+            <div className="flex flex-col gap-5 p-5 sm:p-6">
+              {kind === "announcements" ? (
+                <AnnouncementFields
+                  title={title}
+                  body={body}
+                  previewOpen={previewOpen}
+                  onTitleChange={setTitle}
+                  onBodyChange={setBody}
+                  onPreview={() => setPreviewOpen(value => !value)}
+                />
+              ) : null}
+              {kind === "resources" ? (
+                <ResourceFields
+                  title={title}
+                  body={body}
+                  category={category}
+                  resourceType={resourceType}
+                  destinationUrl={destinationUrl}
+                  onTitleChange={setTitle}
+                  onBodyChange={setBody}
+                  onCategoryChange={setCategory}
+                  onResourceTypeChange={setResourceType}
+                  onDestinationUrlChange={setDestinationUrl}
+                />
+              ) : null}
+              {kind === "questions" ? (
+                <QuestionFields
+                  question={question}
+                  answer={answer}
+                  tagsText={tagsText}
+                  isOfficial={isOfficial}
+                  changeSummary={changeSummary}
+                  editing={editing}
+                  onQuestionChange={setQuestion}
+                  onAnswerChange={setAnswer}
+                  onTagsChange={setTagsText}
+                  onOfficialChange={setIsOfficial}
+                  onSummaryChange={setChangeSummary}
+                  onAutoDraft={handleAutoDraft}
+                  isDrafting={autoDraft.isPending}
+                />
+              ) : null}
+              <MediaFields
+                kind={kind}
+                socialAsset={socialAsset}
+                attachmentAssets={attachmentAssets}
+                imageAltText={imageAltText}
+                busy={uploadMedia.isPending}
+                onImageAltTextChange={setImageAltText}
+                onUpload={uploadAsset}
+                onRemoveSocial={() => {
+                  setSocialPreviewMediaAssetId(null);
+                  setSocialAsset(null);
+                }}
+                onRemoveAttachment={assetId =>
+                  setAttachmentAssets(current => current.filter(asset => asset.id !== assetId))
+                }
+              />
+              {otherSubjects.length > 0 ? (
+                <CrossPostFormSection
+                  isEditing={editing}
+                  otherSubjects={otherSubjects}
+                  selectedSubjectIds={selectedCrossPostSubjectIds}
+                  onChange={setSelectedCrossPostSubjectIds}
+                />
+              ) : null}
+              {editing && kind !== "questions" ? (
+                <ChangeSummary
+                  value={changeSummary}
+                  onChange={setChangeSummary}
+                  onAutoDraft={handleAutoDraft}
+                  isDrafting={autoDraft.isPending}
+                />
+              ) : null}
+              <div className="signal-inset border-l-2 border-l-primary p-4 text-sm text-muted-foreground">
+                <Check className="mr-2 inline size-4 text-primary" />
+                {editing
+                  ? selectedCrossPostSubjectIds.length > 0
+                    ? `Saves a new public version and syncs updates to ${selectedCrossPostSubjectIds.length} other subject(s).`
+                    : "Saves a new public version."
+                  : selectedCrossPostSubjectIds.length > 0
+                  ? `Publishes and cross-posts to ${selectedCrossPostSubjectIds.length} other subject(s).`
+                  : "Saves a private draft."}
+              </div>
+              <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={backToList}>
+                  Cancel
+                </Button>
+                <Button disabled={busy}>
+                  <Send className="size-4" />
+                  {editing
+                    ? selectedCrossPostSubjectIds.length > 0
+                      ? `Save & Sync (${selectedCrossPostSubjectIds.length + 1})`
+                      : "Save new version"
+                    : selectedCrossPostSubjectIds.length > 0
+                    ? `Publish & Cross-Post (${selectedCrossPostSubjectIds.length + 1})`
+                    : "Save draft"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </form>
+      </section>
+      <PrivateNotesDrawer
+        isOpen={notesDrawerOpen}
+        onOpenChange={setNotesDrawerOpen}
+        currentSubject={currentSubject}
+      />
+    </DashboardLayout>
+  );
 
 
   const ContentList = (props: LocalContentListProps) => (
@@ -418,12 +749,25 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             </Link>
           }
           action={
-            <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25">
-              <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
-                <Send className="mr-1.5 size-4" />
-                New {tab.singular}
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setNotesDrawerOpen(true)}
+                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+              >
+                <StickyNote className="size-3.5 text-primary" />
+                <span className="hidden sm:inline">Notes &amp; Snippets</span>
+                <span className="sm:hidden">Notes</span>
+              </Button>
+              <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
+                <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
+                  <Send className="mr-1.5 size-4" />
+                  New {tab.singular}
+                </Link>
+              </Button>
+            </div>
           }
         />
 
@@ -560,6 +904,11 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
           </AlertDialogContent>
         </AlertDialog>
       </section>
+      <PrivateNotesDrawer
+        isOpen={notesDrawerOpen}
+        onOpenChange={setNotesDrawerOpen}
+        currentSubject={currentSubject}
+      />
     </DashboardLayout>
   );
 }
@@ -883,30 +1232,25 @@ function UploadSlot({
 
 function MediaFields({
   kind,
-  coverAsset,
   socialAsset,
   attachmentAssets,
   imageAltText,
   busy,
   onImageAltTextChange,
   onUpload,
-  onRemoveCover,
   onRemoveSocial,
   onRemoveAttachment,
 }: {
   kind: ContentKind;
-  coverAsset: AttachmentAsset | null;
   socialAsset: AttachmentAsset | null;
   attachmentAssets: AttachmentAsset[];
   imageAltText: string;
   busy: boolean;
   onImageAltTextChange: (value: string) => void;
-  onUpload: (event: ChangeEvent<HTMLInputElement>, target: "cover" | "social" | "attachment") => void;
-  onRemoveCover: () => void;
+  onUpload: (event: ChangeEvent<HTMLInputElement>, target: "social" | "attachment") => void;
   onRemoveSocial: () => void;
   onRemoveAttachment: (assetId: number | string) => void;
 }) {
-  const hasImageSlot = kind !== "questions";
   return (
     <section className="rounded-2xl border border-border/80 bg-secondary/30 p-4 sm:p-5 space-y-3">
       <div className="flex items-start gap-3">
@@ -921,39 +1265,23 @@ function MediaFields({
         </div>
       </div>
 
-      {hasImageSlot ? (
-        <Field label="Image Alt Description (optional)" htmlFor="attachment-image-description">
-          <Input
-            id="attachment-image-description"
-            value={imageAltText}
-            onChange={event => onImageAltTextChange(event.target.value)}
-            placeholder="Describe the image content for accessibility"
-            className="rounded-xl"
-          />
-        </Field>
-      ) : null}
+      <Field label="Messenger Preview Card Image Alt (optional)" htmlFor="attachment-image-description">
+        <Input
+          id="attachment-image-description"
+          value={imageAltText}
+          onChange={event => onImageAltTextChange(event.target.value)}
+          placeholder="Describe the preview card image for accessibility"
+          className="rounded-xl"
+        />
+      </Field>
 
-      <div className={`mt-3 grid gap-3 ${hasImageSlot ? "sm:grid-cols-2" : ""}`}>
-        {hasImageSlot ? (
-          coverAsset ? (
-            <AttachmentTile asset={coverAsset} label="Cover Image" image onRemove={onRemoveCover} />
-          ) : (
-            <UploadSlot
-              label={kind === "resources" ? "Attach Cover Image" : "Attach Header Image"}
-              detail="Displayed at the top of the shared page."
-              accept={assetAccepts(PUBLIC_IMAGE_MIME_TYPES)}
-              disabled={busy}
-              onChange={event => onUpload(event, "cover")}
-            />
-          )
-        ) : null}
-
+      <div className="mt-3">
         {socialAsset ? (
           <AttachmentTile asset={socialAsset} label="Messenger Preview Image" image onRemove={onRemoveSocial} />
         ) : (
           <UploadSlot
             label="Attach Messenger Preview Card"
-            detail="Optional custom image for Facebook & Messenger link cards."
+            detail="Optional custom image for Facebook &amp; Messenger link cards."
             accept={assetAccepts(PUBLIC_IMAGE_MIME_TYPES)}
             disabled={busy}
             onChange={event => onUpload(event, "social")}
@@ -965,7 +1293,7 @@ function MediaFields({
         <div className="mt-4 border-t border-border/60 pt-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-foreground">Downloadable Course Files</p>
+              <p className="text-xs font-bold text-foreground">Attachments</p>
               <p className="text-[11px] text-muted-foreground">Attach up to 6 files per resource.</p>
             </div>
             <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -978,7 +1306,7 @@ function MediaFields({
               <AttachmentTile
                 key={asset.id}
                 asset={asset}
-                label="Course File"
+                label="Attachment"
                 image={false}
                 onRemove={() => onRemoveAttachment(asset.id)}
               />
@@ -1364,17 +1692,20 @@ export function SignalContentList({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-base sm:text-lg font-bold text-foreground truncate">{title}</h3>
                     {kind === "questions" && item.isOfficial ? (
                       <span className="glow-badge-orange text-[10px] px-2 py-0.5 rounded-full font-bold">
                         Official Answer
                       </span>
                     ) : null}
+                    {kind === "resources" && item.category ? (
+                      <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {item.category}
+                      </span>
+                    ) : null}
                   </div>
-                  <p className="line-clamp-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                    {detail}
-                  </p>
+                  {/* Card Description Hiding: Purge body description snippets from cards for uncluttered studio lists */}
                 </div>
 
                 <RecordStatusBadge tone={state === "published" ? "published" : state === "archived" ? "archived" : "draft"}>
@@ -1448,7 +1779,7 @@ export function SignalContentList({
                             Messenger Card
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-card/95 backdrop-blur-xl border-border/80 p-6 rounded-3xl">
+                        <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/80 p-6 rounded-3xl">
                           <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
                               <Sparkles className="size-5 text-primary" />
@@ -1465,6 +1796,7 @@ export function SignalContentList({
                               publicUrl={`${typeof window !== "undefined" ? window.location.origin : "https://supersec.mjbalubar.tech"}${sharePath || ""}`}
                               version={item.version || 1}
                               category={kind === "resources" ? item.category : undefined}
+                              coverUrl={item.socialAsset?.url || (item.socialPreviewMediaAssetId ? `/api/media/${item.socialPreviewMediaAssetId}` : undefined)}
                             />
                           </div>
                         </DialogContent>

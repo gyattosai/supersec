@@ -18,7 +18,7 @@ describe("12-hour time formatting", () => {
     expect(time12PartsTo24({ hour: "12", minute: "00", period: "AM" })).toBe("00:00");
     expect(time12PartsTo24({ hour: "12", minute: "30", period: "PM" })).toBe("12:30");
     expect(time12PartsTo24({ hour: "9", minute: "07", period: "PM" })).toBe("21:07");
-    expect(formatTimeRange12Hour("09:07", "17:20")).toBe(" · 9:07 AM–5:20 PM");
+    expect(formatTimeRange12Hour("09:07", "17:20")).toBe(" · 9:07 AM – 5:20 PM");
   });
 
   it("uses an explicit 12-hour clock for date-time displays", () => {

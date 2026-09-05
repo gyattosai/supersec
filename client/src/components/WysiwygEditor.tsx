@@ -374,6 +374,15 @@ export function WysiwygEditor({
       }
     } else {
       document.execCommand("createLink", false, url);
+      if (editorRef.current) {
+        const anchors = editorRef.current.querySelectorAll("a");
+        anchors.forEach(anchor => {
+          if (!anchor.getAttribute("target")) {
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute("rel", "noreferrer");
+          }
+        });
+      }
     }
 
     handleInput();
@@ -388,9 +397,94 @@ export function WysiwygEditor({
     handleInput();
   };
 
+  // Helper to find closest ancestor node with given tag name
+  const getClosestNode = (selection: Selection | null, root: HTMLElement | null, tagName: string): HTMLElement | null => {
+    if (!selection || !selection.anchorNode || !root) return null;
+    let curr: Node | null = selection.anchorNode;
+    while (curr && curr !== root) {
+      if (curr.nodeType === Node.ELEMENT_NODE && (curr as HTMLElement).tagName.toLowerCase() === tagName.toLowerCase()) {
+        return curr as HTMLElement;
+      }
+      curr = curr.parentNode;
+    }
+    return null;
+  };
+
   // Keyboard shortcut listener
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled || mode !== "visual") return;
+
+    // Handle Enter key for task lists and blockquotes
+    if (e.key === "Enter" && !e.shiftKey) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && editorRef.current) {
+        // 1. Task list enter handling
+        const taskLi = getClosestNode(selection, editorRef.current, "li");
+        if (taskLi && taskLi.closest("ul.task-list")) {
+          e.preventDefault();
+          const taskUl = taskLi.closest("ul.task-list")!;
+          const textWithoutCheckbox = taskLi.textContent?.trim() || "";
+          if (!textWithoutCheckbox) {
+            // Exit task list
+            const p = document.createElement("p");
+            p.appendChild(document.createElement("br"));
+            taskLi.remove();
+            if (taskUl.children.length === 0) {
+              taskUl.parentNode?.insertBefore(p, taskUl);
+              taskUl.remove();
+            } else {
+              taskUl.after(p);
+            }
+            const newRange = document.createRange();
+            newRange.setStart(p, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            handleInput();
+            return;
+          } else {
+            // Create next task item
+            const newLi = document.createElement("li");
+            newLi.setAttribute("data-task", "false");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.disabled = true;
+            newLi.appendChild(checkbox);
+            const textNode = document.createTextNode(" ");
+            newLi.appendChild(textNode);
+            taskLi.after(newLi);
+
+            const newRange = document.createRange();
+            newRange.setStart(textNode, 1);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            handleInput();
+            return;
+          }
+        }
+
+        // 2. Blockquote enter handling
+        const bq = getClosestNode(selection, editorRef.current, "blockquote");
+        if (bq) {
+          const bqText = bq.textContent?.trim() || "";
+          if (!bqText) {
+            e.preventDefault();
+            const p = document.createElement("p");
+            p.appendChild(document.createElement("br"));
+            bq.after(p);
+            bq.remove();
+            const newRange = document.createRange();
+            newRange.setStart(p, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            handleInput();
+            return;
+          }
+        }
+      }
+    }
 
     if (e.ctrlKey || e.metaKey) {
       if (e.key === "b" || e.key === "B") {
@@ -719,7 +813,7 @@ export function WysiwygEditor({
             onKeyUp={updateActiveStyles}
             onMouseUp={updateActiveStyles}
             data-placeholder={placeholder}
-            className={`${minHeightClassName} signal-wysiwyg-content w-full bg-transparent font-sans text-sm sm:text-base leading-relaxed text-foreground outline-none empty:before:pointer-events-none empty:before:text-muted-foreground/60 empty:before:content-[attr(data-placeholder)] [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_a]:font-medium [&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:bg-secondary/20 [&_blockquote]:py-1.5 [&_blockquote]:px-4 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-3 [&_code]:rounded-md [&_code]:bg-secondary/80 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-foreground [&_pre]:rounded-xl [&_pre]:bg-secondary/70 [&_pre]:p-4 [&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:overflow-x-auto [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-foreground [&_h2]:mb-2.5 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:text-foreground [&_hr]:my-4 [&_hr]:border-border/70 [&_li]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-1 [&_p]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-1 [&_ul.task-list]:list-none [&_ul.task-list>li]:ml-1 [&_ul.task-list>li]:flex [&_ul.task-list>li]:items-center [&_ul.task-list>li]:gap-2`}
+            className={`${minHeightClassName} signal-wysiwyg-content whitespace-pre-wrap w-full bg-transparent font-sans text-sm sm:text-base leading-relaxed text-foreground outline-none empty:before:pointer-events-none empty:before:text-muted-foreground/60 empty:before:content-[attr(data-placeholder)] [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_a]:font-medium [&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:bg-secondary/20 [&_blockquote]:py-1.5 [&_blockquote]:px-4 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-3 [&_code]:rounded-md [&_code]:bg-secondary/80 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-foreground [&_pre]:rounded-xl [&_pre]:bg-secondary/70 [&_pre]:p-4 [&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:overflow-x-auto [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-foreground [&_h2]:mb-2.5 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:text-foreground [&_hr]:my-4 [&_hr]:border-border/70 [&_li]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-1 [&_p]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:space-y-1 [&_ul.task-list]:list-none [&_ul.task-list>li]:ml-1 [&_ul.task-list>li]:flex [&_ul.task-list>li]:items-center [&_ul.task-list>li]:gap-2`}
           />
         ) : (
           <textarea

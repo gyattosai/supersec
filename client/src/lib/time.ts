@@ -39,7 +39,7 @@ export function formatTime12Hour(value: string | null | undefined): string {
 export function formatTimeRange12Hour(startTime: string | null | undefined, endTime: string | null | undefined): string {
   const start = formatTime12Hour(startTime);
   const end = formatTime12Hour(endTime);
-  return start ? ` · ${start}${end ? `–${end}` : ""}` : "";
+  return start ? ` · ${start}${end ? ` – ${end}` : ""}` : "";
 }
 
 export function formatDateTime12Hour(value: Date | string | number): string {
