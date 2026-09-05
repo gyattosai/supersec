@@ -139,7 +139,7 @@ export interface StaticRouteItem {
   path: string;
   title: string;
   description: string;
-  ogImage: string;
+  ogImage?: string;
   ogType?: string;
   jsonLd?: Record<string, any>;
 }
@@ -159,6 +159,48 @@ export async function buildStaticSeoPages() {
   const addRoute = (route: StaticRouteItem) => {
     routes.push(route);
   };
+
+  // Core application routes for SPA static hosting
+  addRoute({
+    path: "/login",
+    title: "Secretary Sign In — supersec",
+    description: "Sign in to supersec class secretary management workspace.",
+  });
+  addRoute({
+    path: "/app",
+    title: "Secretary Desk — supersec",
+    description: "supersec class secretary management workspace.",
+  });
+  addRoute({
+    path: "/app/subjects",
+    title: "Subject Desks — supersec",
+    description: "Manage class subject desks, weekly rhythms, and student rosters.",
+  });
+  addRoute({
+    path: "/app/reports",
+    title: "Reports Desk — supersec",
+    description: "View and export verified attendance records.",
+  });
+  addRoute({
+    path: "/app/settings",
+    title: "Workspace Settings — supersec",
+    description: "Manage secretary profile, color mode, and preferences.",
+  });
+  addRoute({
+    path: "/app/templates",
+    title: "Message Snippets — supersec",
+    description: "Fast messenger blast templates and snippets.",
+  });
+  addRoute({
+    path: "/app/notes",
+    title: "Notes Desk — supersec",
+    description: "Rich-text notes and lecture references.",
+  });
+  addRoute({
+    path: "/app/archive",
+    title: "Archive — supersec",
+    description: "Retained class items and past records.",
+  });
 
   try {
     console.log("Fetching live published documents from Appwrite Cloud DB...");
@@ -469,6 +511,10 @@ export async function buildStaticSeoPages() {
       await fs.promises.writeFile(`${targetDir}.html`, html, "utf-8");
     }
   }
+
+  // Generate 404.html as SPA fallback for static hosting providers like Appwrite Sites
+  await fs.promises.writeFile(path.join(distDir, "404.html"), template, "utf-8");
+  console.log(`  ✓ Generated dist/public/404.html SPA fallback`);
 
   console.log(`  ✓ Successfully built ${routes.length} static SEO routes`);
 
