@@ -62,7 +62,7 @@ export function SubjectQuickActions({
       <Button
         asChild
         size="sm"
-        className="h-8 px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
+        className="min-h-11 sm:min-h-9 px-3.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
         onClick={handleStopPropagation}
       >
         <Link href={`/app/subjects/${subjectId}`}>
@@ -76,7 +76,7 @@ export function SubjectQuickActions({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 px-2.5 rounded-xl text-xs font-semibold border-border/80 text-foreground hover:bg-secondary"
+            className="min-h-11 sm:min-h-9 px-3 rounded-xl text-xs font-semibold border-border/80 text-foreground hover:bg-secondary"
           >
             Actions
             <ChevronDown className="size-3 ml-1.5 opacity-60" />

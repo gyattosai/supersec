@@ -1028,7 +1028,7 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
                     </div>
 
                     {/* Emoji Category Tabs */}
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                    <div className="flex flex-wrap items-center gap-1">
                       {Object.keys(EMOJI_CATEGORIES).map(cat => {
                         const info = EMOJI_CATEGORIES[cat];
                         const isActive = activeEmojiCategory === cat;
@@ -1037,7 +1037,7 @@ export function MessageTemplatesCard({ initialSubjectId, embedded = false }: Mes
                             key={cat}
                             type="button"
                             onClick={() => setActiveEmojiCategory(cat)}
-                            className={`min-h-8 inline-flex items-center px-2.5 py-1 text-xs sm:text-[10px] font-bold rounded-lg transition-all shrink-0 ${
+                            className={`min-h-9 sm:min-h-8 inline-flex items-center px-2.5 py-1 text-xs sm:text-[11px] font-bold rounded-lg transition-all shrink-0 ${
                               isActive
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground bg-card/60 border border-border/50"

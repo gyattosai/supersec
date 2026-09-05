@@ -441,11 +441,11 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
 
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/60 text-xs">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setFilterTab("ALL")}
-                className={`rounded-lg px-2.5 py-1 font-bold transition-all ${
+                className={`signal-action min-h-10 sm:min-h-8 inline-flex items-center rounded-lg px-3 py-1.5 font-bold transition-all ${
                   filterTab === "ALL"
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                     : "text-muted-foreground hover:text-foreground bg-secondary/50"
@@ -456,7 +456,7 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
               <button
                 type="button"
                 onClick={() => setFilterTab("CONFLICT")}
-                className={`rounded-lg px-2.5 py-1 font-bold transition-all ${
+                className={`signal-action min-h-10 sm:min-h-8 inline-flex items-center rounded-lg px-3 py-1.5 font-bold transition-all ${
                   filterTab === "CONFLICT"
                     ? "bg-amber-500 text-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground bg-secondary/50"
@@ -467,7 +467,7 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
               <button
                 type="button"
                 onClick={() => setFilterTab("NOTES")}
-                className={`rounded-lg px-2.5 py-1 font-bold transition-all ${
+                className={`signal-action min-h-10 sm:min-h-8 inline-flex items-center rounded-lg px-3 py-1.5 font-bold transition-all ${
                   filterTab === "NOTES"
                     ? "bg-primary/20 text-primary border border-primary/30"
                     : "text-muted-foreground hover:text-foreground bg-secondary/50"
@@ -505,7 +505,7 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
                       : "border-border/80 bg-card hover:border-primary/40 hover:shadow-md"
                   }`}
                 >
-                  <div className="flex items-start gap-3.5 min-w-0">
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
                     <div className="pt-1.5 shrink-0">
                       <BulkCheckbox
                         checked={selectedIds.has(sId)}
@@ -518,7 +518,7 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
                       {initials}
                     </span>
 
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-sm sm:text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
                           {displayName(student)}
@@ -541,14 +541,14 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
                         ) : null}
                       </div>
 
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="mt-0.5 text-xs text-muted-foreground truncate">
                         {student.firstName || "First name missing"}
                         {student.middleName ? ` · ${student.middleName}` : ""} ·{" "}
                         {student.lastName || "Last name missing"}
                       </p>
 
                       {student.privateNotes ? (
-                        <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-lg">
+                        <p className="mt-2 inline-flex max-w-full items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-lg">
                           <FileText className="size-3.5 shrink-0" />
                           <span className="truncate max-w-md">{student.privateNotes}</span>
                         </p>
@@ -556,7 +556,7 @@ export function FocusedStudentsPage(props?: { params?: { subjectId?: string } })
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60 justify-end">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60 w-full sm:w-auto justify-start sm:justify-end">
                     <Button
                       type="button"
                       variant="outline"

@@ -281,7 +281,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
             </Link>
           }
           action={
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setComposer("no-class")}>
                 <CalendarX className="h-4 w-4" />
                 Add No Class
@@ -337,11 +337,11 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
 
             {/* Filter Tabs */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-lg border border-border/80 bg-muted/40 p-1 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/40 p-1 text-xs">
                 <button
                   type="button"
                   onClick={() => setFilterTab("all")}
-                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                  className={`signal-action min-h-9 sm:min-h-8 rounded-lg px-3 py-1.5 font-semibold transition-colors ${
                     filterTab === "all"
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -352,7 +352,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                 <button
                   type="button"
                   onClick={() => setFilterTab("class")}
-                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                  className={`signal-action min-h-9 sm:min-h-8 rounded-lg px-3 py-1.5 font-semibold transition-colors ${
                     filterTab === "class"
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -363,7 +363,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                 <button
                   type="button"
                   onClick={() => setFilterTab("no_class")}
-                  className={`rounded-md px-3 py-1.5 font-semibold transition-colors ${
+                  className={`signal-action min-h-9 sm:min-h-8 rounded-lg px-3 py-1.5 font-semibold transition-colors ${
                     filterTab === "no_class"
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -482,7 +482,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                           <>
                             <Link
                               href={`/app/attendance/${session.id}`}
-                              className="signal-action inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20"
+                              className="signal-action inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20"
                             >
                               Take Attendance <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
@@ -646,7 +646,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                           variant="outline"
                           size="sm"
                           onClick={() => setNoClassAt(m.isoString)}
-                          className={`h-7 px-2.5 text-xs font-semibold ${
+                          className={`min-h-9 sm:min-h-7 px-2.5 py-1 text-xs font-semibold ${
                             noClassAt === m.isoString ? "border-primary bg-primary/10 text-primary" : ""
                           }`}
                         >
@@ -671,7 +671,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                         key={preset.label}
                         type="button"
                         onClick={() => setReason(preset.reason)}
-                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all border ${
+                        className={`signal-action min-h-8 sm:min-h-7 rounded-full px-2.5 py-1 text-xs sm:text-[11px] font-medium transition-all border ${
                           reason === preset.reason
                             ? "border-amber-500 bg-amber-500/20 text-amber-300 font-bold"
                             : "border-border/70 bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary/70"
@@ -721,7 +721,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                       key={preset.label}
                       type="button"
                       onClick={() => setReason(preset.reason)}
-                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all border ${
+                      className={`signal-action min-h-8 sm:min-h-7 rounded-full px-2.5 py-1 text-xs sm:text-[11px] font-medium transition-all border ${
                         reason === preset.reason
                           ? "border-amber-500 bg-amber-500/20 text-amber-300 font-bold"
                           : "border-border/70 bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary/70"

@@ -618,7 +618,7 @@ export function WysiwygEditor({
     >
       {/* WYSIWYG Header / Formatting Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-border/70 bg-secondary/30 px-3 py-1.5 rounded-t-2xl">
-        <div className="flex flex-wrap items-center gap-0.5 overflow-x-auto no-scrollbar py-0.5">
+        <div className="flex flex-wrap items-center gap-0.5 py-0.5">
           {/* Block Level: Headings */}
           <div className="flex items-center gap-0.5">
             {renderToolButton({

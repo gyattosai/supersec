@@ -1345,7 +1345,7 @@ export function NotesWorkspaceCard({ initialSubjectId, embedded = false }: Notes
 
           {/* Image Thumbnails Gallery (if any) */}
           {imageAttachments.length > 0 && (
-            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
               {imageAttachments.slice(0, 3).map(img => (
                 <div
                   key={img.id}

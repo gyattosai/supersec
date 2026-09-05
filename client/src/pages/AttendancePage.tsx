@@ -694,7 +694,7 @@ export default function AttendancePage() {
                       type="button"
                       disabled={bulkSetDraftStatus.isPending || !records.data?.length}
                       onClick={() => bulkSetDraftStatus.mutate({ sessionId: sessionQueryParam, status })}
-                      className="signal-action min-h-8 rounded-lg border border-border bg-card px-2.5 text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50"
+                      className="signal-action min-h-9 sm:min-h-8 inline-flex items-center rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50"
                     >
                       {bulkSetDraftStatus.isPending ? "…" : status === "NOT_SET" ? "Reset to Unmarked" : status === "CONFLICT" ? "All With Schedule Conflict" : `All ${status[0]}${status.slice(1).toLowerCase()}`}
                     </button>

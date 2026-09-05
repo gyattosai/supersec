@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -117,5 +117,65 @@ describe("UI/UX Audit and Layout Overhaul Validations", () => {
 
     expect(content).toContain("flex flex-wrap items-center gap-2");
     expect(content).toContain("min-h-10 sm:min-h-9");
+  });
+
+  it("verifies FocusedStudentsPage eliminates slider filters and provides defensive card wrapping", () => {
+    const filePath = path.join(rootDir, "client/src/pages/FocusedStudentsPage.tsx");
+    const content = fs.readFileSync(filePath, "utf8");
+
+    expect(content).not.toContain("overflow-x-auto no-scrollbar");
+    expect(content).toContain("flex flex-wrap items-center gap-1.5");
+    expect(content).toContain("min-h-10 sm:min-h-8");
+    expect(content).toContain("min-w-0 flex-1");
+  });
+
+  it("verifies FocusedSchedulePage provides responsive filter wrapping and touch targets", () => {
+    const filePath = path.join(rootDir, "client/src/pages/FocusedSchedulePage.tsx");
+    const content = fs.readFileSync(filePath, "utf8");
+
+    expect(content).toContain("flex flex-wrap gap-2");
+    expect(content).toContain("flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80");
+    expect(content).toContain("min-h-11 sm:min-h-9");
+    expect(content).toContain("min-h-9 sm:min-h-7");
+  });
+
+  it("verifies SecretaryPages wraps tabs and actions defensively", () => {
+    const filePath = path.join(rootDir, "client/src/pages/SecretaryPages.tsx");
+    const content = fs.readFileSync(filePath, "utf8");
+
+    expect(content).toContain("flex flex-wrap items-center gap-2.5");
+    expect(content).toContain("flex flex-wrap sm:flex-nowrap sm:overflow-x-auto md:flex-col gap-1.5");
+    expect(content).toContain("min-h-11 md:min-h-10");
+  });
+
+  it("verifies SubjectQuickActions enforces touch target guidelines", () => {
+    const filePath = path.join(rootDir, "client/src/components/SubjectQuickActions.tsx");
+    const content = fs.readFileSync(filePath, "utf8");
+
+    expect(content).toContain("min-h-11 sm:min-h-9 px-3.5");
+    expect(content).not.toContain('className="h-8 px-3 rounded-xl');
+  });
+
+  it("verifies MessageTemplatesCard and NotesWorkspaceCard eliminate mobile sliders", () => {
+    const msgPath = path.join(rootDir, "client/src/components/MessageTemplatesCard.tsx");
+    const msgContent = fs.readFileSync(msgPath, "utf8");
+    expect(msgContent).not.toContain("overflow-x-auto no-scrollbar");
+    expect(msgContent).toContain("flex flex-wrap items-center gap-1");
+
+    const notesPath = path.join(rootDir, "client/src/components/NotesWorkspaceCard.tsx");
+    const notesContent = fs.readFileSync(notesPath, "utf8");
+    expect(notesContent).not.toContain("overflow-x-auto no-scrollbar");
+    expect(notesContent).toContain("flex flex-wrap items-center gap-1.5 pt-1");
+  });
+
+  it("verifies WysiwygEditor toolbar and table container ergonomics", () => {
+    const wysiwygPath = path.join(rootDir, "client/src/components/WysiwygEditor.tsx");
+    const wysiwygContent = fs.readFileSync(wysiwygPath, "utf8");
+    expect(wysiwygContent).not.toContain("overflow-x-auto no-scrollbar py-0.5");
+    expect(wysiwygContent).toContain("flex flex-wrap items-center gap-0.5 py-0.5");
+
+    const tablePath = path.join(rootDir, "client/src/components/ui/table.tsx");
+    const tableContent = fs.readFileSync(tablePath, "utf8");
+    expect(tableContent).toContain("overscroll-x-contain touch-pan-x");
   });
 });

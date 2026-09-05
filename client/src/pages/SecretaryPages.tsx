@@ -64,7 +64,7 @@ export function SecretaryDashboard() {
           title={`Welcome back, ${user?.name?.split(" ")[0] || "Secretary"}`}
           description="Manage your class rosters, live Zoom attendance, shared announcements, and official reports."
           action={
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <Button asChild variant="outline" className="rounded-xl border-border bg-card/60 shadow-sm">
                 <Link href="/app/reports">
                   <ChartNoAxesCombined className="mr-1.5 size-4 text-primary" /> Reports
@@ -404,7 +404,7 @@ export function SecretarySettingsPage() {
 
         <div className="flex flex-col md:flex-row gap-8">
           <aside className="md:w-64 shrink-0">
-            <nav className="flex overflow-x-auto md:flex-col gap-1 pb-4 md:pb-0 hide-scrollbar">
+            <nav className="flex flex-wrap sm:flex-nowrap sm:overflow-x-auto md:flex-col gap-1.5 pb-2 md:pb-0 hide-scrollbar">
               {tabs.map(tab => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
@@ -412,7 +412,7 @@ export function SecretarySettingsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all ${
+                    className={`signal-action min-h-11 md:min-h-10 flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all ${
                       active
                         ? "bg-secondary text-foreground shadow-sm ring-1 ring-border/50"
                         : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
