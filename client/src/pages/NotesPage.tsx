@@ -6,13 +6,17 @@ import { StickyNote, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
 export default function NotesPage() {
+  const querySubjectId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("subjectId")
+    : null;
+
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl space-y-6 pb-12">
         {/* Workspace Header */}
         <WorkspacePageHeader
           eyebrow="Secretary Desk"
-          title="Notes & Study References"
+          title="Notes"
           description="Take rich-text notes with full markdown formatting, attach lecture files and images, organize by subject, and copy formatted notes to Messenger."
           action={
             <div className="flex items-center gap-2.5">
@@ -26,7 +30,7 @@ export default function NotesPage() {
         />
 
         {/* Full-Page Notes Workspace Component */}
-        <NotesWorkspaceCard />
+        <NotesWorkspaceCard initialSubjectId={querySubjectId || undefined} />
       </section>
     </DashboardLayout>
   );

@@ -6,13 +6,17 @@ import { MessageSquare, Send, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
 export default function MessageTemplatesPage() {
+  const querySubjectId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("subjectId")
+    : null;
+
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl space-y-6 pb-12">
         {/* Workspace Header */}
         <WorkspacePageHeader
           eyebrow="Secretary Toolkit"
-          title="Messenger Templates & Fast Snippets"
+          title="Snippets"
           description="Create, customize, and copy perfectly formatted Messenger announcements, roll-call links, Zoom proof reminders, and excuse letter notices in 1 click."
           action={
             <div className="flex items-center gap-2.5">
@@ -31,7 +35,7 @@ export default function MessageTemplatesPage() {
         />
 
         {/* Full-Page Message Templates Component */}
-        <MessageTemplatesCard />
+        <MessageTemplatesCard initialSubjectId={querySubjectId || undefined} />
       </section>
     </DashboardLayout>
   );

@@ -110,6 +110,7 @@ export function WysiwygEditor({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const savedSelectionRef = useRef<Range | null>(null);
+  const activeAnchorRef = useRef<HTMLAnchorElement | null>(null);
 
   // Update active styles based on current cursor selection
   const updateActiveStyles = useCallback(() => {
@@ -217,10 +218,9 @@ export function WysiwygEditor({
       if (disabled || mode !== "visual") return;
       editorRef.current?.focus();
 
-      const isCurrentActive =
-        (tag === "h1" && activeStyles.h1) ||
-        (tag === "h2" && activeStyles.h2) ||
-        (tag === "h3" && activeStyles.h3);
+      const selection = window.getSelection();
+      const currentHeading = getClosestNode(selection, editorRef.current, tag);
+      const isCurrentActive = Boolean(currentHeading);
 
       if (isCurrentActive || tag === "p") {
         document.execCommand("formatBlock", false, "<p>");
@@ -229,7 +229,7 @@ export function WysiwygEditor({
       }
       handleInput();
     },
-    [disabled, mode, activeStyles, handleInput]
+    [disabled, mode, handleInput]
   );
 
   // Toggle Blockquote
@@ -251,22 +251,34 @@ export function WysiwygEditor({
     if (!selection || !selection.rangeCount) return;
 
     const range = selection.getRangeAt(0);
-    const selectedText = range.toString();
+    const existingCode = getClosestNode(selection, editorRef.current, "code");
 
-    if (activeStyles.code) {
-      document.execCommand("removeFormat");
-    } else if (selectedText) {
-      const codeNode = document.createElement("code");
-      codeNode.textContent = selectedText;
-      range.deleteContents();
-      range.insertNode(codeNode);
+    if (existingCode) {
+      const parent = existingCode.parentNode;
+      if (parent) {
+        while (existingCode.firstChild) {
+          parent.insertBefore(existingCode.firstChild, existingCode);
+        }
+        parent.removeChild(existingCode);
+      }
     } else {
+      const selectedText = range.toString();
       const codeNode = document.createElement("code");
-      codeNode.textContent = "code";
-      range.insertNode(codeNode);
+      if (selectedText) {
+        try {
+          range.surroundContents(codeNode);
+        } catch {
+          codeNode.textContent = selectedText;
+          range.deleteContents();
+          range.insertNode(codeNode);
+        }
+      } else {
+        codeNode.textContent = "code";
+        range.insertNode(codeNode);
+      }
     }
     handleInput();
-  }, [disabled, mode, activeStyles.code, handleInput]);
+  }, [disabled, mode, handleInput]);
 
   // Toggle Code Block
   const toggleCodeBlock = useCallback(() => {
@@ -322,6 +334,7 @@ export function WysiwygEditor({
   // Open Link Dialog
   const handleOpenLinkDialog = () => {
     if (disabled || mode !== "visual") return;
+    activeAnchorRef.current = null;
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       savedSelectionRef.current = selection.getRangeAt(0).cloneRange();
@@ -332,6 +345,7 @@ export function WysiwygEditor({
       let node: Node | null = selection.anchorNode;
       while (node && node !== editorRef.current) {
         if (node.nodeName.toLowerCase() === "a") {
+          activeAnchorRef.current = node as HTMLAnchorElement;
           setLinkUrl((node as HTMLAnchorElement).getAttribute("href") || "");
           setLinkText(node.textContent || text);
           break;
@@ -359,7 +373,16 @@ export function WysiwygEditor({
       url = `https://${url}`;
     }
 
-    if (linkText.trim()) {
+    if (activeAnchorRef.current && editorRef.current?.contains(activeAnchorRef.current)) {
+      const a = activeAnchorRef.current;
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noreferrer";
+      if (linkText.trim()) {
+        a.textContent = linkText.trim();
+      }
+      activeAnchorRef.current = null;
+    } else if (linkText.trim()) {
       const a = document.createElement("a");
       a.href = url;
       a.target = "_blank";
@@ -389,6 +412,7 @@ export function WysiwygEditor({
     setLinkUrl("");
     setLinkText("");
     savedSelectionRef.current = null;
+    activeAnchorRef.current = null;
   };
 
   // Remove Link
@@ -443,19 +467,29 @@ export function WysiwygEditor({
             handleInput();
             return;
           } else {
-            // Create next task item
+            // Split content at cursor position
+            const range = selection.getRangeAt(0);
+            const splitRange = document.createRange();
+            splitRange.setStart(range.endContainer, range.endOffset);
+            splitRange.setEndAfter(taskLi.lastChild || taskLi);
+            const extractedFragment = splitRange.extractContents();
+
             const newLi = document.createElement("li");
             newLi.setAttribute("data-task", "false");
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.disabled = true;
             newLi.appendChild(checkbox);
-            const textNode = document.createTextNode(" ");
-            newLi.appendChild(textNode);
+            newLi.appendChild(document.createTextNode(" "));
+            if (extractedFragment.childNodes.length > 0) {
+              newLi.appendChild(extractedFragment);
+            }
+
             taskLi.after(newLi);
 
             const newRange = document.createRange();
-            newRange.setStart(textNode, 1);
+            const targetTextNode = newLi.childNodes[1] || newLi;
+            newRange.setStart(targetTextNode, targetTextNode.nodeType === Node.TEXT_NODE ? 1 : 0);
             newRange.collapse(true);
             selection.removeAllRanges();
             selection.addRange(newRange);
@@ -467,13 +501,23 @@ export function WysiwygEditor({
         // 2. Blockquote enter handling
         const bq = getClosestNode(selection, editorRef.current, "blockquote");
         if (bq) {
-          const bqText = bq.textContent?.trim() || "";
-          if (!bqText) {
+          const currentPara = getClosestNode(selection, bq, "p");
+          const isParaEmpty = currentPara ? !currentPara.textContent?.trim() : false;
+          const isBqEmpty = !bq.textContent?.trim();
+
+          if (isParaEmpty || isBqEmpty) {
             e.preventDefault();
             const p = document.createElement("p");
             p.appendChild(document.createElement("br"));
-            bq.after(p);
-            bq.remove();
+            if (currentPara) {
+              currentPara.remove();
+            }
+            if (!bq.textContent?.trim()) {
+              bq.after(p);
+              bq.remove();
+            } else {
+              bq.after(p);
+            }
             const newRange = document.createRange();
             newRange.setStart(p, 0);
             newRange.collapse(true);

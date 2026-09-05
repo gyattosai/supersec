@@ -14,6 +14,7 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowUpDown,
+  BellRing,
   BookOpen,
   CalendarDays,
   CalendarX,
@@ -583,6 +584,41 @@ export function PublicAttendancePage() {
             </section>
           </div>
         )}
+
+        {/* Instant Class Alerts Card & Push Subscription */}
+        <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-4 sm:p-5 shadow-md shadow-primary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <BellRing className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-primary/50 bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+                    Instant Alerts
+                  </Badge>
+                  <span className="text-xs font-bold text-foreground">Class Push Notifications</span>
+                </div>
+                <h3 className="mt-1 text-sm sm:text-base font-bold text-foreground">
+                  Get instant roll-call &amp; class notices for {details.subject.code}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                  Receive instant browser alerts when attendance opens, classes are suspended, or urgent updates are published.
+                </p>
+              </div>
+            </div>
+
+            <div className="shrink-0 self-stretch sm:self-center">
+              <PushNotificationSubscribeButton
+                subjectPublicId={details.subject.publicId}
+                subjectName={details.subject.name}
+                subjectCode={details.subject.code}
+                variant="button"
+                className="w-full sm:w-auto font-bold shadow-sm"
+              />
+            </div>
+          </div>
+        </section>
 
         {isNoClass && details.records.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/80 p-8 sm:p-12 text-center text-muted-foreground">

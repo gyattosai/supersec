@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 import {
   DEFAULT_PRESET_TEMPLATES,
   type MessageTemplate,
@@ -107,7 +108,33 @@ const DYNAMIC_VARIABLES = [
   { label: "Professor", value: "{Professor}" },
 ];
 
-export function MessageTemplatesCard() {
+export interface MessageTemplatesCardProps {
+  initialSubjectId?: string | number;
+}
+
+export function MessageTemplatesCard({ initialSubjectId }: MessageTemplatesCardProps = {}) {
+  const subjectsQuery = trpc.subjects.list.useQuery();
+  const subjects = subjectsQuery.data ?? [];
+
+  const queryParamSubjectId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("subjectId")
+    : null;
+  const initialSubId = initialSubjectId ? String(initialSubjectId) : (queryParamSubjectId ? String(queryParamSubjectId) : "");
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(initialSubId);
+
+  useEffect(() => {
+    if (initialSubjectId) {
+      setSelectedSubjectId(String(initialSubjectId));
+    } else if (queryParamSubjectId) {
+      setSelectedSubjectId(String(queryParamSubjectId));
+    }
+  }, [initialSubjectId, queryParamSubjectId]);
+
+  const currentSubject = useMemo(() => {
+    if (!selectedSubjectId) return null;
+    return subjects.find(s => String(s.id) === selectedSubjectId || s.publicId === selectedSubjectId || s.code === selectedSubjectId) ?? null;
+  }, [subjects, selectedSubjectId]);
+
   // Manage custom templates in localStorage
   const [customTemplates, setCustomTemplates] = useState<MessageTemplate[]>(() => {
     try {
@@ -180,14 +207,36 @@ export function MessageTemplatesCard() {
     });
   }, [allTemplates, searchQuery]);
 
+  const interpolateSnippet = (template: string) => {
+    if (!template) return "";
+    let res = template;
+    if (currentSubject) {
+      res = res
+        .replace(/\{Subject Name\}/gi, currentSubject.name || "Subject")
+        .replace(/\{Subject Code\}/gi, currentSubject.code || "SUBJ")
+        .replace(/\{Professor\}/gi, currentSubject.professorName || "Professor")
+        .replace(/\{Portal Link\}/gi, currentSubject.publicId ? `${window.location.origin}/s/${currentSubject.publicId}` : `${window.location.origin}`);
+    }
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    res = res
+      .replace(/\{Session Date\}/gi, dateStr)
+      .replace(/\{Time\}/gi, timeStr);
+    return res;
+  };
+
   // Copy to clipboard with visual feedback per snippet
   const handleCopySnippet = async (t: MessageTemplate) => {
     if (!t.template) return;
     try {
-      await navigator.clipboard.writeText(t.template);
+      const textToCopy = interpolateSnippet(t.template);
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedId(t.id);
       toast.success(`Copied "${t.title}" for Messenger!`, {
-        description: "Ready to paste directly into your class group chat.",
+        description: currentSubject
+          ? `Variables interpolated for ${currentSubject.code}. Ready to paste!`
+          : "Ready to paste directly into your class group chat.",
       });
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
@@ -357,7 +406,7 @@ export function MessageTemplatesCard() {
             <p className="signal-kicker">Secretary Toolkit</p>
           </div>
           <h2 className="signal-heading text-lg sm:text-xl font-extrabold tracking-tight mt-1">
-            Messenger Templates & Fast Snippets
+            Snippets
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Quickly create, customize, and copy ready-to-send Messenger notices, roll-call links, and reminders in 1 click.
@@ -388,17 +437,33 @@ export function MessageTemplatesCard() {
         </div>
       </div>
 
-      {/* Search & View Mode Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search snippet titles or message keywords…"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-xs rounded-xl bg-card border-border"
-          />
+      {/* Search & Subject Filter & View Mode Toolbar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search snippet titles or message keywords…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-xs rounded-xl bg-card border-border"
+            />
+          </div>
+
+          <select
+            value={selectedSubjectId}
+            onChange={e => setSelectedSubjectId(e.target.value)}
+            className="h-9 rounded-xl border border-border bg-card px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary sm:w-56"
+            title="Select subject desk to auto-fill template variables"
+          >
+            <option value="">All Subjects (Default Variables)</option>
+            {subjects.map(s => (
+              <option key={s.id} value={String(s.id)}>
+                {s.code} · {s.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">

@@ -131,27 +131,6 @@ function SubjectDeskCard({
         </div>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-border/70 flex flex-wrap items-center justify-between gap-2">
-        <Button asChild size="sm" className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20 px-3 h-8">
-          <Link href={`/app/subjects/${subject.id}`}>
-            Enter Workspace <ArrowRight className="ml-1.5 size-3.5" />
-          </Link>
-        </Button>
-
-        <div className="flex items-center gap-1.5">
-          <Button asChild size="icon" variant="outline" className="size-8 rounded-lg" title="Live Attendance Roll Call">
-            <Link href={`/app/subjects/${subject.id}/attendance`}>
-              <Zap className="size-3.5 text-amber-400" />
-            </Link>
-          </Button>
-          <Button asChild size="icon" variant="outline" className="size-8 rounded-lg" title="Roster & Students">
-            <Link href={`/app/subjects/${subject.id}/students`}>
-              <Users className="size-3.5 text-sky-400" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-
       <SubjectQuickActions
         subjectId={subject.id}
         publicId={subject.publicId}

@@ -66,7 +66,10 @@ function Router() {
         <Route path="/app/attendance/:sessionId" component={AttendancePage} />
         <Route path="/app/content/:subjectId/:kind" component={LegacyContentRedirect} />
         <Route path="/app/templates" component={MessageTemplatesPage} />
+        <Route path="/app/snippets" component={MessageTemplatesPage} />
+        <Route path="/snippets" component={MessageTemplatesPage} />
         <Route path="/app/notes" component={NotesPage} />
+        <Route path="/notes" component={NotesPage} />
         <Route path="/app/reports" component={ReportsPage} />
         <Route path="/app/archive" component={ArchivePage} />
         <Route path="/app/settings" component={SecretarySettingsPage} />

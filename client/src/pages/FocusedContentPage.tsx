@@ -14,13 +14,6 @@ import { formatFileSize, isPublicImageMimeType, isSupportedPublicUploadMimeType,
 import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -58,178 +51,6 @@ function toSafeIsoString(val: unknown): string | undefined {
 
 function fileToDataUrl(file: File) { return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Unable to read the selected file")); reader.onerror = () => reject(new Error("Unable to read the selected file")); reader.readAsDataURL(file); }); }
 function assetAccepts(mimeTypes: readonly string[]) { return mimeTypes.join(","); }
-
-const DEFAULT_SNIPPET_TEMPLATES = [
-  {
-    id: "header",
-    title: "Class Header",
-    template: "📢 [{{subject_code}}] {{subject_name}} · {{date}}",
-  },
-  {
-    id: "deadline",
-    title: "Submission Deadline Reminder",
-    template: "⚠️ Reminder for [{{subject_code}}]: Please submit all deliverables by {{date}}. For inquiries, consult Prof. {{professor}}.",
-  },
-  {
-    id: "suspension",
-    title: "Class Suspension Notice",
-    template: "🛑 No Class: [{{subject_code}}] sessions on {{date}} are suspended. Please review the portal for asynchronous tasks.",
-  },
-  {
-    id: "attendance",
-    title: "Attendance Prompt",
-    template: "📋 Attendance Prompt for [{{subject_code}}] ({{date}}): Attendance is now being recorded. Please confirm your presence.",
-  },
-  {
-    id: "materials",
-    title: "New Materials Uploaded",
-    template: "📚 New Study Materials for [{{subject_code}}]: Lecture slides and references have been uploaded on the class portal.",
-  },
-];
-
-function interpolateVariables(template: string, subject?: any) {
-  const now = new Date();
-  const dateStr = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(now);
-  const timeStr = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(now);
-  return template
-    .replace(/\{\{subject_code\}\}/gi, subject?.code || "SUBJ")
-    .replace(/\{\{subject_name\}\}/gi, subject?.name || "Course")
-    .replace(/\{\{professor\}\}/gi, subject?.professorName || "Professor")
-    .replace(/\{\{term\}\}/gi, subject?.termName || "Current Term")
-    .replace(/\{\{date\}\}/gi, dateStr)
-    .replace(/\{\{time\}\}/gi, timeStr);
-}
-
-function PrivateNotesDrawer({
-  isOpen,
-  onOpenChange,
-  currentSubject,
-}: {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentSubject?: any;
-}) {
-  const storageKey = `supersec_private_notes_${currentSubject?.code || currentSubject?.id || "default"}`;
-  const [noteContent, setNoteContent] = useState(() => {
-    try {
-      return localStorage.getItem(storageKey) || "";
-    } catch {
-      return "";
-    }
-  });
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      setNoteContent(saved || "");
-    } catch {
-      // ignore
-    }
-  }, [storageKey]);
-
-  const handleNoteChange = (val: string) => {
-    setNoteContent(val);
-    try {
-      localStorage.setItem(storageKey, val);
-    } catch {
-      // ignore
-    }
-  };
-
-  const copyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`Copied ${label} to clipboard`);
-  };
-
-  return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto p-6 space-y-6 bg-card border-border">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-            <StickyNote className="size-5 text-primary" />
-            Private Notes &amp; Snippets
-          </SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">
-            Fast copyable snippets with variable interpolation ({`{{subject_code}}`}, {`{{professor}}`}, {`{{date}}`}) and private working scratchpad for {currentSubject?.code || "this subject"}.
-          </SheetDescription>
-        </SheetHeader>
-
-        {/* Private Scratchpad */}
-        <div className="space-y-2 rounded-2xl border border-border/80 bg-secondary/30 p-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="private-scratchpad" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-              <FileText className="size-3.5 text-primary" />
-              Secretary Scratchpad (Private)
-            </Label>
-            {noteContent.trim() ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => copyText(noteContent, "private note")}
-                className="h-7 text-xs font-semibold text-primary hover:bg-primary/10 gap-1 px-2"
-              >
-                <Copy className="size-3" />
-                Copy Note
-              </Button>
-            ) : null}
-          </div>
-          <Textarea
-            id="private-scratchpad"
-            value={noteContent}
-            onChange={e => handleNoteChange(e.target.value)}
-            placeholder="Type private draft thoughts, reminders, or scratch notes here... Saved automatically to your browser."
-            rows={4}
-            className="rounded-xl text-xs bg-background/80 resize-y"
-          />
-          <p className="text-[10px] text-muted-foreground">Persisted in local browser storage; never visible to students.</p>
-        </div>
-
-        {/* Quick Snippets with Variable Interpolation */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-primary" />
-              Messenger &amp; Fast Snippets
-            </h4>
-            <Badge variant="outline" className="text-[10px] font-mono">
-              {currentSubject?.code || "Subject"}
-            </Badge>
-          </div>
-
-          <div className="space-y-2.5">
-            {DEFAULT_SNIPPET_TEMPLATES.map(snippet => {
-              const interpolated = interpolateVariables(snippet.template, currentSubject);
-              return (
-                <div
-                  key={snippet.id}
-                  className="rounded-xl border border-border/70 bg-secondary/20 p-3 hover:border-primary/40 transition-all space-y-1.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-foreground">{snippet.title}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyText(interpolated, snippet.title)}
-                      className="h-6 text-[11px] font-semibold text-primary hover:bg-primary/10 gap-1 px-2 rounded-lg"
-                    >
-                      <Copy className="size-3" />
-                      Copy
-                    </Button>
-                  </div>
-                  <p className="text-xs font-mono text-muted-foreground bg-background/60 p-2 rounded-lg leading-relaxed whitespace-pre-wrap select-all">
-                    {interpolated}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
 
 export default function FocusedContentPage(props?: { params?: { subjectId?: string; kind?: string; itemId?: string } }) {
   const [, listParams] = useRoute("/app/subjects/:subjectId/:kind");
@@ -282,7 +103,6 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
   const [attachmentAssets, setAttachmentAssets] = useState<AttachmentAsset[]>([]);
   const [imageAltText, setImageAltText] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
   const [pendingContentAction, setPendingContentAction] = useState<ContentRowAction | null>(null);
   const selectedItem = useMemo(() => {
     const list = kind === "announcements" ? announcements.data : kind === "resources" ? resources.data : questions.data;
@@ -574,16 +394,30 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
             </Link>
           }
           action={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setNotesDrawerOpen(true)}
-              className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
-            >
-              <StickyNote className="size-3.5 text-primary" />
-              <span>Notes &amp; Snippets</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+              >
+                <Link href={`/app/notes?subjectId=${subjectId}`}>
+                  <StickyNote className="size-3.5 text-primary" />
+                  <span>Notes</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+              >
+                <Link href={`/app/snippets?subjectId=${subjectId}`}>
+                  <Sparkles className="size-3.5 text-amber-400" />
+                  <span>Snippets</span>
+                </Link>
+              </Button>
+            </div>
           }
         />
         <form onSubmit={submit} className="signal-panel mt-6 overflow-hidden">
@@ -706,11 +540,6 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
           )}
         </form>
       </section>
-      <PrivateNotesDrawer
-        isOpen={notesDrawerOpen}
-        onOpenChange={setNotesDrawerOpen}
-        currentSubject={currentSubject}
-      />
     </DashboardLayout>
   );
 
@@ -751,15 +580,26 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
           action={
             <div className="flex items-center gap-2">
               <Button
-                type="button"
+                asChild
                 variant="outline"
                 size="sm"
-                onClick={() => setNotesDrawerOpen(true)}
                 className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
               >
-                <StickyNote className="size-3.5 text-primary" />
-                <span className="hidden sm:inline">Notes &amp; Snippets</span>
-                <span className="sm:hidden">Notes</span>
+                <Link href={`/app/notes?subjectId=${subjectId}`}>
+                  <StickyNote className="size-3.5 text-primary" />
+                  <span>Notes</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card/60 shadow-xs font-semibold text-xs gap-1.5 h-10"
+              >
+                <Link href={`/app/snippets?subjectId=${subjectId}`}>
+                  <Sparkles className="size-3.5 text-amber-400" />
+                  <span>Snippets</span>
+                </Link>
               </Button>
               <Button asChild className="rounded-xl font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/25 h-10">
                 <Link href={`/app/subjects/${subjectId}/${kind}/new`}>
@@ -904,11 +744,6 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
           </AlertDialogContent>
         </AlertDialog>
       </section>
-      <PrivateNotesDrawer
-        isOpen={notesDrawerOpen}
-        onOpenChange={setNotesDrawerOpen}
-        currentSubject={currentSubject}
-      />
     </DashboardLayout>
   );
 }

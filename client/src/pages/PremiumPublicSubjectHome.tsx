@@ -28,17 +28,9 @@ import {
   Tag,
   Users,
   X,
-  BellOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  isPushNotificationSupported,
-  isSubjectSubscribedLocally,
-  setSubjectSubscribedLocally,
-  unsubscribeFromBrowserPush,
-} from "@/lib/pushNotifications";
-import { PushNotificationSubscribeButton } from "@/components/PushNotificationSubscribeButton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 
@@ -87,8 +79,6 @@ export function PremiumPublicSubjectHome() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
   const [viewMode, setViewMode] = useState<"categorized" | "feed">("feed");
-  const [showPushOptInBanner, setShowPushOptInBanner] = useState(false);
-  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -269,15 +259,7 @@ export function PremiumPublicSubjectHome() {
     { id: "students", label: "Student Master List", count: counts.students, icon: Users },
   ], [counts]);
 
-  useEffect(() => {
-    if (!subject?.publicId) return;
-    const isSub = isSubjectSubscribedLocally(subject.publicId);
-    setIsPushSubscribed(isSub);
-    const dismissed = localStorage.getItem(`push_optin_dismissed_${subject.publicId}`);
-    if (!isSub && !dismissed && isPushNotificationSupported()) {
-      setShowPushOptInBanner(true);
-    }
-  }, [subject?.publicId]);
+
 
   if (query.isLoading)
     return (
@@ -308,26 +290,6 @@ export function PremiumPublicSubjectHome() {
   const isSearchActive = Boolean(searchQuery.trim());
   const showBentoCategorized = activeCategory === "all" && !isSearchActive && viewMode === "categorized";
 
-  const dismissPushOptIn = () => {
-    if (subject?.publicId) {
-      localStorage.setItem(`push_optin_dismissed_${subject.publicId}`, "true");
-    }
-    setShowPushOptInBanner(false);
-  };
-
-  const handleOneClickOptOut = async () => {
-    if (!subject?.publicId) return;
-    try {
-      await unsubscribeFromBrowserPush();
-      setSubjectSubscribedLocally(subject.publicId, false);
-      setIsPushSubscribed(false);
-      toast.success("Unsubscribed from Notifications", {
-        description: `You will no longer receive push alerts for ${subject.code}.`,
-      });
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to unsubscribe.");
-    }
-  };
 
   return <PublicFrame subject={subject}>
       {/* Hero Subject Header */}
@@ -353,77 +315,7 @@ export function PremiumPublicSubjectHome() {
               <span>Professor {subject.professorName}</span>
             </p>
           </div>
-
-          {/* Quick Actions: Push Alerts & 1-Click Opt-Out */}
-          <div className="shrink-0 flex items-center flex-wrap gap-2">
-            <PushNotificationSubscribeButton
-              subjectPublicId={subject.publicId}
-              subjectName={subject.name}
-              subjectCode={subject.code}
-              variant="pill"
-            />
-            {isPushSubscribed && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleOneClickOptOut}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 rounded-xl"
-                title="Turn off notifications for this class"
-              >
-                <BellOff className="size-3.5" />
-                <span>Opt-Out</span>
-              </Button>
-            )}
-          </div>
         </div>
-
-        {/* Push Notification Opt-In Banner for un-opted users */}
-        {showPushOptInBanner && !isPushSubscribed && (
-          <div className="relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-gradient-to-r from-primary/20 via-primary/10 to-card p-4 sm:p-5 shadow-lg shadow-primary/10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/30">
-                  <BellRing className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-primary/50 bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
-                      Instant Alerts
-                    </Badge>
-                    <span className="text-xs font-bold text-foreground">Stay up to date</span>
-                  </div>
-                  <h4 className="mt-1 text-sm sm:text-base font-extrabold text-foreground">
-                    Get instant notifications for {subject.code}
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                    Receive immediate browser alerts for class cancellations, new lecture resources, and priority announcements.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                <PushNotificationSubscribeButton
-                  subjectPublicId={subject.publicId}
-                  subjectName={subject.name}
-                  subjectCode={subject.code}
-                  variant="button"
-                  className="shadow-sm"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={dismissPushOptIn}
-                  className="size-9 p-0 rounded-xl text-muted-foreground hover:text-foreground"
-                  aria-label="Dismiss notification prompt"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Active No Class Suspension Notice */}
         {subject.noClass && (
@@ -766,16 +658,6 @@ export function PremiumPublicSubjectHome() {
                 onViewAll={() => setActiveCategory("students")}
               />
             </div>
-
-            {/* Instant Push Notifications Card */}
-            <div className="mt-6">
-              <PushNotificationSubscribeButton
-                subjectPublicId={subject.publicId}
-                subjectName={subject.name}
-                subjectCode={subject.code}
-                variant="card"
-              />
-            </div>
           </div>
         ) : filteredAndSortedItems.length === 0 && (isSearchActive || activeCategory !== "all") ? (
           /* State 2: Filtered / Search Empty State */
@@ -844,7 +726,7 @@ export function PremiumPublicSubjectHome() {
               </div>
             )}
 
-            {/* In feed view without active search when viewing all items, show Student Master List summary & Push Notification Subscribe Card */}
+            {/* In feed view without active search when viewing all items, show Student Master List summary */}
             {activeCategory === "all" && !isSearchActive && (
               <div className="space-y-6 pt-2">
                 {students && students.length > 0 && (
@@ -853,12 +735,6 @@ export function PremiumPublicSubjectHome() {
                     onViewAll={() => setActiveCategory("students")}
                   />
                 )}
-                <PushNotificationSubscribeButton
-                  subjectPublicId={subject.publicId}
-                  subjectName={subject.name}
-                  subjectCode={subject.code}
-                  variant="card"
-                />
               </div>
             )}
           </div>

@@ -69,7 +69,11 @@ import {
 
 const STORAGE_KEY = "supersec_secretary_notes";
 
-export function NotesWorkspaceCard() {
+export interface NotesWorkspaceCardProps {
+  initialSubjectId?: string | number;
+}
+
+export function NotesWorkspaceCard({ initialSubjectId }: NotesWorkspaceCardProps = {}) {
   const subjects = trpc.subjects.list.useQuery();
   const activeSubjects = subjects.data?.filter(s => s.status === "active") ?? [];
 
@@ -94,10 +98,23 @@ export function NotesWorkspaceCard() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Search & Filtering State
+  const queryParamSubjectId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("subjectId")
+    : null;
+  const initialFilter = initialSubjectId ? String(initialSubjectId) : (queryParamSubjectId ? String(queryParamSubjectId) : "all");
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("all");
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>(initialFilter);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
   const [onlyPinned, setOnlyPinned] = useState(false);
+
+  useEffect(() => {
+    if (initialSubjectId) {
+      setSelectedSubjectFilter(String(initialSubjectId));
+    } else if (queryParamSubjectId) {
+      setSelectedSubjectFilter(String(queryParamSubjectId));
+    }
+  }, [initialSubjectId, queryParamSubjectId]);
 
   // Quick Note Composer State
   const [isQuickExpanded, setIsQuickExpanded] = useState(false);

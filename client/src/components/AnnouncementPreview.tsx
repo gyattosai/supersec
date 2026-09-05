@@ -169,7 +169,7 @@ export function AnnouncementPreview({ body }: { body: string }) {
     index += 1;
   }
 
-  return <div className="w-full max-w-none break-words">{blocks}</div>;
+  return <div className="w-full max-w-none break-words [overflow-wrap:anywhere]">{blocks}</div>;
 }
 
 function ListItems({ entries }: { entries: string[] }) {
