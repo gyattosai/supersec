@@ -16,6 +16,7 @@ import { attendanceWorkspacePath } from "@/lib/attendanceWorkspace";
 import { trpc } from "@/lib/trpc";
 import { sortAttendance, type AttendanceSortMode } from "@shared/attendanceSorting";
 import { formatSocialTitle, formatShorthandDate } from "@shared/socialTitle";
+import { getSocialShareUrl } from "@shared/shareUrl";
 import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { formatConflictDaysSummary } from "@shared/scheduleConflict";
 import { downloadClassAttendancePdf } from "@/lib/reportPdf";
@@ -297,7 +298,9 @@ export default function AttendancePage() {
   const pastedNameCount = useMemo(() => rawNames.split(/\r?\n/).map(name => name.trim()).filter(Boolean).length, [rawNames]);
   const copyPublicAttendance = async () => {
     if (!session.data?.publicId) return;
-    await navigator.clipboard.writeText(`${window.location.origin}/attendance/${session.data.publicId}`);
+    const currentVersion = Math.max(...(records.data || []).map(r => r.version || 0), (session.data?.version as number) || 0, 1);
+    const url = getSocialShareUrl(`/attendance/${session.data.publicId}`, { fastCacheBust: true, version: currentVersion });
+    await navigator.clipboard.writeText(url);
     toast.success("Public Attendance link copied for Messenger");
   };
 
@@ -1476,7 +1479,7 @@ export default function AttendancePage() {
                         excused={totals.excused}
                         date={new Date(session.data.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         description={`Class Attendance for ${subject.data?.code || "Class"} — ${subject.data?.name || "Operations Management"}. Present: ${totals.present}, Absent: ${totals.absent}, Excused: ${totals.excused}.`}
-                        publicUrl={`${window.location.origin}/attendance/${session.data.publicId}`}
+                        publicUrl={getSocialShareUrl(`/attendance/${session.data.publicId}`, { version: currentVersion })}
                       />
                     );
                   })()}

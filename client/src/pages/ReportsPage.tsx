@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { downloadClassAttendancePdf, downloadCompiledAttendancePdf, downloadSubjectAttendancePdf } from "@/lib/reportPdf";
 import { buildClassAttendanceCsv, buildClassAttendanceSummary, classAttendanceCsvFilename } from "@shared/attendanceCsv";
 import { normalizedSubjectSelection } from "@shared/reportPdf";
+import { getSocialShareUrl } from "@shared/shareUrl";
 import { AlertCircle, Archive, ArchiveRestore, ChartNoAxesCombined, CheckCircle2, CircleDashed, Copy, Download, FileDown, FilePlus2, Send, SquareCheckBig, XCircle, FileText, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -378,7 +379,8 @@ function ReportRow({
   onRestore: () => void;
 }) {
   const copy = async () => {
-    await navigator.clipboard.writeText(`${window.location.origin}/reports/${item.publicId}`);
+    const url = getSocialShareUrl(`/reports/${item.publicId}`, { fastCacheBust: true, version: item.version });
+    await navigator.clipboard.writeText(url);
     toast.success("Public report link copied for Messenger");
   };
   const title = item.reportType === "class_attendance" ? "Class Attendance Report" : "All-Subject Aggregate Report";

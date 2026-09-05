@@ -1,0 +1,10 @@
+{
+  "name": "og-router",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^14.1.0",
+    "open-graph-scraper": "^6.8.2"
+  }
+}

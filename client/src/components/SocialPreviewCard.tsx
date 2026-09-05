@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { generateOgDataUrl, type OgParams } from "@shared/ogImageEngine";
 import { formatSocialTitle, formatSocialDescription, formatShorthandDate } from "@shared/socialTitle";
+import { getSocialShareUrl } from "@shared/shareUrl";
 import {
   Check,
   Copy,
@@ -150,12 +151,18 @@ export function SocialPreviewCard({
     }
   }, [normalizedPublicUrl]);
 
+  const socialRouterShareUrl = useMemo(() => {
+    return getSocialShareUrl(publicUrl || (typeof window !== "undefined" ? window.location.pathname : "/"), {
+      version: versionNum,
+    });
+  }, [publicUrl, versionNum]);
+
   const fastMessengerUrl = useMemo(() => {
-    const base = normalizedPublicUrl || safePublicUrl;
-    const separator = base.includes("?") ? "&" : "?";
-    const ts = Math.floor(Date.now() / 1000).toString(36);
-    return `${base}${separator}v=${versionNum}&t=${ts}`;
-  }, [normalizedPublicUrl, safePublicUrl, versionNum]);
+    return getSocialShareUrl(publicUrl || (typeof window !== "undefined" ? window.location.pathname : "/"), {
+      fastCacheBust: true,
+      version: versionNum,
+    });
+  }, [publicUrl, versionNum]);
 
   const safeDescription = useMemo(() => {
     if (typeof description === "string" && description.trim()) {
@@ -176,14 +183,14 @@ export function SocialPreviewCard({
   }, [description, type, subjectCode, date, professorName, category, present, absent, excused]);
 
   const fbDebuggerUrl = useMemo(() => {
-    return `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(normalizedPublicUrl || safePublicUrl)}`;
-  }, [normalizedPublicUrl, safePublicUrl]);
+    return `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(fastMessengerUrl)}`;
+  }, [fastMessengerUrl]);
 
   const copyUrlOnly = async () => {
     try {
-      await navigator.clipboard.writeText(normalizedPublicUrl || publicUrl);
+      await navigator.clipboard.writeText(socialRouterShareUrl);
       setCopiedLink(true);
-      toast.success("Standard link copied to clipboard!");
+      toast.success("Preview link copied to clipboard!");
       setTimeout(() => setCopiedLink(false), 2500);
     } catch {
       toast.error("Could not copy link to clipboard.");

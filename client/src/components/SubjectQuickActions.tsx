@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { getSocialShareUrl } from "@shared/shareUrl";
 
 export interface SubjectQuickActionsProps {
   subjectId: string | number;
@@ -42,7 +43,7 @@ export function SubjectQuickActions({
       toast.error("Public page link is not yet available for this subject");
       return;
     }
-    const url = `${window.location.origin}/s/${publicId}`;
+    const url = getSocialShareUrl(`/s/${publicId}`, { fastCacheBust: true });
     navigator.clipboard.writeText(url);
     toast.success("Public subject page link copied to clipboard!");
   };

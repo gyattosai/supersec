@@ -61,6 +61,28 @@ export function getCaseVariations(id: string): string[] {
   return Array.from(results);
 }
 
+export function resolveOgImage(candidatePath?: string | null): string {
+  const fallback = "https://supersec.mjbalubar.tech/og-cover.png";
+  if (!candidatePath) return fallback;
+  if (candidatePath.startsWith("http://") || candidatePath.startsWith("https://")) {
+    if (candidatePath.startsWith("https://supersec.mjbalubar.tech/og/")) {
+      const filename = candidatePath.replace("https://supersec.mjbalubar.tech/og/", "").split("?")[0];
+      const localFile = path.resolve(process.cwd(), "client", "public", "og", filename);
+      if (fs.existsSync(localFile)) {
+        return candidatePath;
+      }
+      return fallback;
+    }
+    return candidatePath;
+  }
+  const cleanRelative = candidatePath.startsWith("/") ? candidatePath.slice(1) : candidatePath;
+  const localFile = path.resolve(process.cwd(), "client", "public", cleanRelative.split("?")[0]);
+  if (fs.existsSync(localFile)) {
+    return `https://supersec.mjbalubar.tech/${cleanRelative}`;
+  }
+  return fallback;
+}
+
 function injectMeta(
   template: string,
   {
@@ -204,12 +226,13 @@ export async function buildStaticSeoPages() {
 
   try {
     console.log("Fetching live published documents from Appwrite Cloud DB...");
-    const [subsRes, sessRes, annRes, resRes, qaRes] = await Promise.all([
+    const [subsRes, sessRes, annRes, resRes, qaRes, repRes] = await Promise.all([
       db.listDocuments(dbId, "subjects", [Query.limit(100)]),
       db.listDocuments(dbId, "classSessions", [Query.limit(100)]),
       db.listDocuments(dbId, "announcements", [Query.limit(100)]),
       db.listDocuments(dbId, "resources", [Query.limit(100)]),
       db.listDocuments(dbId, "questionsAnswers", [Query.limit(100)]),
+      db.listDocuments(dbId, "generatedReports", [Query.limit(100)]).catch(() => ({ documents: [] })),
     ]);
 
     const subjectsMap = new Map<string, any>();
@@ -245,7 +268,7 @@ export async function buildStaticSeoPages() {
           path: `/s/${variant}`,
           title: subTitle,
           description: subDesc,
-          ogImage: `https://supersec.mjbalubar.tech/og/subject-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/subject-${variant}.jpg`),
           jsonLd: subJsonLd,
         });
 
@@ -254,7 +277,7 @@ export async function buildStaticSeoPages() {
           path: `/s/${variant}/questions`,
           title: formatSocialTitle({ type: "Q&A", contentTitle: "Knowledgebase", numberOrDate: "Knowledgebase", version: 1, subjectCode: sub.code }),
           description: formatSocialDescription({ type: "qa_hub", subjectCode: sub.code, subjectName: sub.name }),
-          ogImage: `https://supersec.mjbalubar.tech/og/qa-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/qa-${variant}.jpg`),
           jsonLd: { "@context": "https://schema.org", "@type": "FAQPage", name: `${sub.name} Class Q&A` },
         });
 
@@ -262,14 +285,14 @@ export async function buildStaticSeoPages() {
           path: `/s/${variant}/resources`,
           title: formatSocialTitle({ type: "Resource", contentTitle: "Resources", numberOrDate: "Resources", version: 1, subjectCode: sub.code }),
           description: formatSocialDescription({ type: "resource", subjectCode: sub.code, subjectName: sub.name, category: "Resources" }),
-          ogImage: `https://supersec.mjbalubar.tech/og/resource-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/resource-${variant}.jpg`),
         });
 
         addRoute({
           path: `/s/${variant}/announcements`,
           title: formatSocialTitle({ type: "Announcement", contentTitle: "Announcements", numberOrDate: "Announcements", version: 1, subjectCode: sub.code }),
           description: formatSocialDescription({ type: "announcement", subjectCode: sub.code, subjectName: sub.name }),
-          ogImage: `https://supersec.mjbalubar.tech/og/announcement-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/announcement-${variant}.jpg`),
         });
       }
 
@@ -278,27 +301,27 @@ export async function buildStaticSeoPages() {
         path: `/s/${sub.code}`,
         title: subTitle,
         description: subDesc,
-        ogImage: `https://supersec.mjbalubar.tech/og/subject-${sub.code}.jpg`,
+        ogImage: resolveOgImage(`/og/subject-${sub.code}.jpg`),
         jsonLd: subJsonLd,
       });
       addRoute({
         path: `/s/${sub.code}/questions`,
         title: formatSocialTitle({ type: "Q&A", contentTitle: "Knowledgebase", numberOrDate: "Knowledgebase", version: 1, subjectCode: sub.code }),
         description: formatSocialDescription({ type: "qa_hub", subjectCode: sub.code, subjectName: sub.name }),
-        ogImage: `https://supersec.mjbalubar.tech/og/qa-${sub.code}.jpg`,
+        ogImage: resolveOgImage(`/og/qa-${sub.code}.jpg`),
         jsonLd: { "@context": "https://schema.org", "@type": "FAQPage", name: `${sub.name} Class Q&A` },
       });
       addRoute({
         path: `/s/${sub.code}/resources`,
         title: formatSocialTitle({ type: "Resource", contentTitle: "Resources", numberOrDate: "Resources", version: 1, subjectCode: sub.code }),
         description: formatSocialDescription({ type: "resource", subjectCode: sub.code, subjectName: sub.name, category: "Resources" }),
-        ogImage: `https://supersec.mjbalubar.tech/og/resource-${sub.code}.jpg`,
+        ogImage: resolveOgImage(`/og/resource-${sub.code}.jpg`),
       });
       addRoute({
         path: `/s/${sub.code}/announcements`,
         title: formatSocialTitle({ type: "Announcement", contentTitle: "Announcements", numberOrDate: "Announcements", version: 1, subjectCode: sub.code }),
         description: formatSocialDescription({ type: "announcement", subjectCode: sub.code, subjectName: sub.name }),
-        ogImage: `https://supersec.mjbalubar.tech/og/announcement-${sub.code}.jpg`,
+        ogImage: resolveOgImage(`/og/announcement-${sub.code}.jpg`),
       });
     }
 
@@ -322,7 +345,7 @@ export async function buildStaticSeoPages() {
       const sessVariants = getCaseVariations(sess.publicId);
 
       for (const variant of sessVariants) {
-        const attImg = `https://supersec.mjbalubar.tech/og/attendance-${variant}.jpg`;
+        const attImg = resolveOgImage(`/og/attendance-${variant}.jpg`);
 
         addRoute({
           path: `/attendance/${variant}`,
@@ -341,14 +364,14 @@ export async function buildStaticSeoPages() {
           path: `/attendance/${variant}/proof`,
           title: formatSocialTitle({ type: "Proof", subjectCode: subCode }),
           description: formatSocialDescription({ type: "proof", subjectCode: subCode, subjectName: sub?.name }),
-          ogImage: `https://supersec.mjbalubar.tech/og/proof-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/proof-${variant}.jpg`),
         });
 
         addRoute({
           path: `/attendance/${variant}/excuse`,
           title: formatSocialTitle({ type: "Excuse", subjectCode: subCode }),
           description: formatSocialDescription({ type: "excuse", subjectCode: subCode, subjectName: sub?.name }),
-          ogImage: `https://supersec.mjbalubar.tech/og/excuse-${variant}.jpg`,
+          ogImage: resolveOgImage(`/og/excuse-${variant}.jpg`),
         });
       }
     }
@@ -376,13 +399,18 @@ export async function buildStaticSeoPages() {
         version: ann.version || 1,
       });
       const annVariants = getCaseVariations(ann.publicId);
+      const annAssetId = ann.socialPreviewMediaAssetId || ann.mediaAssetId;
 
       for (const variant of annVariants) {
+        const annImg = annAssetId
+          ? `${endpoint}/storage/buckets/media-assets/files/${annAssetId}/view?project=${projectId}&v=${ann.version || 1}`
+          : resolveOgImage(`/og/announcement-${variant}.jpg`);
+
         addRoute({
           path: `/a/${variant}`,
           title: annTitle,
           description: annDesc,
-          ogImage: `https://supersec.mjbalubar.tech/og/announcement-${variant}.jpg`,
+          ogImage: annImg,
           ogType: "article",
           jsonLd: {
             "@context": "https://schema.org",
@@ -418,13 +446,18 @@ export async function buildStaticSeoPages() {
         version: resDoc.version || 1,
       });
       const resVariants = getCaseVariations(resDoc.publicId);
+      const resAssetId = resDoc.socialPreviewMediaAssetId || resDoc.fallbackMediaAssetId;
 
       for (const variant of resVariants) {
+        const resImg = resAssetId
+          ? `${endpoint}/storage/buckets/media-assets/files/${resAssetId}/view?project=${projectId}&v=${resDoc.version || 1}`
+          : resolveOgImage(`/og/resource-${variant}.jpg`);
+
         addRoute({
           path: `/r/${variant}`,
           title: resTitle,
           description: resDesc,
-          ogImage: `https://supersec.mjbalubar.tech/og/resource-${variant}.jpg`,
+          ogImage: resImg,
           ogType: "article",
           jsonLd: {
             "@context": "https://schema.org",
@@ -460,13 +493,18 @@ export async function buildStaticSeoPages() {
         version: qa.version || 1,
       });
       const qaVariants = getCaseVariations(qa.publicId);
+      const qaAssetId = qa.socialPreviewMediaAssetId;
 
       for (const variant of qaVariants) {
+        const qaImg = qaAssetId
+          ? `${endpoint}/storage/buckets/media-assets/files/${qaAssetId}/view?project=${projectId}&v=${qa.version || 1}`
+          : resolveOgImage(`/og/qa-${variant}.jpg`);
+
         addRoute({
           path: `/q/${variant}`,
           title: qaTitle,
           description: qaDesc,
-          ogImage: `https://supersec.mjbalubar.tech/og/qa-${variant}.jpg`,
+          ogImage: qaImg,
           ogType: "article",
           jsonLd: {
             "@context": "https://schema.org",
@@ -481,6 +519,20 @@ export async function buildStaticSeoPages() {
               },
             },
           },
+        });
+      }
+    }
+
+    // Generated Reports
+    for (const rep of (repRes?.documents || [])) {
+      const repVariants = getCaseVariations(rep.publicId);
+      for (const variant of repVariants) {
+        addRoute({
+          path: `/reports/${variant}`,
+          title: `${rep.title || "Academic & Attendance Summary Report"} — supersec`,
+          description: "Official executive summary, attendance rates, and student masterlist records.",
+          ogImage: "https://supersec.mjbalubar.tech/og-cover.png",
+          ogType: "article",
         });
       }
     }

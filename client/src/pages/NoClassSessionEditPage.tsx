@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { formatDateTime12Hour } from "@/lib/time";
+import { getSocialShareUrl } from "@shared/shareUrl";
 import {
   CalendarX,
   ArrowLeft,
@@ -100,7 +101,7 @@ export default function NoClassSessionEditPage() {
 
   const handleCopyLink = () => {
     if (!session.data?.publicId) return;
-    const url = `${window.location.origin}/attendance/${session.data.publicId}`;
+    const url = getSocialShareUrl(`/attendance/${session.data.publicId}`, { fastCacheBust: true });
     navigator.clipboard.writeText(url);
     setCopied(true);
     toast.success("Public notice link copied to clipboard");

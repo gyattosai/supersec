@@ -50,6 +50,55 @@ async function test() {
 
   const imgRes = await fetch('https://supersec.mjbalubar.tech/og/subject-gsl_ywvWRr6G.jpg');
   console.log('\nog/subject-gsl_ywvWRr6G.jpg Status:', imgRes.status, 'Content-Type:', imgRes.headers.get('content-type'), 'Content-Length:', imgRes.headers.get('content-length'));
+
+  const att = await fetch('https://supersec.mjbalubar.tech/attendance/IasJI-l_mpFz');
+  const attText = await att.text();
+  console.log('\nAttendance Status:', att.status);
+  console.log('Attendance Title:', attText.match(/<title>(.*?)<\/title>/)?.[1]);
+  console.log('Attendance OG Title:', attText.match(/<meta property="og:title" content="(.*?)"/)?.[1]);
+  console.log('Attendance OG Image:', attText.match(/<meta property="og:image" content="(.*?)"/)?.[1]);
+  const attImgUrl = attText.match(/<meta property="og:image" content="(.*?)"/)?.[1];
+  if (attImgUrl) {
+    const attImgRes = await fetch(attImgUrl);
+    console.log('Attendance Image Status:', attImgRes.status, 'Content-Type:', attImgRes.headers.get('content-type'));
+  }
+
+  const routerAtt = await fetch(`https://share.mjbalubar.tech/attendance/IasJI-l_mpFz?t=${Date.now()}`);
+  const routerText = await routerAtt.text();
+  console.log('\nShare Router Attendance Status:', routerAtt.status);
+  console.log('Share Router Title:', routerText.match(/<title>(.*?)<\/title>/)?.[1]);
+  console.log('Share Router OG Title:', routerText.match(/<meta property="og:title" content="(.*?)"/)?.[1]);
+  console.log('Share Router OG Image:', routerText.match(/<meta property="og:image" content="(.*?)"/)?.[1]);
+  const routerImgUrl = routerText.match(/<meta property="og:image" content="(.*?)"/)?.[1];
+  if (routerImgUrl) {
+    const rImgRes = await fetch(routerImgUrl);
+    console.log('Router Image Status:', rImgRes.status, 'Content-Type:', rImgRes.headers.get('content-type'));
+  }
+
+  console.log('\n--- Cross-Platform Share Router Endpoint Matrix ---');
+  const checkUrls = [
+    'https://share.mjbalubar.tech/a/wZqXVKLoCRv_',
+    'https://share.mjbalubar.tech/r/LbTUmb5QfHjT',
+    'https://share.mjbalubar.tech/q/qMLs9Dku88Oa',
+    'https://share.mjbalubar.tech/s/gsl_ywvWRr6G',
+    'https://share.mjbalubar.tech/attendance/IasJI-l_mpFz',
+    'https://share.mjbalubar.tech/nonexistent_slug_test'
+  ];
+  for (const u of checkUrls) {
+    const r = await fetch(`${u}?t=${Date.now()}`);
+    const t = await r.text();
+    const title = t.match(/<meta property="og:title" content="(.*?)"/)?.[1];
+    const img = t.match(/<meta property="og:image" content="(.*?)"/)?.[1];
+    let imgStatus = 0;
+    if (img) {
+      const ir = await fetch(img);
+      imgStatus = ir.status;
+    }
+    const shortPath = u.replace('https://share.mjbalubar.tech', '');
+    console.log(`${shortPath.padEnd(25)} | HTTP ${r.status} | Img: HTTP ${imgStatus} | Title: ${title}`);
+  }
 }
 
 test().catch(console.error);
+
+

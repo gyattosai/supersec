@@ -36,6 +36,7 @@ import {
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation, useRoute } from "wouter";
+import { getSocialShareUrl } from "@shared/shareUrl";
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 type DayTimes = Record<number, { startTime: string; endTime: string }>;
@@ -434,7 +435,8 @@ export function SubjectSharingPage() {
   const copyLink = async () => {
     if (!subject.data?.publicId) return;
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${subject.data.publicId}`);
+      const url = getSocialShareUrl(`/s/${subject.data.publicId}`, { fastCacheBust: true });
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success("Public Subject link copied for Messenger");
       setTimeout(() => setCopied(false), 2500);
@@ -454,7 +456,7 @@ export function SubjectSharingPage() {
 
   if (!subject.data) return <SubjectUnavailable />;
   const shared = subject.data.publishState === "published";
-  const publicUrl = `${typeof window === "undefined" ? "" : window.location.origin}/s/${subject.data.publicId}`;
+  const publicUrl = getSocialShareUrl(`/s/${subject.data.publicId}`);
 
   return (
     <DashboardLayout>

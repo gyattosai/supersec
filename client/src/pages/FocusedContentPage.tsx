@@ -32,6 +32,7 @@ import { MessageTemplatesCard } from "@/components/MessageTemplatesCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { filterNotes, type SecretaryNote, INITIAL_SECRETARY_NOTES } from "@shared/notes";
 import { filterMessageTemplates, DEFAULT_PRESET_TEMPLATES, type MessageTemplate } from "@shared/messageTemplates";
+import { getSocialShareUrl } from "@shared/shareUrl";
 import { Link, useLocation, useRoute } from "wouter";
 
 const tabs = [
@@ -1712,9 +1713,10 @@ export function SignalContentList({
 }: LocalContentListProps & { pendingAction: ContentRowAction }) {
   const list = items ?? [];
   const singular = tabs.find(tab => tab.key === kind)!.singular;
-  const copy = async (path: string) => {
-    await navigator.clipboard.writeText(`${window.location.origin}${path}`);
-    toast.success("Public view-only link copied for Messenger");
+  const copy = async (path: string, version?: number | string) => {
+    const url = getSocialShareUrl(path, { fastCacheBust: true, version });
+    await navigator.clipboard.writeText(url);
+    toast.success("Public preview link copied for Messenger");
   };
 
   return (
@@ -1888,7 +1890,7 @@ export function SignalContentList({
                         type="button"
                         size="sm"
                         variant="ghost"
-                        onClick={() => copy(sharePath)}
+                        onClick={() => copy(sharePath, item.version)}
                         className="rounded-xl text-xs font-semibold text-primary hover:bg-primary/10"
                       >
                         <Copy className="mr-1.5 size-3.5" />
