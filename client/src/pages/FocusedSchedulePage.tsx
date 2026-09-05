@@ -385,30 +385,39 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                 const isCompleted = session.sessionState === "completed";
                 return (
                   <div key={sId} className={`signal-card-shell ${isSelected ? "!bg-primary/30" : isNoClass ? "!bg-amber-500/20" : ""}`}>
-                    <article className={`signal-record-card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${isSelected ? "!bg-primary/5" : ""}`}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <BulkCheckbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSession(sId)}
-                          label={`Select session for ${formatDateTime12Hour(session.startsAt)}`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-sm sm:text-base truncate tracking-[-0.02em]">
+                    <article className={`signal-record-card flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between sm:p-5 ${isSelected ? "!bg-primary/5" : ""}`}>
+                      <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                        <div className="mt-0.5 sm:mt-0 shrink-0">
+                          <BulkCheckbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSession(sId)}
+                            label={`Select session for ${formatDateTime12Hour(session.startsAt)}`}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="font-bold text-sm sm:text-base tracking-[-0.02em] text-foreground">
                             {formatDateTime12Hour(session.startsAt)}
                           </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
                             {isNoClass ? (
-                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
-                                No Class • {session.noClassReason || "Suspended"}
-                              </span>
+                              <>
+                                <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                                  <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400" />
+                                  No Class
+                                </span>
+                                {session.noClassReason && (
+                                  <span className="text-xs text-muted-foreground/90 font-medium truncate max-w-xs sm:max-w-md">
+                                    {session.noClassReason}
+                                  </span>
+                                )}
+                              </>
                             ) : isCompleted ? (
-                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                              <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
                                 <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-emerald-400" />
                                 Attendance completed
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                              <span className="inline-flex items-center gap-1.5 min-h-6 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border/40 shrink-0">
                                 <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground" />
                                 Ready for Attendance
                               </span>
@@ -417,7 +426,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 pt-1 lg:pt-0">
                         {isNoClass ? (
                           <>
                             {session.publicId && (
@@ -432,7 +441,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                                     toast.success("Public notice link copied to clipboard");
                                   }}
                                   title="Copy public notice link for students"
-                                  className="gap-1.5"
+                                  className="gap-1.5 rounded-xl min-h-9 px-3 text-xs font-semibold"
                                 >
                                   <Copy className="size-3.5" />
                                   Copy notice
@@ -442,6 +451,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                                   variant="outline"
                                   size="sm"
                                   asChild
+                                  className="rounded-xl min-h-9 px-3 text-xs font-semibold"
                                 >
                                   <a
                                     href={`/attendance/${session.publicId}`}
@@ -463,7 +473,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                                 setSessionForNoClass(session.id);
                                 setReason(session.noClassReason || "");
                               }}
-                              className="gap-1.5"
+                              className="gap-1.5 rounded-xl min-h-9 px-3 text-xs font-semibold"
                             >
                               <Pencil className="size-3.5" />
                               Edit reason
@@ -474,6 +484,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                               size="sm"
                               disabled={setNoClass.isPending}
                               onClick={() => setNoClass.mutate({ sessionId: session.id as any, noClass: false, publish: true })}
+                              className="rounded-xl min-h-9 px-3.5 text-xs font-semibold"
                             >
                               Restore class
                             </Button>
@@ -482,7 +493,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                           <>
                             <Link
                               href={`/app/attendance/${session.id}`}
-                              className="signal-action inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20"
+                              className="signal-action inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20"
                             >
                               Take Attendance <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
@@ -494,6 +505,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                                 setSessionForNoClass(session.id);
                                 setReason("");
                               }}
+                              className="rounded-xl min-h-9 px-3.5 text-xs font-semibold"
                             >
                               Mark No Class
                             </Button>
@@ -507,7 +519,7 @@ export function FocusedAttendancePage(props?: { params?: { subjectId?: string } 
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              className="rounded-xl size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                               aria-label={`Delete session ${formatDateTime12Hour(session.startsAt)}`}
                             >
                               <Trash2 className="size-4" />
