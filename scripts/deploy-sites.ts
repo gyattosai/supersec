@@ -12,37 +12,13 @@ async function main() {
     process.exit(1);
   }
 
-  // 1. Prune unused / alias cards from client/public/og
-  const ogDir = "client/public/og";
-  if (fs.existsSync(ogDir)) {
-    const keepPrefixes = [
-      "subject-",
-      "attendance-",
-      "announcement-",
-      "resource-",
-      "qa-",
-    ];
-    const files = fs.readdirSync(ogDir);
-    let removed = 0;
-    for (const f of files) {
-      if (f.endsWith(".png") || !keepPrefixes.some((p) => f.startsWith(p))) {
-        fs.unlinkSync(`${ogDir}/${f}`);
-        removed++;
-      }
-    }
-    console.log(`Pruned ${removed} unused cards from ${ogDir}`);
-  }
-
-  // 2. Clean temporary tar/test files
+  // 1. Clean temporary tar/test files
   const tempFiles = [
     "code.tar.gz",
     "test-code.tar.gz",
     "test-size.tar.gz",
     "test-clean.tar.gz",
     "test-pack.tar.gz",
-    "og-svgs.json",
-    "scripts/render-runner.html",
-    "client/public/render-cards.html",
   ];
   for (const tf of tempFiles) {
     if (fs.existsSync(tf)) {
@@ -52,9 +28,9 @@ async function main() {
     }
   }
 
-  console.log("3. Packaging codebase into code.tar.gz...");
+  console.log("2. Packaging codebase into code.tar.gz...");
   execSync(
-    'tar -czf code.tar.gz --exclude="node_modules" --exclude="dist" --exclude=".git" --exclude=".agents" --exclude=".project" --exclude=".manus-logs" --exclude="scratch" --exclude="*.tar.gz" --exclude="og-svgs.json" --exclude="og-cards.json" --exclude="scripts/render-*.html" --exclude="client/public/render-cards.html" --exclude="client/public/og/*.png" --exclude="test-*" --exclude=".playwright-mcp" .',
+    'tar -czf code.tar.gz --exclude="node_modules" --exclude="dist" --exclude=".git" --exclude=".agents" --exclude=".project" --exclude=".manus-logs" --exclude="scratch" --exclude="*.tar.gz" --exclude="test-*" --exclude=".playwright-mcp" .',
     { stdio: "inherit" }
   );
 

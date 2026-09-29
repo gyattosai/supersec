@@ -12,7 +12,6 @@
     "test": "vitest run",
     "setup:appwrite": "tsx scripts/setup-appwrite.ts",
     "deploy:sites": "tsx scripts/deploy-sites.ts",
-    "deploy:function": "tsx scripts/deploy-function.ts",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {
