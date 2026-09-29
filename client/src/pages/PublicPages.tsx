@@ -5,10 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ViewOnlyHeader } from "@/components/ViewOnlyHeader";
 import { formatDateTime12Hour, formatTimeRange12Hour } from "@/lib/time";
 import { trpc } from "@/lib/trpc";
-import { usePageMeta } from "@/lib/meta";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
-import { formatSocialTitle, formatSocialDescription, formatShorthandDate, formatFullDate } from "@shared/socialTitle";
 import { sortPublicAttendanceRecords, type PublicAttendanceSortMode } from "@shared/attendanceSorting";
 import {
   AlertCircle,
@@ -48,32 +46,6 @@ export function PublicSubjectPage() {
   const [, params] = useRoute("/s/:publicId");
   const input = useMemo(() => ({ publicId: params?.publicId ?? "" }), [params?.publicId]);
   const subject = trpc.foundation.publicSubject.useQuery(input, { enabled: Boolean(input.publicId) });
-
-  const subjectName = subject.data?.available ? subject.data.subject.name : "";
-  const subjectCode = subject.data?.available ? subject.data.subject.code : "";
-  const professorName = subject.data?.available ? subject.data.subject.professorName : "";
-  const socialTitle = subject.data?.available
-    ? formatSocialTitle({
-        type: "Subject",
-        contentTitle: subjectName,
-        subjectCode,
-      })
-    : undefined;
-  const socialDesc = subject.data?.available
-    ? formatSocialDescription({
-        type: "subject",
-        subjectCode,
-        subjectName,
-        professorName,
-      })
-    : undefined;
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    ogImage: subject.data?.available ? `/api/og?type=subject&title=${encodeURIComponent(subject.data.subject.name)}&subjectCode=${encodeURIComponent(subject.data.subject.code)}` : undefined,
-  });
-
   if (subject.isLoading) return <PublicShell><ReaderLoading label="Subject" /></PublicShell>;
   if (subject.isError) return <PublicShell><ReaderFailure /></PublicShell>;
   if (!subject.data?.available) return <PublicUnavailable />;
@@ -129,44 +101,7 @@ export function PublicSubjectQuestionsPage() {
   const [search, setSearch] = useState("");
   const questions = trpc.foundation.publicQuestions.useQuery({ publicId, query: search || undefined }, { enabled: Boolean(publicId) });
 
-  const subjectName = questions.data?.available ? questions.data.subject.name : "";
-  const subjectCode = questions.data?.available ? questions.data.subject.code : "";
-  const socialTitle = questions.data?.available
-    ? formatSocialTitle({
-        type: "Q&A",
-        contentTitle: "Knowledgebase",
-        numberOrDate: "Knowledgebase",
-        version: 1,
-        subjectCode,
-      })
-    : undefined;
-  const socialDesc = questions.data?.available
-    ? formatSocialDescription({
-        type: "qa_hub",
-        subjectCode,
-        subjectName,
-      })
-    : undefined;
-  const dynamicOg = questions.data?.available
-    ? `/api/og?type=question&title=${encodeURIComponent(socialTitle || subjectName + " Q&A")}&subjectCode=${encodeURIComponent(subjectCode)}&subtitle=${encodeURIComponent("Verified Class FAQs")}`
-    : undefined;
 
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: subjectCode ? [subjectCode, subjectName, "Q&A", "Questions", "Answers", "Class FAQ"] : undefined,
-    canonicalPath: publicId ? `/s/${publicId}/questions` : undefined,
-    ogImage: dynamicOg,
-    ogImageAlt: `${subjectName} Q&A Knowledgebase`,
-    jsonLd: questions.data?.available
-      ? {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          name: `${subjectName} Class FAQs & Knowledgebase`,
-          description: `Frequently asked class questions and verified answers for ${subjectCode}`,
-        }
-      : undefined,
-  });
 
   if (questions.isLoading) return <PublicShell><ReaderLoading label="Q&A" /></PublicShell>;
   if (questions.isError) return <PublicShell><ReaderFailure /></PublicShell>;
@@ -350,63 +285,6 @@ export function PublicAttendancePage() {
   const isNoClass = details?.sessionState === "no_class";
   const noClassReason = details?.noClassReason || "No class scheduled";
 
-  const dateShorthand = details ? formatShorthandDate(details.startsAt) || "Session" : "";
-  const dateStr = details?.startsAt ? new Date(details.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-  const socialTitle = details
-    ? formatSocialTitle({
-        type: "Attendance",
-        numberOrDate: dateShorthand,
-        version: details.version,
-        subjectCode: details.subject.code,
-        isNoClass,
-        noClassReason,
-      })
-    : undefined;
-  const socialDesc = details
-    ? formatSocialDescription({
-        type: "attendance",
-        subjectCode: details.subject.code,
-        subjectName: details.subject.name,
-        date: details.startsAt,
-        totals,
-        version: details.version,
-        isNoClass,
-        noClassReason,
-      })
-    : undefined;
-  const ogImgUrl = details
-    ? `/og/attendance-${params?.publicId}.jpg?v=${details.version}`
-    : undefined;
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: details
-      ? [
-          details.subject.code,
-          details.subject.name,
-          ...(isNoClass ? ["No Class", "Class Suspended", "Notice"] : ["Attendance", "Roll Call", "Class Session"]),
-          `Version ${details.version}`,
-        ]
-      : undefined,
-    canonicalPath: params?.publicId ? `/attendance/${params.publicId}` : undefined,
-    ogImage: ogImgUrl,
-    ogImageAlt: details ? (isNoClass ? `${details.subject.name} No Class Notice` : `${details.subject.name} Attendance v${details.version}`) : undefined,
-    jsonLd: details
-      ? {
-          "@context": "https://schema.org",
-          "@type": "EducationEvent",
-          name: isNoClass ? `${details.subject.name} Class Session (Suspended)` : `${details.subject.name} Class Session Attendance`,
-          startDate: details.startsAt ? new Date(details.startsAt).toISOString() : undefined,
-          description: isNoClass ? `No class notice for ${details.subject.code}: ${noClassReason}` : `Verified roll call attendance for ${details.subject.code} — ${details.subject.name}`,
-          eventStatus: isNoClass ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
-          organizer: {
-            "@type": "Organization",
-            name: "supersec",
-          },
-        }
-      : undefined,
-  });
 
   const filteredRecords = useMemo(() => {
     if (!details?.records) return [];
@@ -919,36 +797,7 @@ export function PublicReportPage() {
   const report = trpc.foundation.publicReport.useQuery({ publicId }, { enabled: Boolean(publicId) });
   const details = report.data?.available ? report.data.report : null;
 
-  const dateShorthand = details ? formatShorthandDate(details.startsAt) || `#${details.version}` : "";
-  const socialTitle = details
-    ? formatSocialTitle({
-        type: "Report",
-        contentTitle: details.title,
-        numberOrDate: dateShorthand,
-        version: details.version,
-      })
-    : undefined;
-  const socialDesc = details
-    ? formatSocialDescription({
-        type: "report",
-        contentTitle: details.title,
-        date: details.startsAt,
-        totals: details.totals,
-        version: details.version,
-      })
-    : "Official certified summary attendance and performance report.";
-  const dynamicOg = details
-    ? `/api/og?type=report&title=${encodeURIComponent(socialTitle || details.title)}&version=${details.version}&v=${details.version}`
-    : undefined;
 
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: details ? [details.title, "Attendance Report", "Summary Analytics", "Class Report"] : undefined,
-    canonicalPath: publicId ? `/reports/${publicId}` : undefined,
-    ogImage: dynamicOg,
-    ogImageAlt: details ? `${details.title} Report Cover` : undefined,
-  });
 
   if (report.isLoading) return <PublicShell><ReaderLoading label="Report" /></PublicShell>;
   if (report.isError) return <PublicShell><ReaderFailure /></PublicShell>;
@@ -1008,62 +857,7 @@ function PublicContentPage({ kind, publicId, label }: { kind: "announcement" | "
   const details = item.data?.available ? item.data.item : null;
   const visual = details?.media ?? details?.socialPreviewMedia;
   const visibleTitle = details?.kind === "question" ? details.title.replace(/^(Official|Unofficial) answer — /, "") : (details?.title || "");
-  const dateShorthand = details ? formatShorthandDate(details.publishedAt) || `#${details.version}` : "";
-  const socialTitle = details
-    ? formatSocialTitle({
-        type: kind,
-        contentTitle: visibleTitle,
-        numberOrDate: dateShorthand,
-        version: details.version,
-        subjectCode: details.subject?.code,
-      })
-    : undefined;
-  const socialDesc = details
-    ? formatSocialDescription({
-        type: kind,
-        subjectCode: details.subject?.code,
-        subjectName: details.subject?.name,
-        contentTitle: visibleTitle,
-        contentBody: details.body,
-        category: details.category,
-        date: details.publishedAt,
-        version: details.version,
-      })
-    : "Official class post.";
-  const dateStr = details?.publishedAt ? new Date(details.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-  const staticOgName =
-    kind === "question"
-      ? `qa-${publicId}.jpg`
-      : kind === "resource"
-      ? `resource-${publicId}.jpg`
-      : `announcement-${publicId}.jpg`;
-  const dynamicOg = details
-    ? visual?.url || `/og/${staticOgName}?v=${details.version}`
-    : undefined;
 
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: details ? [visibleTitle, details.subject?.code || "", label, "Class Update", "Official Announcement"] : undefined,
-    canonicalPath: publicId ? `/${kind === "announcement" ? "a" : kind === "resource" ? "r" : "q"}/${publicId}` : undefined,
-    ogImage: dynamicOg,
-    ogImageAlt: visual?.altText || visibleTitle,
-    ogType: "article",
-    publishedTime: details?.publishedAt ? new Date(details.publishedAt).toISOString() : undefined,
-    jsonLd: details
-      ? {
-          "@context": "https://schema.org",
-          "@type": kind === "question" ? "QAPage" : kind === "resource" ? "LearningResource" : "Article",
-          name: visibleTitle,
-          description: details.body ? details.body.replace(/\s+/g, " ").slice(0, 180) : "Class post",
-          datePublished: details.publishedAt ? new Date(details.publishedAt).toISOString() : undefined,
-          author: {
-            "@type": "Organization",
-            name: "supersec",
-          },
-        }
-      : undefined,
-  });
 
   if (item.isLoading) return <PublicShell><ReaderLoading label={label} /></PublicShell>;
   if (item.isError) return <PublicShell><ReaderFailure /></PublicShell>;

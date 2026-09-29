@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatFileSize, isPublicImageMimeType, isSupportedPublicUploadMimeType, isSupportedResourceFileMimeType, MAX_PUBLIC_UPLOAD_BYTES, PUBLIC_IMAGE_MIME_TYPES, RESOURCE_FILE_MIME_TYPES } from "@shared/mediaPolicy";
-import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -416,7 +415,7 @@ export default function FocusedContentPage(props?: { params?: { subjectId?: stri
     try {
       const uploaded = await uploadMedia.mutateAsync({ fileName: file.name, mimeType: file.type, base64Data: await fileToDataUrl(file), altText: isImageSlot ? imageAltText.trim() || title || question || null : null, publicUse: true });
       const asset: AttachmentAsset = { id: uploaded.id, url: uploaded.url, originalName: uploaded.originalName, mimeType: uploaded.mimeType, byteSize: uploaded.byteSize, altText: isImageSlot ? imageAltText.trim() || title || question || null : null };
-      if (target === "social") { setSocialPreviewMediaAssetId(asset.id as any); setSocialAsset(asset); toast.success("Messenger preview image attached"); }
+      if (target === "social") { setSocialPreviewMediaAssetId(asset.id as any); setSocialAsset(asset); toast.success("Cover image attached"); }
       if (target === "attachment") { setAttachmentAssets(current => [...current, asset]); if (!destinationUrl) { setDestinationUrl(new URL(asset.url, window.location.origin).toString()); setResourceType("File attachment"); } toast.success("Attachment added"); }
     } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to upload the selected file"); }
   };
@@ -1333,23 +1332,23 @@ function MediaFields({
         </div>
       </div>
 
-      <Field label="Messenger Preview Card Image Alt (optional)" htmlFor="attachment-image-description">
+      <Field label="Cover Image Alt (optional)" htmlFor="attachment-image-description">
         <Input
           id="attachment-image-description"
           value={imageAltText}
           onChange={event => onImageAltTextChange(event.target.value)}
-          placeholder="Describe the preview card image for accessibility"
+          placeholder="Describe the cover image for accessibility"
           className="rounded-xl"
         />
       </Field>
 
       <div className="mt-3">
         {socialAsset ? (
-          <AttachmentTile asset={socialAsset} label="Messenger Preview Image" image onRemove={onRemoveSocial} />
+          <AttachmentTile asset={socialAsset} label="Cover Image" image onRemove={onRemoveSocial} />
         ) : (
           <UploadSlot
-            label="Attach Messenger Preview Card"
-            detail="Optional custom image for Facebook &amp; Messenger link cards."
+            label="Attach Cover Image"
+            detail="Optional image to display with this post."
             accept={assetAccepts(PUBLIC_IMAGE_MIME_TYPES)}
             disabled={busy}
             onChange={event => onUpload(event, "social")}
@@ -1840,46 +1839,6 @@ export function SignalContentList({
 
                   {state === "published" ? (
                     <>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="rounded-xl text-xs font-bold text-primary border-primary/30 hover:bg-primary/10"
-                          >
-                            <Share2 className="mr-1.5 size-3.5" />
-                            Messenger Card
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl sm:max-w-3xl w-full max-h-[85vh] sm:max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border">
-                          <DialogHeader className="p-4 sm:p-5 border-b border-border/80 sticky top-0 bg-card z-10 shrink-0">
-                            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-foreground">
-                              <Sparkles className="size-5 text-primary" />
-                              Messenger Link Card &amp; Fast Share
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1">
-                            <SocialPreviewCard
-                              type={kind === "announcements" ? "announcement" : kind === "resources" ? "resource" : "question"}
-                              title={title || item.title || item.question || "Class Update"}
-                              subjectCode={item.subjectCode || item.subject?.code || subjectCode}
-                              date={toSafeIsoString(item.publishedAt) || toSafeIsoString(item.createdAt)}
-                              description={detail || ""}
-                              publicUrl={`${typeof window !== "undefined" ? window.location.origin : "https://supersec.mjbalubar.tech"}${sharePath || ""}`}
-                              version={item.version || 1}
-                              category={kind === "resources" ? item.category : undefined}
-                              coverUrl={
-                                item.socialAsset?.url ||
-                                item.coverAsset?.url ||
-                                item.attachments?.[0]?.url ||
-                                (item.socialPreviewMediaAssetId ? `/api/media/${item.socialPreviewMediaAssetId}` : undefined)
-                              }
-                            />
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
                       <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-semibold">
                         <a href={sharePath} target="_blank" rel="noreferrer">
                           <ExternalLink className="mr-1.5 size-3.5" />

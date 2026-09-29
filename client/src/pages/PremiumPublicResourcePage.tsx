@@ -3,8 +3,6 @@ import { PublicResourceAttachments } from "@/components/PublicResourceAttachment
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { usePageMeta } from "@/lib/meta";
-import { formatSocialTitle, formatSocialDescription, formatShorthandDate } from "@shared/socialTitle";
 import { ArrowLeft, ExternalLink, FileText, Globe, History, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useRoute } from "wouter";
@@ -19,52 +17,6 @@ export function PremiumPublicResourcePage() {
 
   const details = item.data?.available ? item.data.item : null;
   const visual = details?.media ?? details?.socialPreviewMedia;
-  const dateShorthand = details ? formatShorthandDate(details.publishedAt) || `#${details.version}` : "";
-  const socialTitle = details
-    ? formatSocialTitle({
-        type: "Resource",
-        contentTitle: details.title,
-        numberOrDate: dateShorthand,
-        version: details.version,
-        subjectCode: details.subject?.code,
-      })
-    : undefined;
-  const socialDesc = details
-    ? formatSocialDescription({
-        type: "resource",
-        subjectCode: details.subject?.code,
-        subjectName: details.subject?.name,
-        contentTitle: details.title,
-        contentBody: details.body,
-        category: details.category || undefined,
-        version: details.version,
-      })
-    : "Published course resource and download link.";
-  const dynamicOg = details
-    ? visual?.url || `/og/resource-${params?.publicId}.jpg?v=${details.version}`
-    : undefined;
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: details ? [details.title, details.subject?.code || "", details.category || "Resource", "Resource", "Class Download"] : undefined,
-    canonicalPath: params?.publicId ? `/r/${params.publicId}` : undefined,
-    ogImage: dynamicOg,
-    ogImageAlt: visual?.altText || details?.title,
-    ogType: "article",
-    publishedTime: details?.publishedAt ? new Date(details.publishedAt).toISOString() : undefined,
-    jsonLd: details
-      ? {
-          "@context": "https://schema.org",
-          "@type": "LearningResource",
-          name: details.title,
-          description: details.body ? details.body.replace(/\s+/g, " ").slice(0, 180) : "Course resource",
-          datePublished: details.publishedAt ? new Date(details.publishedAt).toISOString() : undefined,
-          learningResourceType: details.category || "Resource",
-          url: details.destinationUrl || undefined,
-        }
-      : undefined,
-  });
 
   if (item.isLoading)
     return (

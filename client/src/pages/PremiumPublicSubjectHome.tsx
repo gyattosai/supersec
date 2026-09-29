@@ -2,8 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { ViewOnlyHeader } from "@/components/ViewOnlyHeader";
 import { formatTimeRange12Hour } from "@/lib/time";
 import { trpc } from "@/lib/trpc";
-import { usePageMeta } from "@/lib/meta";
-import { formatSocialTitle, formatSocialDescription } from "@shared/socialTitle";
 import {
   AlertTriangle,
   ArrowRight,
@@ -93,53 +91,6 @@ export function PremiumPublicSubjectHome() {
   }, []);
 
   const subjectData = query.data?.available ? query.data.subject : null;
-  const socialTitle = subjectData
-    ? formatSocialTitle({
-        type: "Subject",
-        contentTitle: subjectData.name,
-        subjectCode: subjectData.code,
-        numberOrDate: subjectData.code,
-        version: 1,
-      })
-    : undefined;
-  const socialDesc = subjectData
-    ? formatSocialDescription({
-        type: "subject",
-        subjectCode: subjectData.code,
-        subjectName: subjectData.name,
-        professorName: subjectData.professorName,
-      })
-    : undefined;
-  const dynamicOg = subjectData
-    ? `/api/og?type=subject&title=${encodeURIComponent(socialTitle || subjectData.name)}&subjectCode=${encodeURIComponent(subjectData.code)}&professorName=${encodeURIComponent(subjectData.professorName)}&subtitle=${encodeURIComponent("Official Student Portal")}`
-    : undefined;
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: subjectData ? [subjectData.code, subjectData.name, `Professor ${subjectData.professorName}`, "Class Portal", "Attendance", "Announcements"] : undefined,
-    canonicalPath: params?.publicId ? `/s/${params.publicId}` : undefined,
-    ogImage: dynamicOg,
-    ogImageAlt: subjectData ? `${subjectData.name} Portal Cover` : undefined,
-    ogType: "website",
-    jsonLd: subjectData
-      ? {
-          "@context": "https://schema.org",
-          "@type": "Course",
-          name: subjectData.name,
-          courseCode: subjectData.code,
-          description: `Official class portal for ${subjectData.name}`,
-          provider: {
-            "@type": "Organization",
-            name: "supersec",
-          },
-          instructor: {
-            "@type": "Person",
-            name: subjectData.professorName,
-          },
-        }
-      : undefined,
-  });
 
   const { subject, allUnifiedItems, latestAttendance } = useMemo(() => {
     if (!subjectData) return { subject: null, allUnifiedItems: [], latestAttendance: null };

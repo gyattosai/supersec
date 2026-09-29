@@ -5,8 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { formatFileSize, isPublicImageMimeType, MAX_PUBLIC_UPLOAD_BYTES, PUBLIC_IMAGE_MIME_TYPES } from "@shared/mediaPolicy";
 import { trpc } from "@/lib/trpc";
-import { usePageMeta } from "@/lib/meta";
-import { formatSocialTitle, formatSocialDescription } from "@shared/socialTitle";
 import { ArrowLeft, FileText, LoaderCircle, UploadCloud, AlertCircle, Clock } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Link, useRoute } from "wouter";
@@ -27,27 +25,6 @@ export function ExcuseSubmissionPage() {
   const publicId = params?.publicId ?? "";
   const session = trpc.attendanceProof.publicSession.useQuery({ publicId }, { enabled: Boolean(publicId) });
   const submitProof = trpc.attendanceProof.submit.useMutation();
-
-  const subjectCode = session.data?.session?.subject?.code;
-  const subjectName = session.data?.session?.subject?.name;
-  const socialTitle = formatSocialTitle({
-    type: "Excuse",
-    subjectCode,
-  });
-  const socialDesc = formatSocialDescription({
-    type: "excuse",
-    subjectCode,
-    subjectName,
-  });
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: ["Excuse Letter", "Attendance Excuse", "Medical Certificate", "Class Roll Call"],
-    canonicalPath: publicId ? `/attendance/${publicId}/excuse` : undefined,
-    ogImage: "/api/og?type=excuse&title=" + encodeURIComponent(socialTitle) + "&subtitle=" + encodeURIComponent("Secretary Review Process"),
-    ogImageAlt: socialTitle,
-  });
 
   const [submittedName, setSubmittedName] = useState("");
   const [excuseReason, setExcuseReason] = useState("");

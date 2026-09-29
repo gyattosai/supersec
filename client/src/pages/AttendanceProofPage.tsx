@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatFileSize, isPublicImageMimeType, MAX_PUBLIC_UPLOAD_BYTES, PUBLIC_IMAGE_MIME_TYPES } from "@shared/mediaPolicy";
 import { trpc } from "@/lib/trpc";
-import { usePageMeta } from "@/lib/meta";
-import { formatSocialTitle, formatSocialDescription } from "@shared/socialTitle";
 import { ArrowLeft, CheckCircle2, ImagePlus, LoaderCircle, ShieldCheck, Sparkles, UploadCloud, AlertCircle, Clock } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Link, useRoute } from "wouter";
@@ -26,27 +24,6 @@ export function AttendanceProofPage() {
   const publicId = params?.publicId ?? "";
   const session = trpc.attendanceProof.publicSession.useQuery({ publicId }, { enabled: Boolean(publicId) });
   const submitProof = trpc.attendanceProof.submit.useMutation();
-
-  const subjectCode = session.data?.session?.subject?.code;
-  const subjectName = session.data?.session?.subject?.name;
-  const socialTitle = formatSocialTitle({
-    type: "Proof",
-    subjectCode,
-  });
-  const socialDesc = formatSocialDescription({
-    type: "proof",
-    subjectCode,
-    subjectName,
-  });
-
-  usePageMeta({
-    title: socialTitle,
-    description: socialDesc,
-    keywords: ["Zoom Attendance", "Attendance Proof", "AI Verification", "Class Roll Call"],
-    canonicalPath: publicId ? `/attendance/${publicId}/proof` : undefined,
-    ogImage: "/api/og?type=proof&title=" + encodeURIComponent(socialTitle) + "&subtitle=" + encodeURIComponent("Instant AI Verification"),
-    ogImageAlt: socialTitle,
-  });
 
   const [submittedName, setSubmittedName] = useState("");
   const [file, setFile] = useState<File | null>(null);

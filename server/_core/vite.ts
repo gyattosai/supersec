@@ -10,49 +10,20 @@ import { buildSsrPrefetch } from "./ssrCaller";
 import type { HeadMeta } from "../../client/src/ssr/prefetch";
 
 const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-const defaultOrigin = process.env.CANONICAL_ORIGIN || "https://supersec.mjbalubar.tech";
 const siteName = process.env.SITE_NAME ?? "supersec";
 
-function headTags(head: HeadMeta, reqOrigin?: string) {
-  const origin = reqOrigin || defaultOrigin;
+function headTags(head: HeadMeta) {
   const title = escapeHtml(head.title.slice(0, 70));
   const description = escapeHtml(head.description.replace(/\s+/g, " ").slice(0, 200));
-  const canonical = head.canonicalPath ? (head.canonicalPath.startsWith("http") ? head.canonicalPath : `${origin}${head.canonicalPath}`) : "";
-  const rawImage = head.ogImage || "/api/og?type=subject&title=supersec";
-  const image = rawImage.startsWith("/") ? `${origin}${rawImage}` : rawImage;
-  const isJpg = image.includes(".jpg") || image.includes(".jpeg");
-  const isPng = image.includes(".png");
-  const isWebp = image.includes(".webp");
-  const imageMime = isJpg ? "image/jpeg" : isPng ? "image/png" : isWebp ? "image/webp" : "image/jpeg";
 
   return [
     `<title>${title}</title>`,
     `<meta name="description" content="${description}" />`,
-    `<meta property="og:type" content="${head.ogType ?? "website"}" />`,
-    `<meta property="og:title" content="${title}" />`,
-    `<meta property="og:description" content="${description}" />`,
-    `<meta property="og:site_name" content="${escapeHtml(siteName)}" />`,
-    canonical ? `<meta property="og:url" content="${escapeHtml(canonical)}" />` : "",
-    canonical ? `<link rel="canonical" href="${escapeHtml(canonical)}" />` : "",
-    `<meta property="og:image" content="${escapeHtml(image)}" />`,
-    `<meta property="og:image:secure_url" content="${escapeHtml(image)}" />`,
-    `<meta property="og:image:type" content="${imageMime}" />`,
-    `<meta property="og:image:width" content="1200" />`,
-    `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${escapeHtml(head.ogImageAlt || title)}" />`,
-    `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${title}" />`,
-    `<meta name="twitter:description" content="${description}" />`,
-    `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
-    `<meta name="twitter:image:width" content="1200" />`,
-    `<meta name="twitter:image:height" content="630" />`,
-    head.publishedTime ? `<meta property="article:published_time" content="${escapeHtml(head.publishedTime)}" />` : "",
     head.noindex || head.notFound ? `<meta name="robots" content="noindex, follow" />` : "",
-    head.jsonLd ? `<script type="application/ld+json" id="page-jsonld">${JSON.stringify(head.jsonLd).replace(/</g, "\\u003c")}</script>` : "",
   ].filter(Boolean).join("\n");
 }
 
-function composeHtml(template: string, html: string, head: HeadMeta, state: unknown, reqOrigin?: string) {
+function composeHtml(template: string, html: string, head: HeadMeta, state: unknown) {
   const serialized = JSON.stringify(superjson.serialize(state)).replace(/</g, "\\u003c");
   let cleanTemplate = template
     .replace(/<title>[\s\S]*?<\/title>/gi, "")
@@ -64,7 +35,7 @@ function composeHtml(template: string, html: string, head: HeadMeta, state: unkn
 
   return cleanTemplate
     .replace("</body>", () => `<script>window.__RQ_STATE__=${serialized}</script></body>`)
-    .replace("<!--app-head-->", () => headTags(head, reqOrigin))
+    .replace("<!--app-head-->", () => headTags(head))
     .replace("<!--app-html-->", () => html);
 }
 
@@ -83,7 +54,7 @@ export async function setupVite(app: Express, server: Server) {
       const { render } = await vite.ssrLoadModule("/src/entry-server.tsx");
       const prefetch = await buildSsrPrefetch(req, res);
       const output = await render(url, prefetch);
-      res.status(output.head.notFound ? 404 : 200).set("Cache-Control", "no-cache").type("html").end(composeHtml(template, output.html, output.head, output.dehydratedState, reqOrigin));
+      res.status(output.head.notFound ? 404 : 200).set("Cache-Control", "no-cache").type("html").end(composeHtml(template, output.html, output.head, output.dehydratedState));
     } catch (error) {
       vite.ssrFixStacktrace(error as Error);
       next(error);
@@ -120,7 +91,7 @@ export function serveStatic(app: Express) {
       const entryPath = path.resolve(import.meta.dirname, "server-ssr", "entry-server.js");
       const { render } = await import(entryPath);
       const output = await render(req.originalUrl, await buildSsrPrefetch(req, res));
-      res.status(output.head.notFound ? 404 : 200).set("Cache-Control", "no-cache").type("html").end(composeHtml(template, output.html, output.head, output.dehydratedState, reqOrigin));
+      res.status(output.head.notFound ? 404 : 200).set("Cache-Control", "no-cache").type("html").end(composeHtml(template, output.html, output.head, output.dehydratedState));
     } catch (error) {
       console.error("[SSR] render failed, serving shell:", error);
       let fallbackTitle = `${siteName} — Class Secretary Management System`;
@@ -141,7 +112,7 @@ export function serveStatic(app: Express) {
         fallbackTitle = `Class Attendance · ${siteName}`;
         fallbackDesc = "Official class session attendance roll call on supersec.";
       }
-      res.status(200).set("Cache-Control", "no-cache").type("html").end(template.replace("<!--app-head-->", () => headTags({ title: fallbackTitle, description: fallbackDesc, canonicalPath: req.path }, reqOrigin)).replace("<!--app-html-->", () => ""));
+      res.status(200).set("Cache-Control", "no-cache").type("html").end(template.replace("<!--app-head-->", () => headTags({ title: fallbackTitle, description: fallbackDesc })).replace("<!--app-html-->", () => ""));
     }
   });
 }

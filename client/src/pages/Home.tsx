@@ -14,31 +14,9 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { usePageMeta } from "@/lib/meta";
 import { Link } from "wouter";
 
 export default function Home() {
-  usePageMeta({
-    title: "supersec — Class Secretary Management System",
-    description: "Modern, high-productivity class secretary management system with live roll call, AI Zoom proof intake, official announcements, course resources, and view-only student portals.",
-    keywords: ["Class Secretary", "Attendance Tracking", "Student Management", "Zoom Proofs", "Resources", "Announcements", "Class Portal"],
-    canonicalPath: "/",
-    ogImage: "/api/og?type=subject&title=supersec&subtitle=" + encodeURIComponent("Class Secretary Management System"),
-    ogImageAlt: "supersec Class Secretary Management System",
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      name: "supersec",
-      applicationCategory: "EducationalApplication",
-      operatingSystem: "All",
-      description: "Modern class secretary management system with live roll call, AI Zoom proof intake, and view-only student portals.",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-      },
-    },
-  });
   return (
     <main className="signal-canvas min-h-[100dvh] text-foreground flex flex-col">
       {/* Top Header */}

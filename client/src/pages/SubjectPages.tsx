@@ -2,7 +2,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { RecordStatusBadge } from "@/components/RecordStatusBadge";
 import { WorkspaceFormFooter } from "@/components/WorkspaceFormFooter";
 import { WorkspacePageHeader } from "@/components/WorkspacePageHeader";
-import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -576,17 +575,6 @@ export function SubjectSharingPage() {
           </div>
         </div>
 
-        {/* Live Social Previews & Messenger Card Preview */}
-        {shared && subject.data.publicId && (
-          <SocialPreviewCard
-            title={subject.data.name}
-            subjectCode={subject.data.code}
-            professorName={subject.data.professorName}
-            description={`Official student portal for ${subject.data.code} — ${subject.data.name}. View class schedule, announcements, resources, and attendance updates.`}
-            publicUrl={publicUrl}
-            type="subject"
-          />
-        )}
       </section>
     </DashboardLayout>
   );

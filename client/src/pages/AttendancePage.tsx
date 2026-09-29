@@ -15,9 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { attendanceWorkspacePath } from "@/lib/attendanceWorkspace";
 import { trpc } from "@/lib/trpc";
 import { sortAttendance, type AttendanceSortMode } from "@shared/attendanceSorting";
-import { formatSocialTitle, formatShorthandDate } from "@shared/socialTitle";
 import { getSocialShareUrl } from "@shared/shareUrl";
-import { SocialPreviewCard } from "@/components/SocialPreviewCard";
 import { formatConflictDaysSummary } from "@shared/scheduleConflict";
 import { downloadClassAttendancePdf } from "@/lib/reportPdf";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,7 +28,7 @@ import { Link, useRoute } from "wouter";
 
 const statusOptions = ["PRESENT", "ABSENT", "EXCUSED", "CONFLICT", "NOT_SET"] as const;
 const statusFilters = ["ALL", ...statusOptions] as const;
-export type AttendanceScreen = "main" | "zoom" | "proofs" | "social";
+export type AttendanceScreen = "main" | "zoom" | "proofs";
 const localDateTimeValue = (date = new Date()) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
 function parseZoomNameToStudent(sourceName: string): { lastName: string; firstName: string; middleName: string } {
@@ -314,9 +312,7 @@ export default function AttendancePage() {
               ? "Attendance"
               : activeScreen === "zoom"
               ? "Match Zoom Names"
-              : activeScreen === "proofs"
-              ? "Attendance Proofs & Excuse Letters"
-              : "Messenger & Social Card Preview"
+              : "Attendance Proofs & Excuse Letters"
           }
           back={
             activeScreen === "main" ? (
@@ -518,19 +514,6 @@ export default function AttendancePage() {
                 {proofSubmissions.data?.length ?? 0}
               </Badge>
             )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveScreen("social")}
-            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all ${
-              activeScreen === "social"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-            }`}
-          >
-            <Copy className="size-4 text-sky-400" />
-            Messenger & Social Card Preview
           </button>
         </div>
 
@@ -1435,89 +1418,6 @@ export default function AttendancePage() {
           </div>
         )}
 
-        {/* Dedicated Context Screen: Messenger & Social Card Preview */}
-        {activeScreen === "social" && (
-          <div className="mt-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveScreen("main")}
-                className="gap-2 font-semibold"
-              >
-                <ArrowLeft className="size-4" />
-                ← Back to Attendance
-              </Button>
-            </div>
-
-            <section className="signal-panel p-5 sm:p-6 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <Copy className="size-5" />
-                </span>
-                <div>
-                  <p className="signal-kicker">Social Share Preview</p>
-                  <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">Messenger & Social Card Preview</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Live dynamic preview of how this attendance session renders when shared across Messenger, Discord, Twitter, and Facebook.
-                  </p>
-                </div>
-              </div>
-
-              {session.data?.publishState === "published" && session.data?.publicId ? (
-                <div className="mt-6 space-y-5">
-                  {(() => {
-                    const currentVersion = Math.max(...(records.data || []).map(r => r.version || 0), (session.data?.version as number) || 0, 1);
-                    return (
-                      <SocialPreviewCard
-                        title={`[${subject.data?.code || "ATTENDANCE"}] Attendance ${formatShorthandDate(session.data.startsAt) || "Session"}`}
-                        subjectCode={subject.data?.code}
-                        type="attendance"
-                        version={currentVersion}
-                        present={totals.present}
-                        absent={totals.absent}
-                        excused={totals.excused}
-                        date={new Date(session.data.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        description={`Class Attendance for ${subject.data?.code || "Class"} — ${subject.data?.name || "Operations Management"}. Present: ${totals.present}, Absent: ${totals.absent}, Excused: ${totals.excused}.`}
-                        publicUrl={getSocialShareUrl(`/attendance/${session.data.publicId}`, { version: currentVersion })}
-                      />
-                    );
-                  })()}
-
-                  <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
-                    <Button type="button" onClick={copyPublicAttendance} className="gap-2">
-                      <Copy className="size-4" />
-                      Copy Messenger Link
-                    </Button>
-                    <Button type="button" variant="outline" asChild>
-                      <a href={`/attendance/${session.data.publicId}`} target="_blank" rel="noreferrer" className="gap-2 inline-flex items-center">
-                        <ExternalLink className="size-4" />
-                        View Public Attendance
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-6 signal-inset p-8 text-center rounded-2xl text-muted-foreground">
-                  <p className="text-sm font-semibold text-foreground">Attendance not yet published</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Publish this session from the Attendance Desk to generate the live public link and dynamic preview card.</p>
-                </div>
-              )}
-            </section>
-
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveScreen("main")}
-                className="gap-2 font-semibold"
-              >
-                <ArrowLeft className="size-4" />
-                ← Back to Attendance
-              </Button>
-            </div>
-          </div>
-        )}
       </section>
 
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
