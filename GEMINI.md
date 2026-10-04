@@ -70,6 +70,15 @@ Leverage the installed specialized skills and tools based on the task:
 * **`ui-skills` MCP server**: Query specialized UI patterns on-demand via MCP `call_mcp_tool`.
 * **`designmd` Pro MCP server**: Search DESIGN.md catalogs, generate token variables, and inspect block layouts on-demand.
 
+### G. Matt Pocock Architecture & Workflow Suite
+* **`codebase-design`**: Design deep modules with narrow, expressive surfaces. Hide internal implementation details to make code maintainable and AI-navigable.
+* **`domain-modeling`**: Keep domain concepts aligned with the ubiquitous language in `docs/CONTEXT.md`. Propose new terms before introducing them.
+* **`tdd`**: Strict test-driven development (Red ➔ Green ➔ Refactor). Write tests first for stats calculations, attendance rules R1–R9, and access controls.
+* **`grilling`**: Stress-test architectural plans and challenge thin assumptions before writing code (paired with `/grill-me`).
+* **`prototype`**: Build rapid, throwaway spikes when exploring state transitions or mobile UI ergonomics before committing to production files.
+* **`research`**: Investigate upstream docs and specifications (Payload CMS 3, Next.js 15, Appwrite) against primary sources before writing complex integrations.
+* **`pr`**: Generate clear, structured pull request descriptions summarizing intent, spec compliance, and phone verification steps.
+
 ---
 
 ## 3. Testing Rules
