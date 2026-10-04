@@ -174,6 +174,22 @@ Leverage the installed specialized skills and tools based on the task:
 4. **Verify**: Ensure tests pass and the build succeeds (`pnpm test && pnpm build`).
 5. **Review & Commit**: Confirm mobile usability and commit changes to the working branch.
 
+---
+
+## Agent skills
+
+### Issue tracker
+
+GitHub issues on `gyattosai/supersec` via `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical 5-role triage label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context (`GLOSSARY.md` + `docs/adr/`). See `docs/agents/domain.md`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
