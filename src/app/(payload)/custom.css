@@ -1,0 +1,18 @@
+/* Payload Admin theme mapping to Linear tokens */
+:root {
+  --theme-bg: #010102;
+  --theme-text: #f7f8f8;
+  --theme-elevation-0: #010102;
+  --theme-elevation-50: #0f1011;
+  --theme-elevation-100: #141516;
+  --theme-elevation-150: #18191a;
+  --theme-elevation-200: #1c1c1f;
+  --theme-elevation-250: #232326;
+  --theme-elevation-300: #28282c;
+  --theme-elevation-400: #34343a;
+  --theme-elevation-500: #3e3e44;
+  --theme-elevation-800: #8a8f98;
+  --theme-elevation-1000: #f7f8f8;
+  --theme-input-border: #23252a;
+  --theme-border: #23252a;
+}
