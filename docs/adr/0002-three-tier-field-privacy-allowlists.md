@@ -1,0 +1,3 @@
+# 0002. Three-Tier Field Privacy Model with Compile-Time Allowlists
+
+SuperSec serves secretary management, public classmate viewing, and secret professor reports from shared underlying collections. We classify every document field into one of three privacy tiers (🌐 Public, 📋 Report-only, 🔒 Private) and enforce zero-leak guarantees via compile-time field allowlists (`select: publicFields`) in public routes and Local API queries rather than relying on shadow collections or runtime row-level ACLs. This keeps the schema unified while making inadvertent data leakage mathematically detectable by automated tests.
