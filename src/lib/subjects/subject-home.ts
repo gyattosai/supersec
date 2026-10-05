@@ -1,6 +1,7 @@
 import { getWeekdayAbbrev } from '@/lib/dashboard-helpers'
 import { formatTimeRange12 } from '@/lib/format-time'
 import { isAnnouncementPinned } from '@/lib/posts/lifecycle'
+import { formatStudentDisplayName } from '@/lib/data/students'
 
 export interface SubjectScheduleSlot {
   weekday: string
@@ -196,7 +197,7 @@ export function projectSubjectRosterList(rawEnrollments: any[]): SubjectRosterIt
     return {
       id: enr.id,
       studentId: student.id || enr.student,
-      name: student.name || 'Unnamed Student',
+      name: formatStudentDisplayName(student),
       studentNumber: student.studentNumber,
       sectionMark: enr.sectionMark,
       hasScheduleConflict: Boolean(enr.hasScheduleConflict),

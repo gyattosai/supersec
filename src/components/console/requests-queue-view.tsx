@@ -151,7 +151,7 @@ export function RequestsQueueView({ initialRequests, subjects }: RequestsQueueVi
             >
               <span>{tab.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                   statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-surface-3 text-text-tertiary'
                 }`}
               >

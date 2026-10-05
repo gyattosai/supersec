@@ -74,7 +74,7 @@ export function PublicSubjectPortal({ data }: PublicSubjectPortalProps) {
         >
           <Calendar className="h-3.5 w-3.5" />
           <span>Sessions</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {sessions.length}
           </span>
         </button>
@@ -90,7 +90,7 @@ export function PublicSubjectPortal({ data }: PublicSubjectPortalProps) {
         >
           <Megaphone className="h-3.5 w-3.5" />
           <span>Announcements</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {announcements.length}
           </span>
         </button>
@@ -106,7 +106,7 @@ export function PublicSubjectPortal({ data }: PublicSubjectPortalProps) {
         >
           <BookOpen className="h-3.5 w-3.5" />
           <span>Resources</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {resources.length}
           </span>
         </button>
@@ -122,7 +122,7 @@ export function PublicSubjectPortal({ data }: PublicSubjectPortalProps) {
         >
           <HelpCircle className="h-3.5 w-3.5" />
           <span>Q&A</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {questions.length}
           </span>
         </button>

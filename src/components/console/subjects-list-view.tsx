@@ -144,19 +144,19 @@ export function SubjectsListView({
         </div>
       </div>
 
-      {/* Subjects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      {/* Subjects Grid (Adaptive 1 col on mobile, 2 col on tablet, 3 col on desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSubjects.map((subj) => (
           <div
             key={subj.id}
-            className="p-4 rounded-xl border border-border bg-surface-1 shadow-1 flex flex-col justify-between gap-4 hover:border-border-hover transition-colors"
+            className="p-4 sm:p-5 rounded-2xl border border-border bg-surface-1 shadow-xs flex flex-col justify-between gap-4 hover:border-border-strong transition-all duration-150"
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-xs font-bold text-brand-text uppercase tracking-wider">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-mono font-bold text-brand-text tracking-wide uppercase px-2 py-0.5 rounded bg-brand/10 border border-brand/20">
                   {subj.code} {subj.sectionMark ? `· ${subj.sectionMark}` : ''}
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {subj.flaggedCount && subj.flaggedCount > 0 ? (
                     <Link
                       href={`/console/subjects/${subj.id}?tab=monitoring`}
@@ -176,29 +176,29 @@ export function SubjectsListView({
 
               <Link
                 href={`/console/subjects/${subj.id}`}
-                className="group block hover:opacity-90 transition-opacity"
+                className="group block hover:opacity-90 transition-opacity mt-1"
               >
                 <h2 className="text-base font-semibold text-text-primary group-hover:text-brand transition-colors flex items-center justify-between">
-                  <span>{subj.name}</span>
-                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-brand" />
+                  <span className="leading-snug">{subj.name}</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-brand shrink-0 ml-1" />
                 </h2>
               </Link>
 
               {subj.professor && (
-                <p className="text-xs text-text-tertiary mt-0.5">
+                <p className="text-xs text-text-tertiary mt-1">
                   Prof. {subj.professor}
                 </p>
               )}
 
               {/* 12-Hour Schedule Badges */}
-              <div className="flex flex-wrap gap-1.5 mt-3">
+              <div className="flex flex-wrap gap-1.5 mt-3.5">
                 {subj.schedule.map((slot, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded bg-surface-2 text-text-secondary border border-border"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md bg-surface-2 text-text-secondary border border-border"
                   >
-                    <Clock className="h-3 w-3 text-text-tertiary" />
-                    <span className="capitalize">{slot.weekday}</span>
+                    <Clock className="h-3 w-3 text-text-tertiary shrink-0" />
+                    <span className="capitalize font-semibold">{slot.weekday}</span>
                     <span>{formatTimeRange12(slot.start, slot.end)}</span>
                   </span>
                 ))}
@@ -206,10 +206,10 @@ export function SubjectsListView({
             </div>
 
             {/* Quick Actions */}
-            <div className="flex items-center gap-2 pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2 pt-3 border-t border-border/60">
               <Link
                 href={`/console/subjects/${subj.id}`}
-                className="inline-flex items-center justify-center min-h-[44px] px-3.5 rounded-lg border border-border bg-surface-2 text-xs font-semibold text-text-primary hover:bg-surface-3 transition-colors flex-1"
+                className="inline-flex items-center justify-center min-h-[42px] px-3.5 rounded-xl border border-border bg-surface-2 text-xs font-semibold text-text-primary hover:bg-surface-3 transition-colors flex-1"
               >
                 Open Subject
               </Link>
@@ -218,7 +218,7 @@ export function SubjectsListView({
                 variant="primary"
                 onClick={() => handleStartSession(subj)}
                 loading={startingSubjectId === subj.id}
-                className="min-h-[44px] text-xs font-semibold px-3"
+                className="min-h-[42px] text-xs font-semibold px-3"
               >
                 <Play className="h-3.5 w-3.5 mr-1.5" />
                 Start Session
@@ -227,7 +227,7 @@ export function SubjectsListView({
                 href={`/s/${subj.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center min-h-[44px] px-3 rounded-lg border border-border bg-surface-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors shrink-0"
+                className="inline-flex items-center justify-center min-h-[42px] min-w-[42px] px-2.5 rounded-xl border border-border bg-surface-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors shrink-0"
                 title="Open public classmate view"
               >
                 <ExternalLink className="h-3.5 w-3.5" />

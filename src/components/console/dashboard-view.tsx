@@ -438,36 +438,6 @@ export function DashboardView({
         )}
       </div>
 
-      {/* Dedicated All Subjects Navigation Card */}
-      {allSubjects && allSubjects.length > 0 && (
-        <div className="flex flex-col gap-2 mt-1">
-          <Link
-            href="/console/subjects"
-            className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface-1 hover:bg-surface-2 transition-colors shadow-1 group min-h-[44px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-surface-2 group-hover:bg-surface-3 flex items-center justify-center text-brand transition-colors">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                    All Subjects
-                  </span>
-                  <Badge variant="neutral" className="text-xs">
-                    {allSubjects.length}
-                  </Badge>
-                </div>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  Open subjects, manage student rosters, and view official reports
-                </p>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-text-tertiary group-hover:text-text-primary transition-colors" />
-          </Link>
-        </div>
-      )}
-
       {/* No Class Reason Bottom Sheet */}
       <BottomSheet
         open={noClassModalOpen}

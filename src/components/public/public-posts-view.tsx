@@ -73,7 +73,7 @@ export function PublicPostsView({ postsHub }: PublicPostsViewProps) {
         >
           <Megaphone className="h-3.5 w-3.5" />
           <span>Announcements</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {announcements.length}
           </span>
         </button>
@@ -89,7 +89,7 @@ export function PublicPostsView({ postsHub }: PublicPostsViewProps) {
         >
           <BookOpen className="h-3.5 w-3.5" />
           <span>Resources</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {resources.length}
           </span>
         </button>
@@ -105,7 +105,7 @@ export function PublicPostsView({ postsHub }: PublicPostsViewProps) {
         >
           <HelpCircle className="h-3.5 w-3.5" />
           <span>Q&A</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-3 text-text-tertiary">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-3 text-text-tertiary">
             {questions.length}
           </span>
         </button>

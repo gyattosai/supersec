@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { SubjectHomeView } from '@/components/console/subject-home-view'
 import { projectSubjectHomeHeader } from '@/lib/subjects/subject-home'
+import { formatStudentDisplayName } from '@/lib/data/students'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -191,7 +192,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
     return {
       id: enr.id,
       studentId: student.id || enr.student,
-      name: student.name || 'Unnamed Student',
+      name: formatStudentDisplayName(student),
       studentNumber: student.studentNumber,
       sectionMark: enr.sectionMark,
       hasScheduleConflict: Boolean(enr.hasScheduleConflict),

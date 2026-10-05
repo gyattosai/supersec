@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { RosterImportAssistant } from '@/components/console/roster-import-assistant'
 import type {
   SubjectHomeHeaderData,
   SubjectSessionSummaryItem,
@@ -92,6 +93,7 @@ export function SubjectHomeView({
   const [startingSession, setStartingSession] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
+  const [rosterImportOpen, setRosterImportOpen] = useState(false)
 
   // Posts & Knowledge State
   const [postTypeFilter, setPostTypeFilter] = useState<'all' | 'announcement' | 'resource' | 'question'>('all')
@@ -365,7 +367,7 @@ export function SubjectHomeView({
           <Calendar className="h-4 w-4" />
           Sessions
           {typeof counts?.sessions === 'number' && (
-            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border">
               {counts.sessions}
             </span>
           )}
@@ -383,7 +385,7 @@ export function SubjectHomeView({
           <Users className="h-4 w-4" />
           Roster
           {typeof counts?.students === 'number' && (
-            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border">
               {counts.students}
             </span>
           )}
@@ -401,7 +403,7 @@ export function SubjectHomeView({
           <BookOpen className="h-4 w-4" />
           Posts
           {typeof counts?.posts === 'number' && counts.posts > 0 && (
-            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border">
               {counts.posts}
             </span>
           )}
@@ -437,7 +439,7 @@ export function SubjectHomeView({
           <AlertTriangle className="h-4 w-4" />
           Monitoring
           {typeof monitoring?.totalFlaggedCount === 'number' && monitoring.totalFlaggedCount > 0 && (
-            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-rose-700 dark:text-rose-400 font-bold border border-red-500/30">
               {monitoring.totalFlaggedCount}
             </span>
           )}
@@ -542,16 +544,27 @@ export function SubjectHomeView({
 
         {activeTab === 'roster' && (
           <div className="flex flex-col gap-3">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-              <input
-                type="text"
-                value={rosterSearch}
-                onChange={(e) => setRosterSearch(e.target.value)}
-                placeholder="Search enrolled students by name or student number..."
-                className="w-full h-11 min-h-[44px] rounded-lg border border-border bg-surface-1 pl-9 pr-3 text-xs text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
-              />
+            {/* Search Bar & Import Action */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
+                <input
+                  type="text"
+                  value={rosterSearch}
+                  onChange={(e) => setRosterSearch(e.target.value)}
+                  placeholder="Search enrolled students by name or student number..."
+                  className="w-full h-11 min-h-[44px] rounded-lg border border-border bg-surface-1 pl-9 pr-3 text-xs text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setRosterImportOpen(true)}
+                className="h-11 min-h-[44px] px-3.5 gap-2 shrink-0 text-xs font-semibold"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Import Roster</span>
+              </Button>
             </div>
 
             <div className="text-xs text-text-tertiary px-1">
@@ -665,7 +678,7 @@ export function SubjectHomeView({
                       }`}
                     >
                       <span>{tab.label}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2 border border-border">
                         {count}
                       </span>
                     </button>
@@ -854,7 +867,7 @@ export function SubjectHomeView({
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         requestFilter === tab.id
                           ? 'bg-white/20 text-white'
                           : 'bg-surface-3 text-text-tertiary'
@@ -1026,7 +1039,7 @@ export function SubjectHomeView({
                 <span className="text-[11px] text-text-secondary font-medium">No Attendance</span>
                 <span
                   className={`text-xl font-bold font-mono ${
-                    (monitoring?.noAttendanceCount ?? 0) > 0 ? 'text-red-400' : 'text-text-primary'
+                    (monitoring?.noAttendanceCount ?? 0) > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-text-primary'
                   }`}
                 >
                   {monitoring?.noAttendanceCount ?? 0}
@@ -1038,7 +1051,7 @@ export function SubjectHomeView({
                 <span className="text-[11px] text-text-secondary font-medium">Below 50%</span>
                 <span
                   className={`text-xl font-bold font-mono ${
-                    (monitoring?.below50Count ?? 0) > 0 ? 'text-amber-400' : 'text-text-primary'
+                    (monitoring?.below50Count ?? 0) > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-text-primary'
                   }`}
                 >
                   {monitoring?.below50Count ?? 0}
@@ -1050,7 +1063,7 @@ export function SubjectHomeView({
                 <span className="text-[11px] text-text-secondary font-medium">Total Flagged</span>
                 <span
                   className={`text-xl font-bold font-mono ${
-                    (monitoring?.totalFlaggedCount ?? 0) > 0 ? 'text-rose-400' : 'text-emerald-400'
+                    (monitoring?.totalFlaggedCount ?? 0) > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'
                   }`}
                 >
                   {monitoring?.totalFlaggedCount ?? 0}
@@ -1088,7 +1101,7 @@ export function SubjectHomeView({
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         monitoringFilter === tab.id
                           ? 'bg-white/20 text-white'
                           : 'bg-surface-3 text-text-tertiary'
@@ -1174,12 +1187,12 @@ export function SubjectHomeView({
                               {s.name}
                             </span>
                             {s.hasScheduleConflict && (
-                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/30">
                                 Conflict
                               </span>
                             )}
                             {s.dropped && (
-                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-surface-3 text-text-tertiary border border-border">
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface-3 text-text-tertiary border border-border">
                                 Dropped
                               </span>
                             )}
@@ -1197,7 +1210,7 @@ export function SubjectHomeView({
                             <span
                               className={
                                 s.absentCount >= (monitoring?.absenceLimit ?? 4)
-                                  ? 'text-rose-400 font-semibold'
+                                  ? 'text-rose-700 dark:text-rose-400 font-semibold'
                                   : 'text-text-secondary'
                               }
                             >
@@ -1206,7 +1219,7 @@ export function SubjectHomeView({
                             {s.recitationsCount > 0 && (
                               <>
                                 <span>·</span>
-                                <span className="text-purple-400 font-medium">
+                                <span className="text-purple-700 dark:text-purple-400 font-medium">
                                   {s.recitationsCount} recitations
                                 </span>
                               </>
@@ -1219,34 +1232,34 @@ export function SubjectHomeView({
                       <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto flex-wrap">
                         {/* Threshold Category Badges */}
                         {s.isNoAttendance && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-500/15 text-rose-700 dark:text-rose-400 border border-red-500/30">
                             No Attendance
                           </span>
                         )}
                         {s.isBelow50 && !s.isNoAttendance && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                             Below 50%
                           </span>
                         )}
                         {s.isExceeded && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
                             Exceeded Limit
                           </span>
                         )}
                         {s.isAtRisk && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30">
                             At Risk
                           </span>
                         )}
                         {s.isWatch && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
                             Watch
                           </span>
                         )}
 
                         {/* Streak Badge */}
                         {s.hasStreak && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30">
                             <Flame className="h-3 w-3" />
                             {s.consecutiveAbsences} Streak
                           </span>
@@ -1256,10 +1269,10 @@ export function SubjectHomeView({
                         <div
                           className={`min-w-[48px] text-right font-mono text-xs font-bold px-2 py-1 rounded-lg border ${
                             s.attendanceRate < 50
-                              ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                              ? 'bg-red-500/10 text-rose-700 dark:text-rose-400 border-red-500/20'
                               : s.attendanceRate < 75
-                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                              : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
                           }`}
                         >
                           {s.attendanceRate}%
@@ -1655,6 +1668,14 @@ export function SubjectHomeView({
           </div>
         )}
       </BottomSheet>
+
+      <RosterImportAssistant
+        open={rosterImportOpen}
+        onClose={() => setRosterImportOpen(false)}
+        subjectId={header.subjectId}
+        subjectCode={header.code}
+        onImportComplete={() => router.refresh()}
+      />
     </div>
   )
 }
