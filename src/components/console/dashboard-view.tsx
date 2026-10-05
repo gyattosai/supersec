@@ -3,7 +3,19 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, Clock, MapPin, Inbox, Play, Ban, CheckCircle, ChevronRight } from 'lucide-react'
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Inbox,
+  Play,
+  Ban,
+  CheckCircle,
+  ChevronRight,
+  BookOpen,
+  ExternalLink,
+  Users,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -30,9 +42,21 @@ export interface TodayClassItem {
   } | null
 }
 
+export interface SubjectOverviewItem {
+  id: string
+  code: string
+  name: string
+  sectionMark?: string
+  professor?: string
+  slug: string
+  schedule: Array<{ weekday: string; start: string; end: string }>
+  studentCount: number
+}
+
 export interface DashboardViewProps {
   todayDate: string
   todayClasses: TodayClassItem[]
+  allSubjects?: SubjectOverviewItem[]
   pendingRequestsCount: number
   activeTermName?: string
 }
@@ -40,6 +64,7 @@ export interface DashboardViewProps {
 export function DashboardView({
   todayDate,
   todayClasses,
+  allSubjects = [],
   pendingRequestsCount,
   activeTermName,
 }: DashboardViewProps) {
@@ -113,6 +138,32 @@ export function DashboardView({
       alert(err?.message || 'Error marking no class')
     } finally {
       setSubmittingNoClass(false)
+    }
+  }
+
+  const handleStartSessionForSubject = async (subj: SubjectOverviewItem) => {
+    try {
+      setStartingSubjectId(subj.id)
+      const res = await fetch('/api/sessions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subjectId: subj.id,
+          date: todayDate,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to start session')
+      }
+
+      const data = await res.json()
+      router.push(`/console/session/${data.session.id}`)
+    } catch (err: any) {
+      alert(err?.message || 'Error starting session')
+    } finally {
+      setStartingSubjectId(null)
     }
   }
 
@@ -250,17 +301,98 @@ export function DashboardView({
         })}
 
         {todayClasses.length === 0 && (
-          <div className="text-center py-12 rounded-xl border border-dashed border-border bg-surface-1 p-6">
-            <Calendar className="h-8 w-8 text-text-quaternary mx-auto mb-2" />
-            <p className="text-sm font-semibold text-text-primary">
-              No classes scheduled for today
-            </p>
-            <p className="text-xs text-text-secondary mt-1 max-w-sm mx-auto">
-              Check your subjects or upcoming term schedules to see future classes.
+          <div className="rounded-xl border border-border bg-surface-1 p-5 text-center shadow-1">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Calendar className="h-4 w-4 text-brand-text" />
+              <p className="text-sm font-semibold text-text-primary">
+                No scheduled meetings today
+              </p>
+            </div>
+            <p className="text-xs text-text-secondary max-w-md mx-auto">
+              None of your subjects meet on this weekday ({todayDate}). Your active subjects meet on Tuesday and Friday. You can still launch an unscheduled session or open any subject below.
             </p>
           </div>
         )}
       </div>
+
+      {/* All Subjects Section */}
+      {allSubjects && allSubjects.length > 0 && (
+        <div className="flex flex-col gap-3 mt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-text-secondary" />
+              <h2 className="text-base font-semibold text-text-primary">
+                All Subjects
+              </h2>
+              <Badge variant="neutral" className="text-xs">
+                {allSubjects.length}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {allSubjects.map((subj) => (
+              <div
+                key={subj.id}
+                className="p-4 rounded-xl border border-border bg-surface-1 shadow-1 flex flex-col justify-between gap-3 hover:border-border-hover transition-colors"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-xs font-bold text-brand-text uppercase tracking-wider">
+                      {subj.code} {subj.sectionMark ? `· ${subj.sectionMark}` : ''}
+                    </span>
+                    <Badge variant="neutral" className="text-[11px]">
+                      {subj.studentCount} student{subj.studentCount === 1 ? '' : 's'}
+                    </Badge>
+                  </div>
+                  <h3 className="text-sm font-semibold text-text-primary">
+                    {subj.name}
+                  </h3>
+                  {subj.professor && (
+                    <p className="text-xs text-text-tertiary mt-0.5">
+                      Prof. {subj.professor}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {subj.schedule.map((slot, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-surface-2 text-text-secondary border border-border"
+                      >
+                        <Clock className="h-3 w-3 text-text-tertiary" />
+                        <span className="capitalize">{slot.weekday}</span> {slot.start}–{slot.end}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => handleStartSessionForSubject(subj)}
+                    loading={startingSubjectId === subj.id}
+                    className="flex-1 text-xs min-h-[44px]"
+                  >
+                    <Play className="h-3.5 w-3.5 mr-1.5" />
+                    Start Session
+                  </Button>
+                  <Link
+                    href={`/s/${subj.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center min-h-[44px] px-3 rounded-lg border border-border bg-surface-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors shrink-0"
+                    title="Open public classmate view"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Public View
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* No Class Reason Bottom Sheet */}
       <BottomSheet

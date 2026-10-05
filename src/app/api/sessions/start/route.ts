@@ -24,6 +24,26 @@ export async function POST(req: Request) {
     }
 
     const payload = await getPayload({ config })
+
+    const existingSession = await payload.find({
+      collection: 'sessions',
+      where: {
+        and: [
+          { subject: { equals: subjectId } },
+          { date: { equals: date } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (existingSession.docs && existingSession.docs.length > 0) {
+      return NextResponse.json({
+        success: true,
+        session: existingSession.docs[0],
+      })
+    }
+
     const session = await startSession(payload, {
       subjectId,
       date,
