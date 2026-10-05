@@ -49,3 +49,82 @@ export function matchExistingSession(
   }
   return null
 }
+
+import { computeAbsenteeMonitoring } from './stats/absentee-monitoring'
+
+export interface DashboardMetricsResult {
+  totalFlaggedCount: number
+  subjectFlaggedCounts: Record<string, number>
+}
+
+export function computeDashboardMetrics(params: {
+  subjects: any[]
+  enrollments: any[]
+  sessions: any[]
+}): DashboardMetricsResult {
+  const { subjects, enrollments, sessions } = params
+  const subjectFlaggedCounts: Record<string, number> = {}
+  let totalFlaggedCount = 0
+
+  const enrollmentsBySubject = new Map<string, any[]>()
+  for (const enr of enrollments) {
+    const sId = typeof enr.subject === 'object' && enr.subject !== null ? enr.subject.id : enr.subject
+    if (!sId) continue
+    const list = enrollmentsBySubject.get(sId) || []
+    list.push(enr)
+    enrollmentsBySubject.set(sId, list)
+  }
+
+  const sessionsBySubject = new Map<string, any[]>()
+  for (const sess of sessions) {
+    const sId = typeof sess.subject === 'object' && sess.subject !== null ? sess.subject.id : sess.subject
+    if (!sId) continue
+    const list = sessionsBySubject.get(sId) || []
+    list.push(sess)
+    sessionsBySubject.set(sId, list)
+  }
+
+  for (const subj of subjects) {
+    const subjEnrollments = (enrollmentsBySubject.get(subj.id) || []).map((enr: any) => {
+      const student = typeof enr.student === 'object' && enr.student !== null ? enr.student : {}
+      return {
+        id: enr.id,
+        studentId: student.id || enr.student,
+        name: student.name || 'Student',
+        studentNumber: student.studentNumber,
+        sectionMark: enr.sectionMark,
+        hasScheduleConflict: Boolean(enr.hasScheduleConflict),
+        enrolledOn: enr.enrolledOn,
+        dropped: enr.status === 'dropped' || Boolean(enr.dropped),
+        droppedOn: enr.droppedOn,
+        displayOrder: enr.displayOrder,
+      }
+    })
+
+    const subjSessions = (sessionsBySubject.get(subj.id) || []).map((s: any) => ({
+      id: s.id,
+      date: s.date,
+      kind: (s.kind || 'class') as 'class' | 'noClass',
+      entries: (s.entries || []).map((e: any) => ({
+        studentId: typeof e.student === 'object' && e.student !== null ? e.student.id : e.student,
+        attendance: e.attendance,
+        recitations: e.recitations,
+      })),
+    }))
+
+    const monitoring = computeAbsenteeMonitoring({
+      enrollments: subjEnrollments,
+      sessions: subjSessions,
+      absenceLimit: subj.absenceLimit ?? 4,
+      subjectId: subj.id,
+    })
+
+    subjectFlaggedCounts[subj.id] = monitoring.totalFlaggedCount
+    totalFlaggedCount += monitoring.totalFlaggedCount
+  }
+
+  return {
+    totalFlaggedCount,
+    subjectFlaggedCounts,
+  }
+}

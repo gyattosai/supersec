@@ -15,6 +15,7 @@ import {
   BookOpen,
   ExternalLink,
   Users,
+  AlertTriangle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -51,6 +52,7 @@ export interface SubjectOverviewItem {
   slug: string
   schedule: Array<{ weekday: string; start: string; end: string }>
   studentCount: number
+  flaggedCount?: number
 }
 
 export interface DashboardViewProps {
@@ -58,6 +60,7 @@ export interface DashboardViewProps {
   todayClasses: TodayClassItem[]
   allSubjects?: SubjectOverviewItem[]
   pendingRequestsCount: number
+  flaggedStudentsCount?: number
   activeTermName?: string
 }
 
@@ -66,6 +69,7 @@ export function DashboardView({
   todayClasses,
   allSubjects = [],
   pendingRequestsCount,
+  flaggedStudentsCount = 0,
   activeTermName,
 }: DashboardViewProps) {
   const router = useRouter()
@@ -74,6 +78,13 @@ export function DashboardView({
   const [targetSubject, setTargetSubject] = React.useState<TodayClassItem | null>(null)
   const [noClassReason, setNoClassReason] = React.useState('')
   const [submittingNoClass, setSubmittingNoClass] = React.useState(false)
+
+  const firstFlaggedSubject = allSubjects.find((s) => (s.flaggedCount ?? 0) > 0)
+  const monitoringHref = firstFlaggedSubject
+    ? `/console/subjects/${firstFlaggedSubject.id}?tab=monitoring`
+    : allSubjects.length > 0
+      ? `/console/subjects/${allSubjects[0].id}?tab=monitoring`
+      : '#all-subjects'
 
   const handleStartSession = async (item: TodayClassItem) => {
     if (item.existingSession) {
@@ -169,21 +180,74 @@ export function DashboardView({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Pending Requests Banner */}
-      {pendingRequestsCount > 0 && (
+      {/* Operational Indicators (Pending Requests & Flagged Students) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Pending Requests Badge */}
         <Link
           href="/console/requests"
-          className="flex items-center justify-between p-3.5 rounded-xl border border-warning/30 bg-warning/10 text-text-primary hover:bg-warning/15 transition-colors shadow-1"
+          className={`flex items-center justify-between p-3.5 rounded-xl border transition-colors shadow-1 min-h-[44px] ${
+            pendingRequestsCount > 0
+              ? 'border-warning/40 bg-warning/10 text-text-primary hover:bg-warning/15'
+              : 'border-border bg-surface-1 text-text-secondary hover:bg-surface-2'
+          }`}
         >
           <div className="flex items-center gap-2.5">
-            <Inbox className="h-4 w-4 text-warning shrink-0" />
-            <span className="text-xs font-semibold">
-              {pendingRequestsCount} pending classmate request{pendingRequestsCount > 1 ? 's' : ''} awaiting review
-            </span>
+            <Inbox className={`h-4 w-4 shrink-0 ${pendingRequestsCount > 0 ? 'text-warning' : 'text-text-tertiary'}`} />
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-text-primary">
+                {pendingRequestsCount > 0
+                  ? `${pendingRequestsCount} Pending Request${pendingRequestsCount > 1 ? 's' : ''}`
+                  : '0 Pending Requests'}
+              </span>
+              <span className="text-[11px] text-text-tertiary">
+                {pendingRequestsCount > 0 ? 'Classmate disputes & excuses' : 'Queue is all caught up'}
+              </span>
+            </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-text-tertiary" />
+          <div className="flex items-center gap-1.5">
+            {pendingRequestsCount > 0 && (
+              <Badge variant="warning" className="text-[11px] px-2 font-semibold">
+                {pendingRequestsCount}
+              </Badge>
+            )}
+            <ChevronRight className="h-4 w-4 text-text-tertiary" />
+          </div>
         </Link>
-      )}
+
+        {/* Flagged Students Badge */}
+        <Link
+          href={monitoringHref}
+          className={`flex items-center justify-between p-3.5 rounded-xl border transition-colors shadow-1 min-h-[44px] ${
+            flaggedStudentsCount > 0
+              ? 'border-danger/40 bg-danger/10 text-text-primary hover:bg-danger/15'
+              : 'border-border bg-surface-1 text-text-secondary hover:bg-surface-2'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle
+              className={`h-4 w-4 shrink-0 ${flaggedStudentsCount > 0 ? 'text-danger' : 'text-text-tertiary'}`}
+            />
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-text-primary">
+                {flaggedStudentsCount > 0
+                  ? `${flaggedStudentsCount} Flagged Student${flaggedStudentsCount > 1 ? 's' : ''}`
+                  : '0 Attendance Warnings'}
+              </span>
+              <span className="text-[11px] text-text-tertiary">
+                {flaggedStudentsCount > 0 ? 'Exceeded or at risk of dropping' : 'All students within absence limits'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {flaggedStudentsCount > 0 && (
+              <Badge variant="danger" className="text-[11px] px-2 font-semibold">
+                {flaggedStudentsCount}
+              </Badge>
+            )}
+            <ChevronRight className="h-4 w-4 text-text-tertiary" />
+          </div>
+        </Link>
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -341,9 +405,22 @@ export function DashboardView({
                     <span className="text-xs font-bold text-brand-text uppercase tracking-wider">
                       {subj.code} {subj.sectionMark ? `· ${subj.sectionMark}` : ''}
                     </span>
-                    <Badge variant="neutral" className="text-[11px]">
-                      {subj.studentCount} student{subj.studentCount === 1 ? '' : 's'}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {subj.flaggedCount && subj.flaggedCount > 0 ? (
+                        <Link
+                          href={`/console/subjects/${subj.id}?tab=monitoring`}
+                          className="inline-flex items-center"
+                        >
+                          <Badge variant="danger" className="text-[11px] gap-1 hover:opacity-80 transition-opacity">
+                            <AlertTriangle className="h-3 w-3" />
+                            {subj.flaggedCount} flagged
+                          </Badge>
+                        </Link>
+                      ) : null}
+                      <Badge variant="neutral" className="text-[11px]">
+                        {subj.studentCount} student{subj.studentCount === 1 ? '' : 's'}
+                      </Badge>
+                    </div>
                   </div>
                   <Link
                     href={`/console/subjects/${subj.id}`}

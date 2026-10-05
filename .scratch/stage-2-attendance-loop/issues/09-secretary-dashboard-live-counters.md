@@ -6,9 +6,9 @@
 
 **Blocked by:** 04 (Secretary Request Review Queue), 06 (Secretary Monitoring Tab).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Console dashboard queries pending requests count and displays a prominent badge when pending requests exist.
-- [ ] Console dashboard displays the count of students flagged for attendance warnings.
-- [ ] Tapping the pending requests badge opens the review queue.
-- [ ] Tapping the flagged students badge opens the monitoring view.
+- [x] Console dashboard queries pending requests count and displays a prominent badge when pending requests exist.
+- [x] Console dashboard displays the count of students flagged for attendance warnings.
+- [x] Tapping the pending requests badge opens the review queue.
+- [x] Tapping the flagged students badge opens the monitoring view.

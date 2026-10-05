@@ -2,7 +2,12 @@ import * as React from 'react'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getActiveTerm } from '@/lib/data/terms'
-import { getTodayClasses, matchExistingSession, getWeekdayAbbrev } from '@/lib/dashboard-helpers'
+import {
+  getTodayClasses,
+  matchExistingSession,
+  getWeekdayAbbrev,
+  computeDashboardMetrics,
+} from '@/lib/dashboard-helpers'
 import {
   DashboardView,
   type TodayClassItem,
@@ -17,6 +22,7 @@ export default async function DashboardPage() {
   const activeTerm = await getActiveTerm(payload, todayDate)
   let todayClasses: TodayClassItem[] = []
   let allSubjects: SubjectOverviewItem[] = []
+  let flaggedStudentsCount = 0
 
   if (activeTerm?.id) {
     const subjectsRes = await payload.find({
@@ -31,19 +37,50 @@ export default async function DashboardPage() {
       overrideAccess: true,
     })
 
-    const sessionsRes = await payload.find({
-      collection: 'sessions',
-      where: {
-        date: { equals: todayDate },
-      },
-      limit: 100,
-      overrideAccess: true,
-    })
+    const subjectIds = (subjectsRes.docs as any[]).map((s) => s.id)
+
+    const [todaySessionsRes, allEnrollmentsRes, allPublishedSessionsRes] = await Promise.all([
+      payload.find({
+        collection: 'sessions',
+        where: {
+          date: { equals: todayDate },
+        },
+        limit: 100,
+        overrideAccess: true,
+      }),
+      subjectIds.length > 0
+        ? payload.find({
+            collection: 'enrollments',
+            where: {
+              and: [
+                { subject: { in: subjectIds } },
+                { status: { equals: 'active' } },
+              ],
+            },
+            depth: 1,
+            limit: 1000,
+            overrideAccess: true,
+          })
+        : { docs: [] as any[] },
+      subjectIds.length > 0
+        ? payload.find({
+            collection: 'sessions',
+            where: {
+              and: [
+                { subject: { in: subjectIds } },
+                { _status: { equals: 'published' } },
+              ],
+            },
+            limit: 500,
+            overrideAccess: true,
+          })
+        : { docs: [] as any[] },
+    ])
 
     const scheduled = getTodayClasses(subjectsRes.docs as any[], todayWeekday)
 
     todayClasses = scheduled.map((sc) => {
-      const existing = matchExistingSession(sessionsRes.docs as any[], sc.subject.id, todayDate)
+      const existing = matchExistingSession(todaySessionsRes.docs as any[], sc.subject.id, todayDate)
       return {
         subject: {
           id: sc.subject.id,
@@ -65,20 +102,19 @@ export default async function DashboardPage() {
       }
     })
 
-    const enrollmentsCountRes = await payload.find({
-      collection: 'enrollments',
-      where: {
-        status: { equals: 'active' },
-      },
-      limit: 1000,
-      overrideAccess: true,
-    })
-
     const studentCountMap = new Map<string, number>()
-    for (const enr of enrollmentsCountRes.docs as any[]) {
+    for (const enr of allEnrollmentsRes.docs as any[]) {
       const sId = typeof enr.subject === 'object' && enr.subject !== null ? enr.subject.id : enr.subject
       studentCountMap.set(sId, (studentCountMap.get(sId) || 0) + 1)
     }
+
+    const metrics = computeDashboardMetrics({
+      subjects: subjectsRes.docs,
+      enrollments: allEnrollmentsRes.docs,
+      sessions: allPublishedSessionsRes.docs,
+    })
+
+    flaggedStudentsCount = metrics.totalFlaggedCount
 
     allSubjects = (subjectsRes.docs as any[]).map((s) => ({
       id: s.id,
@@ -89,6 +125,7 @@ export default async function DashboardPage() {
       slug: s.slug,
       schedule: s.schedule || [],
       studentCount: studentCountMap.get(s.id) || 0,
+      flaggedCount: metrics.subjectFlaggedCounts[s.id] || 0,
     }))
   }
 
@@ -109,6 +146,7 @@ export default async function DashboardPage() {
       todayClasses={todayClasses}
       allSubjects={allSubjects}
       pendingRequestsCount={pendingRequestsCount}
+      flaggedStudentsCount={flaggedStudentsCount}
       activeTermName={activeTerm?.name}
     />
   )
