@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   projectSubjectSessionsList,
   projectSubjectRosterList,
+  projectSubjectRequestsList,
 } from '@/lib/subjects/subject-home'
 
 describe('Subject Home Sessions & Roster Tabs (Ticket 02)', () => {
@@ -88,4 +89,31 @@ describe('Subject Home Sessions & Roster Tabs (Ticket 02)', () => {
       expect(projected[1].hasScheduleConflict).toBe(true)
     })
   })
+
+  describe('Requests Tab Projection', () => {
+    it('formats requests and maps student name and session date', () => {
+      const rawRequests = [
+        {
+          id: 'req-1',
+          session: { id: 'sess-1', date: '2026-09-25' },
+          student: { id: 'stud-1', name: 'Cariño, Dei', studentNumber: '2023-00123' },
+          type: 'excuse',
+          reason: 'Fever with med cert',
+          proofUrl: 'data:image/webp;base64,xxxx',
+          status: 'pending',
+          createdAt: '2026-09-26T08:00:00.000Z',
+        },
+      ]
+
+      const projected = projectSubjectRequestsList(rawRequests)
+      expect(projected).toHaveLength(1)
+      expect(projected[0].id).toBe('req-1')
+      expect(projected[0].studentName).toBe('Cariño, Dei')
+      expect(projected[0].sessionDate).toBe('2026-09-25')
+      expect(projected[0].type).toBe('excuse')
+      expect(projected[0].status).toBe('pending')
+      expect(projected[0].proofUrl).toBe('data:image/webp;base64,xxxx')
+    })
+  })
 })
+

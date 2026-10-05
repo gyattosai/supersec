@@ -17,6 +17,10 @@ import {
   AlertTriangle,
   FileText,
   Search,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  MessageSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -24,6 +28,7 @@ import type {
   SubjectHomeHeaderData,
   SubjectSessionSummaryItem,
   SubjectRosterItem,
+  SubjectRequestItem,
 } from '@/lib/subjects/subject-home'
 
 export type SubjectHomeTab = 'sessions' | 'roster' | 'requests' | 'monitoring' | 'reports'
@@ -33,6 +38,7 @@ interface SubjectHomeViewProps {
   todayDate: string
   sessions?: SubjectSessionSummaryItem[]
   roster?: SubjectRosterItem[]
+  requests?: SubjectRequestItem[]
   counts?: {
     sessions?: number
     students?: number
@@ -45,6 +51,7 @@ export function SubjectHomeView({
   todayDate,
   sessions = [],
   roster = [],
+  requests = [],
   counts,
 }: SubjectHomeViewProps) {
   const router = useRouter()
@@ -52,6 +59,11 @@ export function SubjectHomeView({
   const [startingSession, setStartingSession] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
+
+  // Requests Review State
+  const [requestFilter, setRequestFilter] = useState<'pending' | 'approved' | 'declined' | 'all'>('pending')
+  const [reviewingId, setReviewingId] = useState<string | null>(null)
+  const [selectedProof, setSelectedProof] = useState<{ url: string; studentName: string } | null>(null)
 
   // No Class modal state
   const [noClassModalOpen, setNoClassModalOpen] = useState(false)
@@ -118,6 +130,28 @@ export function SubjectHomeView({
       alert(err?.message || 'Error marking no class')
     } finally {
       setSubmittingNoClass(false)
+    }
+  }
+
+  const handleReviewRequest = async (requestId: string, decision: 'approved' | 'declined') => {
+    try {
+      setReviewingId(requestId)
+      const res = await fetch('/api/requests/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, decision }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Failed to ${decision} request`)
+      }
+
+      router.refresh()
+    } catch (err: any) {
+      alert(err?.message || `Error reviewing request`)
+    } finally {
+      setReviewingId(null)
     }
   }
 
@@ -490,10 +524,178 @@ export function SubjectHomeView({
         )}
 
         {activeTab === 'requests' && (
-          <div className="rounded-xl border border-border bg-surface-1 p-6 text-center text-xs text-text-secondary">
-            <Inbox className="h-8 w-8 text-text-tertiary mx-auto mb-2 opacity-60" />
-            <p className="font-medium text-text-primary">Classmate Requests Queue</p>
-            <p className="mt-1">Pending excuses and recitation dispute review (Ticket 04).</p>
+          <div className="flex flex-col gap-4">
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
+              {(
+                [
+                  { id: 'pending', label: 'Pending' },
+                  { id: 'approved', label: 'Approved' },
+                  { id: 'declined', label: 'Declined' },
+                  { id: 'all', label: 'All Requests' },
+                ] as const
+              ).map((tab) => {
+                const count = requests.filter((r) =>
+                  tab.id === 'all' ? true : r.status === tab.id,
+                ).length
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setRequestFilter(tab.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[38px] ${
+                      requestFilter === tab.id
+                        ? 'bg-brand text-on-brand'
+                        : 'bg-surface-2 text-text-secondary hover:text-text-primary border border-border'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        requestFilter === tab.id
+                          ? 'bg-white/20 text-white'
+                          : 'bg-surface-3 text-text-tertiary'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Requests List */}
+            {requests.filter((r) => (requestFilter === 'all' ? true : r.status === requestFilter)).length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {requests
+                  .filter((r) => (requestFilter === 'all' ? true : r.status === requestFilter))
+                  .map((req) => (
+                    <div
+                      key={req.id}
+                      className="p-4 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-3 hover:border-border-hover transition-colors"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-2.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-text-primary">
+                            {req.studentName}
+                          </span>
+                          {req.studentNumber && (
+                            <span className="font-mono text-[11px] text-text-tertiary">
+                              {req.studentNumber}
+                            </span>
+                          )}
+                          <span
+                            className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                              req.type === 'present'
+                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                : req.type === 'excuse'
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            }`}
+                          >
+                            {req.type === 'present'
+                              ? 'I was present'
+                              : req.type === 'excuse'
+                              ? 'Excuse'
+                              : `Recitation (+${req.count || 1})`}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                          {req.sessionDate && (
+                            <Link
+                              href={`/console/session/${req.sessionId}`}
+                              className="hover:text-text-primary underline flex items-center gap-1"
+                            >
+                              <span>Class: {req.sessionDate}</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Request Content / Reason */}
+                      <div className="text-xs text-text-secondary">
+                        {req.reason && (
+                          <div className="flex items-start gap-1.5">
+                            <MessageSquare className="h-3.5 w-3.5 text-text-tertiary shrink-0 mt-0.5" />
+                            <p className="text-text-primary italic">&quot;{req.reason}&quot;</p>
+                          </div>
+                        )}
+                        {req.topic && (
+                          <p className="text-text-tertiary mt-1">
+                            Topic: <span className="text-text-primary">{req.topic}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Proof and Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        {req.proofUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedProof({ url: req.proofUrl!, studentName: req.studentName })
+                            }
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-brand" />
+                            <span>View Proof Image</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-text-quaternary">No proof attached</span>
+                        )}
+
+                        {req.status === 'pending' ? (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              loading={reviewingId === req.id}
+                              onClick={() => handleReviewRequest(req.id, 'approved')}
+                              className="text-xs min-h-[38px] px-3 font-semibold bg-emerald-600 hover:bg-emerald-500 text-white"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              loading={reviewingId === req.id}
+                              onClick={() => handleReviewRequest(req.id, 'declined')}
+                              className="text-xs min-h-[38px] px-3 font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/20"
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-md capitalize ${
+                                req.status === 'approved'
+                                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-red-500/15 text-red-400 border border-red-500/30'
+                              }`}
+                            >
+                              {req.status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-surface-1 p-8 text-center text-xs text-text-secondary">
+                <Inbox className="h-8 w-8 text-text-tertiary mx-auto mb-2 opacity-60" />
+                <p className="font-semibold text-text-primary">No {requestFilter} requests</p>
+                <p className="mt-1">
+                  {requestFilter === 'pending'
+                    ? 'All classmate correction requests have been addressed.'
+                    : `No requests with status "${requestFilter}".`}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -544,6 +746,34 @@ export function SubjectHomeView({
             className="w-full text-xs font-semibold min-h-[44px]"
           >
             Confirm Cancellation
+          </Button>
+        </div>
+      </BottomSheet>
+
+      {/* Proof Preview Modal */}
+      <BottomSheet
+        open={Boolean(selectedProof)}
+        onClose={() => setSelectedProof(null)}
+        title={selectedProof ? `Excuse Proof · ${selectedProof.studentName}` : 'Excuse Proof'}
+      >
+        <div className="flex flex-col gap-3 py-2">
+          {selectedProof?.url && (
+            <div className="rounded-lg overflow-hidden border border-border bg-surface-2 max-h-[60vh] flex items-center justify-center p-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedProof.url}
+                alt="Excuse proof"
+                className="max-h-[58vh] w-auto object-contain rounded"
+              />
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setSelectedProof(null)}
+            className="w-full text-xs font-semibold min-h-[44px]"
+          >
+            Close
           </Button>
         </div>
       </BottomSheet>

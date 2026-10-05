@@ -4,11 +4,11 @@
 
 **Blocked by:** 01 (Subject Home Shell & Quick Actions Header), 03 (Public Classmate Request Submission).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Pending requests appear in the Subject Home Requests tab and the global console requests queue.
-- [ ] Secretary can inspect attached proof screenshots in an accessible image preview modal.
-- [ ] Approving an excuse request updates the student's session entry to `excused` and increments the published session version.
-- [ ] Approving a recitation request adds the requested delta to the student's recitation count without overwriting marks (Rule R5).
-- [ ] Approval is strictly blocked with an explanatory error if the target session has unpublished draft edits (Rule R3).
-- [ ] Declining a request sets the status to `declined` with an optional note and leaves session records unchanged.
+- [x] Pending requests appear in the Subject Home Requests tab and the global console requests queue.
+- [x] Secretary can inspect attached proof screenshots in an accessible image preview modal.
+- [x] Approving an excuse request updates the student's session entry to `excused` and increments the published session version.
+- [x] Approving a recitation request adds the requested delta to the student's recitation count without overwriting marks (Rule R5).
+- [x] Approval is strictly blocked with an explanatory error if the target session has unpublished draft edits (Rule R3).
+- [x] Declining a request sets the status to `declined` with an optional note and leaves session records unchanged.

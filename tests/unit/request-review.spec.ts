@@ -235,4 +235,96 @@ describe('Secretary Request Review Seam (Stage 1.9 / Issue #10 - Rules R3 & R5)'
     expect(updatedRequest.status).toBe('declined')
     expect(updatedRequest.decidedAt).toBeDefined()
   })
+
+  it('declining a request saves optional decisionNote and leaves session untouched', async () => {
+    const mockRequest = {
+      id: 'req-6',
+      session: 'sess-pub',
+      student: 'stu-1',
+      type: 'excuse',
+      reason: 'Woke up late',
+      status: 'pending',
+    }
+
+    let sessionUpdated = false
+    let updatedRequest: any
+
+    const mockPayload = {
+      find: async ({ collection }: any) => {
+        if (collection === 'requests') return { docs: [mockRequest] }
+        if (collection === 'sessions') {
+          return {
+            docs: [
+              {
+                id: 'sess-pub',
+                version: 2,
+                _status: 'published',
+                entries: [{ student: 'stu-1', attendance: 'A' }],
+              },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async ({ collection, data }: any) => {
+        if (collection === 'sessions') sessionUpdated = true
+        if (collection === 'requests') updatedRequest = data
+        return data
+      },
+    }
+
+    await reviewRequest(mockPayload as any, {
+      requestId: 'req-6',
+      decision: 'declined',
+      note: 'Not an excusable reason under syllabus rules',
+    })
+
+    expect(sessionUpdated).toBe(false)
+    expect(updatedRequest.status).toBe('declined')
+    expect(updatedRequest.decisionNote).toBe('Not an excusable reason under syllabus rules')
+  })
+
+  it('approving an excuse increments published session version and sets changeNote', async () => {
+    const mockRequest = {
+      id: 'req-7',
+      session: 'sess-pub',
+      student: 'stu-1',
+      type: 'excuse',
+      reason: 'Medical certificate submitted',
+      status: 'pending',
+    }
+
+    let updatedSession: any
+
+    const mockPayload = {
+      find: async ({ collection }: any) => {
+        if (collection === 'requests') return { docs: [mockRequest] }
+        if (collection === 'sessions') {
+          return {
+            docs: [
+              {
+                id: 'sess-pub',
+                version: 1,
+                _status: 'published',
+                entries: [{ student: 'stu-1', attendance: 'A' }],
+              },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async ({ collection, data }: any) => {
+        if (collection === 'sessions') updatedSession = data
+        return data
+      },
+    }
+
+    await reviewRequest(mockPayload as any, {
+      requestId: 'req-7',
+      decision: 'approved',
+    })
+
+    expect(updatedSession.changeNote).toContain('Approved excuse request')
+    expect(updatedSession.entries[0].attendance).toBe('E')
+  })
 })

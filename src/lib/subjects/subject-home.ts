@@ -206,3 +206,62 @@ export function projectSubjectRosterList(rawEnrollments: any[]): SubjectRosterIt
   // Sort by Last Name / Name ascending
   return items.sort((a, b) => a.name.localeCompare(b.name))
 }
+
+export interface SubjectRequestItem {
+  id: string
+  subjectId?: string
+  subjectCode?: string
+  subjectName?: string
+  sessionId: string
+  sessionDate?: string
+  studentId: string
+  studentName: string
+  studentNumber?: string
+  type: 'present' | 'excuse' | 'recited'
+  reason?: string
+  count?: number
+  topic?: string
+  proofUrl?: string
+  status: 'pending' | 'approved' | 'declined' | 'expired'
+  createdAt: string
+  decidedAt?: string
+  decisionNote?: string
+}
+
+export function projectSubjectRequestsList(rawRequests: any[]): SubjectRequestItem[] {
+  if (!rawRequests || !Array.isArray(rawRequests)) return []
+
+  const sorted = [...rawRequests].sort((a, b) => {
+    const timeA = new Date(a.createdAt || 0).getTime()
+    const timeB = new Date(b.createdAt || 0).getTime()
+    return timeB - timeA
+  })
+
+  return sorted.map((req) => {
+    const student = typeof req.student === 'object' && req.student !== null ? req.student : {}
+    const session = typeof req.session === 'object' && req.session !== null ? req.session : {}
+    const subject = typeof req.subject === 'object' && req.subject !== null ? req.subject : {}
+
+    return {
+      id: req.id,
+      subjectId: subject.id || req.subject,
+      subjectCode: subject.code,
+      subjectName: subject.name,
+      sessionId: session.id || req.session,
+      sessionDate: session.date,
+      studentId: student.id || req.student,
+      studentName: student.name || 'Unknown Student',
+      studentNumber: student.studentNumber,
+      type: req.type || 'present',
+      reason: req.reason,
+      count: req.count,
+      topic: req.topic,
+      proofUrl: req.proofUrl,
+      status: req.status || 'pending',
+      createdAt: req.createdAt,
+      decidedAt: req.decidedAt,
+      decisionNote: req.decisionNote,
+    }
+  })
+}
+

@@ -97,5 +97,10 @@ export const Requests: CollectionConfig = {
       type: 'date',
       label: 'Decided At',
     },
+    {
+      name: 'decisionNote',
+      type: 'text',
+      label: 'Secretary Decision Note',
+    },
   ],
 }

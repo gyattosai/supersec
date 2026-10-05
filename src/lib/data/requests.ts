@@ -151,6 +151,7 @@ export async function submitClassmateRequest(payload: Payload, data: SubmitReque
 export interface ReviewRequestInput {
   requestId: string
   decision: 'approved' | 'declined'
+  note?: string
 }
 
 export async function reviewRequest(payload: Payload, input: ReviewRequestInput) {
@@ -232,20 +233,26 @@ export async function reviewRequest(payload: Payload, input: ReviewRequestInput)
         id: session.id,
         data: {
           entries,
+          changeNote: `Approved ${req.type} request from classmate`,
         },
         overrideAccess: true,
       })
     }
   }
 
-  // 3. Update request status and decidedAt
+  // 3. Update request status, decidedAt, and optional decisionNote
+  const updateData: any = {
+    status: input.decision,
+    decidedAt: new Date().toISOString(),
+  }
+  if (input.note) {
+    updateData.decisionNote = input.note
+  }
+
   const updatedRequest = await payload.update({
     collection: 'requests',
     id: req.id,
-    data: {
-      status: input.decision,
-      decidedAt: new Date().toISOString(),
-    },
+    data: updateData,
     overrideAccess: true,
   })
 

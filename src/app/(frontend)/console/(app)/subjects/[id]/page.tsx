@@ -69,11 +69,9 @@ export default async function SubjectHomePage({ params }: PageProps) {
     payload.find({
       collection: 'requests',
       where: {
-        and: [
-          { subject: { equals: subject.id } },
-          { status: { equals: 'pending' } },
-        ],
+        subject: { equals: subject.id },
       },
+      depth: 1,
       limit: 100,
       overrideAccess: true,
     }),
@@ -93,9 +91,16 @@ export default async function SubjectHomePage({ params }: PageProps) {
     currentTime,
   )
 
-  const { projectSubjectSessionsList, projectSubjectRosterList } = await import('@/lib/subjects/subject-home')
+  const {
+    projectSubjectSessionsList,
+    projectSubjectRosterList,
+    projectSubjectRequestsList,
+  } = await import('@/lib/subjects/subject-home')
+
   const sessions = projectSubjectSessionsList(sessionsRes.docs)
   const roster = projectSubjectRosterList(enrollmentsRes.docs)
+  const requests = projectSubjectRequestsList(requestsRes.docs)
+  const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length
 
   return (
     <SubjectHomeView
@@ -103,10 +108,11 @@ export default async function SubjectHomePage({ params }: PageProps) {
       todayDate={todayDate}
       sessions={sessions}
       roster={roster}
+      requests={requests}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,
-        pendingRequests: requestsRes.totalDocs,
+        pendingRequests: pendingRequestsCount,
       }}
     />
   )
