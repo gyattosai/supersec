@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { Users } from './collections/Users'
+import { Terms } from './collections/Terms'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -17,7 +18,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users],
+  collections: [Users, Terms],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'supersec-local-development-secret-key-32chars-min',
   typescript: {
