@@ -46,12 +46,12 @@ export default async function SubjectHomePage({ params }: PageProps) {
     hour12: false,
   }).format(now)
 
-  // Query counts for tabs
+  // Query data for tabs
   const [sessionsRes, enrollmentsRes, requestsRes] = await Promise.all([
     payload.find({
       collection: 'sessions',
       where: { subject: { equals: subject.id } },
-      limit: 1,
+      limit: 200,
       overrideAccess: true,
     }),
     payload.find({
@@ -62,7 +62,8 @@ export default async function SubjectHomePage({ params }: PageProps) {
           { dropped: { not_equals: true } },
         ],
       },
-      limit: 1,
+      depth: 1,
+      limit: 200,
       overrideAccess: true,
     }),
     payload.find({
@@ -73,7 +74,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
           { status: { equals: 'pending' } },
         ],
       },
-      limit: 1,
+      limit: 100,
       overrideAccess: true,
     }),
   ])
@@ -92,10 +93,16 @@ export default async function SubjectHomePage({ params }: PageProps) {
     currentTime,
   )
 
+  const { projectSubjectSessionsList, projectSubjectRosterList } = await import('@/lib/subjects/subject-home')
+  const sessions = projectSubjectSessionsList(sessionsRes.docs)
+  const roster = projectSubjectRosterList(enrollmentsRes.docs)
+
   return (
     <SubjectHomeView
       header={header}
       todayDate={todayDate}
+      sessions={sessions}
+      roster={roster}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,

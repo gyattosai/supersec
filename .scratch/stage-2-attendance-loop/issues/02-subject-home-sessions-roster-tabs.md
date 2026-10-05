@@ -6,11 +6,11 @@
 
 **Blocked by:** 01 (Subject Home Shell & Quick Actions Header).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Sessions tab renders all past and live sessions for the subject in chronological order.
-- [ ] Each session row displays date, session kind badge (`Class` or `No Class`), and version tag.
-- [ ] Tapping a session row navigates to the session roll call / view screen.
-- [ ] Roster tab lists all actively enrolled students with instant name search filtering.
-- [ ] Students flagged with schedule conflicts display the `With Schedule Conflict` (`C`) badge.
-- [ ] Total student count matches enrolled database count.
+- [x] Sessions tab renders all past and live sessions for the subject in chronological order.
+- [x] Each session row displays date, session kind badge (`Class` or `No Class`), and version tag.
+- [x] Tapping a session row navigates to the session roll call / view screen.
+- [x] Roster tab lists all actively enrolled students with instant name search filtering.
+- [x] Students flagged with schedule conflicts display the `With Schedule Conflict` (`C`) badge.
+- [x] Total student count matches enrolled database count.

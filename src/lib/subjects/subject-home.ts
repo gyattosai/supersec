@@ -123,3 +123,86 @@ export function projectSubjectHomeHeader(
     nextMeeting,
   }
 }
+
+export interface SubjectSessionSummaryItem {
+  id: string
+  date: string
+  kind: 'class' | 'noClass'
+  title?: string
+  status: string
+  version: number
+  presentCount: number
+  absentCount: number
+  totalEntries: number
+  attendanceRate: number
+  noClassReason?: string
+}
+
+export interface SubjectRosterItem {
+  id: string
+  studentId: string
+  name: string
+  studentNumber?: string
+  sectionMark?: string
+  hasScheduleConflict: boolean
+  dropped: boolean
+  enrolledOn?: string
+}
+
+export function projectSubjectSessionsList(rawSessions: any[]): SubjectSessionSummaryItem[] {
+  if (!rawSessions || !Array.isArray(rawSessions)) return []
+
+  const sorted = [...rawSessions].sort((a, b) => b.date.localeCompare(a.date))
+
+  return sorted.map((s) => {
+    const entries = Array.isArray(s.entries) ? s.entries : []
+    let presentCount = 0
+    let absentCount = 0
+
+    for (const e of entries) {
+      if (e.status === 'present' || e.status === 'excused' || e.status === 'conflict') {
+        presentCount++
+      } else if (e.status === 'absent') {
+        absentCount++
+      }
+    }
+
+    const totalEntries = entries.length
+    const attendanceRate = totalEntries > 0 ? (presentCount / totalEntries) * 100 : 0
+
+    return {
+      id: s.id,
+      date: s.date,
+      kind: s.kind || 'class',
+      title: s.title,
+      status: s._status || 'published',
+      version: s.version || 1,
+      presentCount,
+      absentCount,
+      totalEntries,
+      attendanceRate: Math.round(attendanceRate * 10) / 10,
+      noClassReason: s.noClassReason,
+    }
+  })
+}
+
+export function projectSubjectRosterList(rawEnrollments: any[]): SubjectRosterItem[] {
+  if (!rawEnrollments || !Array.isArray(rawEnrollments)) return []
+
+  const items = rawEnrollments.map((enr) => {
+    const student = typeof enr.student === 'object' && enr.student !== null ? enr.student : {}
+    return {
+      id: enr.id,
+      studentId: student.id || enr.student,
+      name: student.name || 'Unnamed Student',
+      studentNumber: student.studentNumber,
+      sectionMark: enr.sectionMark,
+      hasScheduleConflict: Boolean(enr.hasScheduleConflict),
+      dropped: Boolean(enr.dropped),
+      enrolledOn: enr.enrolledOn,
+    }
+  })
+
+  // Sort by Last Name / Name ascending
+  return items.sort((a, b) => a.name.localeCompare(b.name))
+}
