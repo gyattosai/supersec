@@ -8,7 +8,7 @@ export interface PublicStudentInfo {
 
 export interface PublicSessionEntry {
   student: PublicStudentInfo
-  attendance: 'P' | 'A' | 'E' | null
+  attendance: 'P' | 'A' | 'E' | 'C' | null
   recitations: number
 }
 

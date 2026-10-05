@@ -61,6 +61,7 @@ export function PublicSessionsView({
               const isPresent = att === 'P'
               const isAbsent = att === 'A'
               const isExcused = att === 'E'
+              const isConflict = att === 'C'
 
               return (
                 <div
@@ -85,6 +86,11 @@ export function PublicSessionsView({
                     {isExcused && (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-warning/15 text-warning">
                         <AlertTriangle className="h-3 w-3" /> E
+                      </span>
+                    )}
+                    {isConflict && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-brand-tint text-brand-text" title="With Schedule Conflict">
+                        C
                       </span>
                     )}
                     {att == null && (

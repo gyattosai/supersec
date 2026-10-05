@@ -164,9 +164,10 @@ export function ProfessorReportView({
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-text-secondary font-medium">
               <th className="py-3 px-4">Student</th>
-              <th className="py-3 px-3 text-center">P</th>
-              <th className="py-3 px-3 text-center">A</th>
-              <th className="py-3 px-3 text-center">E</th>
+              <th className="py-3 px-3 text-center" title="Present">P</th>
+              <th className="py-3 px-3 text-center" title="Absent">A</th>
+              <th className="py-3 px-3 text-center" title="Excused">E</th>
+              <th className="py-3 px-3 text-center" title="With Schedule Conflict">C</th>
               <th className="py-3 px-3 text-center">Rate</th>
               <th className="py-3 px-3 text-center">Recit</th>
               <th className="py-3 px-3 text-center">Streak</th>
@@ -191,7 +192,7 @@ export function ProfessorReportView({
                     </div>
                   </td>
 
-                  {/* P / A / E */}
+                  {/* P / A / E / C */}
                   <td className="py-3 px-3 text-center font-medium text-success">
                     {stu.presentCount}
                   </td>
@@ -200,6 +201,9 @@ export function ProfessorReportView({
                   </td>
                   <td className="py-3 px-3 text-center font-medium text-warning">
                     {stu.excusedCount}
+                  </td>
+                  <td className="py-3 px-3 text-center font-medium text-brand">
+                    {stu.conflictCount ?? 0}
                   </td>
 
                   {/* Attendance Rate */}

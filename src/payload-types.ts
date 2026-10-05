@@ -245,7 +245,7 @@ export interface Session {
   entries?:
     | {
         student: string | Student;
-        attendance?: ('P' | 'A' | 'E') | null;
+        attendance?: ('P' | 'A' | 'E' | 'C') | null;
         recitations?: number | null;
         recitationTopic?: string | null;
         id?: string | null;

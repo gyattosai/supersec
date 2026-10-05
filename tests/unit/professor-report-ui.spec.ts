@@ -36,9 +36,9 @@ describe('Professor Report CSV & Helpers', () => {
       students: mockStudents,
     })
 
-    expect(csv).toContain('Student Name,Student Number,Held Sessions,Present,Absent,Excused,Attendance %,Recitations,Absence Streak,Status Flag')
-    expect(csv).toContain('"Alice Santos",2023-0001,10,9,1,0,90%,4,0,None')
-    expect(csv).toContain('"Bob Reyes",2023-0002,10,6,4,0,60%,1,3,Exceeded Limit')
+    expect(csv).toContain('Student Name,Student Number,Held Sessions,Present,Absent,Excused,Schedule Conflict,Attendance %,Recitations,Absence Streak,Status Flag')
+    expect(csv).toContain('"Alice Santos",2023-0001,10,9,1,0,0,90%,4,0,None')
+    expect(csv).toContain('"Bob Reyes",2023-0002,10,6,4,0,0,60%,1,3,Exceeded Limit')
   })
 
   it('escapes student names with commas and quotes properly', () => {
@@ -63,7 +63,7 @@ describe('Professor Report CSV & Helpers', () => {
       students: customStudents,
     })
 
-    expect(csv).toContain('"Dela Cruz, Juan ""Johnny""",2023-0003,6,5,0,1,100%,0,0,None')
+    expect(csv).toContain('"Dela Cruz, Juan ""Johnny""",2023-0003,6,5,0,1,0,100%,0,0,None')
   })
 
   it('maps warning flags to human-readable labels and variant styles', () => {

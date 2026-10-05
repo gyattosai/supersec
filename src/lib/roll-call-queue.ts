@@ -3,7 +3,7 @@ export type SessionOp =
       idempotencyKey: string
       type: 'set_attendance'
       studentId: string
-      attendance: 'P' | 'A' | 'E' | null
+      attendance: 'P' | 'A' | 'E' | 'C' | null
       excuseReason?: string
     }
   | {

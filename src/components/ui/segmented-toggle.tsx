@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export type PresenceState = 'P' | 'A' | 'E' | null
+export type PresenceState = 'P' | 'A' | 'E' | 'C' | null
 
 export function getSegmentedButtonClass(value: PresenceState, selected: PresenceState): string {
   const base =
@@ -11,6 +11,7 @@ export function getSegmentedButtonClass(value: PresenceState, selected: Presence
     if (value === 'P') return cn(base, 'bg-success/20 text-success border-success/40 shadow-sm')
     if (value === 'A') return cn(base, 'bg-danger/20 text-danger border-danger/40 shadow-sm')
     if (value === 'E') return cn(base, 'bg-warning/20 text-warning border-warning/40 shadow-sm')
+    if (value === 'C') return cn(base, 'bg-brand/20 text-brand border-brand/40 shadow-sm')
     return cn(base, 'bg-surface-3 text-text-primary border-border-strong shadow-sm')
   }
 
@@ -34,6 +35,7 @@ export function SegmentedToggle({
     { label: 'P', val: 'P', ariaLabel: 'Present' },
     { label: 'A', val: 'A', ariaLabel: 'Absent' },
     { label: 'E', val: 'E', ariaLabel: 'Excused' },
+    { label: 'C', val: 'C', ariaLabel: 'With Schedule Conflict' },
     { label: '–', val: null, ariaLabel: 'Not set' },
   ]
 

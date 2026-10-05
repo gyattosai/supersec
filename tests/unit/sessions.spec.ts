@@ -131,4 +131,40 @@ describe('Sessions Collection & Materialization (Stage 1.5 / Issue #6)', () => {
       ).rejects.toThrow('A reason is required when marking No Class')
     })
   })
+
+  describe('recordAttendance Seam', () => {
+    it('records With Schedule Conflict (C) status successfully', async () => {
+      let updatedData: any
+      const mockPayload = {
+        findByID: async () => ({
+          id: 'sess-1',
+          entries: [
+            { student: 'stu-1', attendance: null },
+            { student: 'stu-2', attendance: 'P' },
+          ],
+        }),
+        update: async ({ data }: any) => {
+          updatedData = data
+          return { id: 'sess-1', ...data }
+        },
+      }
+
+      const { recordAttendance } = await import('@/lib/data/sessions')
+      const updated = await recordAttendance(mockPayload as any, 'sess-1', 'stu-1', 'C')
+      expect(updated).toBeDefined()
+      expect(updatedData.entries[0].attendance).toBe('C')
+      expect(updatedData.entries[1].attendance).toBe('P')
+    })
+
+    it('rejects invalid attendance statuses', async () => {
+      const mockPayload = {
+        findByID: async () => ({ id: 'sess-1', entries: [] }),
+      }
+
+      const { recordAttendance } = await import('@/lib/data/sessions')
+      await expect(
+        recordAttendance(mockPayload as any, 'sess-1', 'stu-1', 'INVALID' as any),
+      ).rejects.toThrow('Invalid attendance status: INVALID')
+    })
+  })
 })

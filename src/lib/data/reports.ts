@@ -144,6 +144,7 @@ export type ProfessorReportResponse =
         presentCount: number
         absentCount: number
         excusedCount: number
+        conflictCount: number
         attendancePercentage: number
         recitationsCount: number
         flag: 'none' | 'watch' | 'at_risk' | 'exceeded' | 'no_attendance'
@@ -234,8 +235,9 @@ export async function getProfessorReport(
     let presentCount = 0
     let absentCount = 0
     let excusedCount = 0
+    let conflictCount = 0
     let recitationsCount = 0
-    const attendanceHistory: Array<'P' | 'A' | 'E'> = []
+    const attendanceHistory: Array<'P' | 'A' | 'E' | 'C'> = []
 
     for (const session of sessions) {
       const entry = session.entries?.find((e: any) => {
@@ -253,19 +255,22 @@ export async function getProfessorReport(
         } else if (entry.attendance === 'E') {
           excusedCount++
           attendanceHistory.push('E')
+        } else if (entry.attendance === 'C') {
+          conflictCount++
+          attendanceHistory.push('C')
         }
         recitationsCount += entry.recitations || 0
       }
     }
 
-    const denominator = heldSessionsCount - excusedCount
+    const denominator = heldSessionsCount - excusedCount - conflictCount
     const attendancePercentage = denominator <= 0 ? 100 : Math.round((presentCount / denominator) * 100)
 
-    // Streak calculation (Rule R2: Excused days neither break nor extend streaks)
+    // Streak calculation (Rule R2: Excused & Schedule Conflict days neither break nor extend streaks)
     let streak = 0
     for (let i = attendanceHistory.length - 1; i >= 0; i--) {
       const mark = attendanceHistory[i]
-      if (mark === 'E') {
+      if (mark === 'E' || mark === 'C') {
         continue
       }
       if (mark === 'A') {
@@ -297,6 +302,7 @@ export async function getProfessorReport(
       presentCount,
       absentCount,
       excusedCount,
+      conflictCount,
       attendancePercentage,
       recitationsCount,
       flag,

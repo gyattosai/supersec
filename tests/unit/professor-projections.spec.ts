@@ -270,4 +270,64 @@ describe('Professor Report Data Projections (Stage 1.12 / Issue #13 - ADR 0002 &
     expect((report.students[0] as any).proofStorageId).toBeUndefined()
     expect((report.students[0] as any).excuseReason).toBeUndefined()
   })
+
+  it('correctly tracks Schedule Conflict (C) status, skips it in streaks, and adjusts denominator', async () => {
+    const mockSubject = {
+      id: 'subj-1',
+      code: 'CS101',
+      name: 'Algorithms',
+      absenceLimit: 4,
+    }
+
+    const mockStudents = [{ id: 'stu-conflict', name: 'Carlos Conflict', studentNumber: '2024-0003' }]
+    const mockEnrollments = [{ id: 'enr-3', student: mockStudents[0], status: 'active', displayOrder: 1 }]
+
+    const mockSessions = [
+      {
+        id: 'sess-1',
+        subject: 'subj-1',
+        date: '2026-09-01',
+        _status: 'published',
+        entries: [{ student: 'stu-conflict', attendance: 'A' }],
+      },
+      {
+        id: 'sess-2',
+        subject: 'subj-1',
+        date: '2026-09-03',
+        _status: 'published',
+        entries: [{ student: 'stu-conflict', attendance: 'C' }],
+      },
+      {
+        id: 'sess-3',
+        subject: 'subj-1',
+        date: '2026-09-08',
+        _status: 'published',
+        entries: [{ student: 'stu-conflict', attendance: 'A' }],
+      },
+    ]
+
+    const mockPayload = {
+      find: async ({ collection }: any) => {
+        if (collection === 'reportLinks') return { docs: [{ id: 'l1', token: 'tok-c', revokedAt: null, subject: 'subj-1' }] }
+        if (collection === 'subjects') return { docs: [mockSubject] }
+        if (collection === 'sessions') return { docs: mockSessions }
+        if (collection === 'enrollments') return { docs: mockEnrollments }
+        return { docs: [] }
+      },
+    }
+
+    const report = await getProfessorReport(mockPayload as any, 'tok-c')
+    expect(report.status).toBe('active')
+    if (report.status !== 'active') throw new Error('Expected active')
+
+    const student = report.students[0]
+    expect(student.presentCount).toBe(0)
+    expect(student.absentCount).toBe(2)
+    expect(student.excusedCount).toBe(0)
+    expect(student.conflictCount).toBe(1)
+    // Streak: Sess 1 was A, Sess 2 was C (skipped), Sess 3 was A => Streak is 2
+    expect(student.streak).toBe(2)
+    // Denominator = 3 held - 1 conflict = 2. Present 0 => 0%
+    expect(student.attendancePercentage).toBe(0)
+  })
 })

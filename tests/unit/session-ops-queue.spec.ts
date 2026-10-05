@@ -28,6 +28,20 @@ describe('Session Ops & Single-Flight Queue Engine (Ticket 03)', () => {
       expect(updated.find((e: any) => e.student === 'stu-2')?.attendance).toBe('A')
     })
 
+    it('applies set_attendance with C (With Schedule Conflict)', () => {
+      const ops: SessionOp[] = [
+        {
+          idempotencyKey: 'k-conflict',
+          type: 'set_attendance',
+          studentId: 'stu-1',
+          attendance: 'C',
+        },
+      ]
+
+      const updated = applyOpsToEntries(initialEntries as any, ops)
+      expect(updated.find((e: any) => e.student === 'stu-1')?.attendance).toBe('C')
+    })
+
     it('applies adjust_recitation operation with topic', () => {
       const ops: SessionOp[] = [
         {

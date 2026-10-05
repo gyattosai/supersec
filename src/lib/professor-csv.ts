@@ -4,6 +4,7 @@ export interface ProfessorCsvStudent {
   presentCount: number
   absentCount: number
   excusedCount: number
+  conflictCount?: number
   attendancePercentage: number
   recitationsCount: number
   flag: 'none' | 'watch' | 'at_risk' | 'exceeded' | 'no_attendance'
@@ -72,6 +73,7 @@ export function generateProfessorCsv({
     'Present',
     'Absent',
     'Excused',
+    'Schedule Conflict',
     'Attendance %',
     'Recitations',
     'Absence Streak',
@@ -86,6 +88,7 @@ export function generateProfessorCsv({
       stu.presentCount,
       stu.absentCount,
       stu.excusedCount,
+      stu.conflictCount ?? 0,
       `${stu.attendancePercentage}%`,
       stu.recitationsCount,
       stu.streak,

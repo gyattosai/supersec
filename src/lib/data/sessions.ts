@@ -4,7 +4,7 @@ import { validatePublishableSession } from '@/collections/Sessions'
 
 export interface SessionEntry {
   student: string
-  attendance?: 'P' | 'A' | 'E' | null
+  attendance?: 'P' | 'A' | 'E' | 'C' | null
   recitations?: number
   recitationTopic?: string
 }
@@ -134,9 +134,9 @@ export async function recordAttendance(
   payload: Payload,
   sessionId: string,
   studentId: string,
-  attendance: 'P' | 'A' | 'E' | null,
+  attendance: 'P' | 'A' | 'E' | 'C' | null,
 ) {
-  if (attendance !== null && !['P', 'A', 'E'].includes(attendance)) {
+  if (attendance !== null && !['P', 'A', 'E', 'C'].includes(attendance)) {
     throw new Error(`Invalid attendance status: ${attendance}`)
   }
 

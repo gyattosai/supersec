@@ -125,6 +125,7 @@ export const Sessions: CollectionConfig = {
             { label: 'Present (P)', value: 'P' },
             { label: 'Absent (A)', value: 'A' },
             { label: 'Excused (E)', value: 'E' },
+            { label: 'With Schedule Conflict (C)', value: 'C' },
           ],
           label: 'Attendance',
         },
