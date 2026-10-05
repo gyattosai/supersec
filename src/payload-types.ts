@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     terms: Term;
+    subjects: Subject;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +79,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     terms: TermsSelect<false> | TermsSelect<true>;
+    subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -159,6 +161,34 @@ export interface Term {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subjects".
+ */
+export interface Subject {
+  id: string;
+  term: string | Term;
+  name: string;
+  code: string;
+  slug: string;
+  professor?: string | null;
+  sectionMark?: string | null;
+  sectionFull?: string | null;
+  schedule: {
+    weekday: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+    start: string;
+    end: string;
+    id?: string | null;
+  }[];
+  room?: string | null;
+  zoomUrl?: string | null;
+  absenceLimit?: number | null;
+  archivedAt?: string | null;
+  legacyRowId?: string | null;
+  legacyId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -188,6 +218,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'terms';
         value: string | Term;
+      } | null)
+    | ({
+        relationTo: 'subjects';
+        value: string | Subject;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -264,6 +298,35 @@ export interface TermsSelect<T extends boolean = true> {
   name?: T;
   startDate?: T;
   endDate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subjects_select".
+ */
+export interface SubjectsSelect<T extends boolean = true> {
+  term?: T;
+  name?: T;
+  code?: T;
+  slug?: T;
+  professor?: T;
+  sectionMark?: T;
+  sectionFull?: T;
+  schedule?:
+    | T
+    | {
+        weekday?: T;
+        start?: T;
+        end?: T;
+        id?: T;
+      };
+  room?: T;
+  zoomUrl?: T;
+  absenceLimit?: T;
+  archivedAt?: T;
+  legacyRowId?: T;
+  legacyId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

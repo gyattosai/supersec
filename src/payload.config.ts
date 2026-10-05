@@ -7,6 +7,7 @@ import sharp from 'sharp'
 
 import { Users } from './collections/Users'
 import { Terms } from './collections/Terms'
+import { Subjects } from './collections/Subjects'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -18,7 +19,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Terms],
+  collections: [Users, Terms, Subjects],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'supersec-local-development-secret-key-32chars-min',
   typescript: {
