@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import crypto from 'crypto'
 
 export interface MeetingSlot {
   weekday: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
@@ -8,8 +9,7 @@ export interface MeetingSlot {
 
 export function generateSubjectSlug(code: string): string {
   const cleanCode = code.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
-  const randomChars = Math.random().toString(36).substring(2, 6)
-  return `${cleanCode}-${randomChars}`
+  return `${cleanCode}-${crypto.randomBytes(2).toString('hex')}`
 }
 
 export function validateMeetingSchedule(

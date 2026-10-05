@@ -65,18 +65,13 @@ export function getRoster(
   students: RosterStudent[],
   sortBy: 'original' | 'alphabetical' = 'original',
 ): RosterStudent[] {
-  const copy = [...students]
-
-  if (sortBy === 'alphabetical') {
-    return copy.sort((a, b) => {
-      const lastCompare = a.lastName.localeCompare(b.lastName, undefined, { sensitivity: 'base' })
-      if (lastCompare !== 0) return lastCompare
-      return a.firstName.localeCompare(b.firstName, undefined, { sensitivity: 'base' })
-    })
-  }
-
-  // Default: original paste order (Rule R9)
-  return copy.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+  return [...students].sort(
+    sortBy === 'alphabetical'
+      ? (a, b) =>
+          a.lastName.localeCompare(b.lastName, undefined, { sensitivity: 'base' }) ||
+          a.firstName.localeCompare(b.firstName, undefined, { sensitivity: 'base' })
+      : (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0),
+  )
 }
 
 export async function pasteRoster(
