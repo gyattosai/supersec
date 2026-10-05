@@ -12,11 +12,11 @@
 
 **Blocked by:** 05 (Pure Absentee Monitoring Engine & Streak Rules), 07 (Professor Report Token Management).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `/prof/[token]` renders without requiring authentication.
-- [ ] Displays all 5 summary metric cards, the basis note, the flagged students matrix, and the session summary table.
-- [ ] Date matrix columns accurately reflect student marks (`P`, `A`, `E`, `C`, `—`).
-- [ ] `@media print` stylesheet prints cleanly to PDF with running headers and footers.
-- [ ] CSV export button downloads identical columnar figures for spreadsheet grading.
-- [ ] Automated privacy harness test verifies no 🔒 fields leak into HTML or API responses.
+- [x] `/prof/[token]` renders without requiring authentication.
+- [x] Displays all 5 summary metric cards, the basis note, the flagged students matrix, and the session summary table.
+- [x] Date matrix columns accurately reflect student marks (`P`, `A`, `E`, `C`, `—`).
+- [x] `@media print` stylesheet prints cleanly to PDF with running headers and footers.
+- [x] CSV export button downloads identical columnar figures for spreadsheet grading.
+- [x] Automated privacy harness test verifies no 🔒 fields leak into HTML or API responses.

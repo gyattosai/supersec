@@ -65,73 +65,20 @@ export default async function ProfessorReportPage({
     )
   }
 
-  const { subject, heldSessionsCount, students, range } = report
+  const {
+    subject,
+    heldSessionsCount,
+    heldSessionDates,
+    sessionSummaries,
+    monitoringSummary,
+    preparedByName,
+    datePrepared,
+    students,
+    range,
+  } = report
 
   return (
-    <main className="min-h-screen bg-canvas text-text-primary px-4 py-8 max-w-5xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-border bg-surface-1 shadow-2">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold tracking-wider px-2 py-0.5 rounded bg-brand-tint text-brand-text">
-              {subject.code}
-            </span>
-            {subject.section && (
-              <Badge variant="neutral">
-                Sec {subject.section}
-              </Badge>
-            )}
-            <Badge variant="brand">
-              Professor View
-            </Badge>
-          </div>
-
-          <h1 className="text-xl font-bold tracking-tight text-text-primary">
-            {subject.name}
-          </h1>
-
-          <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
-            {subject.room && <span>Room: {subject.room}</span>}
-            {subject.scheduleDays && subject.scheduleDays.length > 0 && (
-              <span>Schedule: {subject.scheduleDays.join(', ')}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="flex items-center gap-4 border-t sm:border-t-0 sm:border-l border-border pt-3 sm:pt-0 sm:pl-5">
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-xs text-text-quaternary">
-              <CalendarCheck className="h-3.5 w-3.5" />
-              <span>Held</span>
-            </div>
-            <span className="text-lg font-bold text-text-primary">
-              {heldSessionsCount}
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-xs text-text-quaternary">
-              <Users className="h-3.5 w-3.5" />
-              <span>Students</span>
-            </div>
-            <span className="text-lg font-bold text-text-primary">
-              {students.length}
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-xs text-text-quaternary">
-              <Clock className="h-3.5 w-3.5" />
-              <span>Absence Limit</span>
-            </div>
-            <span className="text-lg font-bold text-text-primary">
-              {subject.absenceLimit}
-            </span>
-          </div>
-        </div>
-      </header>
-
+    <main className="min-h-screen bg-canvas text-text-primary px-4 py-8 max-w-5xl mx-auto flex flex-col gap-6 print:bg-white print:p-0 print:max-w-none">
       {/* Main Professor Report Table & Controls */}
       <React.Suspense
         fallback={
@@ -145,11 +92,16 @@ export default async function ProfessorReportPage({
           subject={subject}
           range={range}
           heldSessionsCount={heldSessionsCount}
+          heldSessionDates={heldSessionDates}
+          sessionSummaries={sessionSummaries}
+          monitoringSummary={monitoringSummary}
+          preparedByName={preparedByName}
+          datePrepared={datePrepared}
           students={students}
         />
       </React.Suspense>
 
-      <footer className="mt-8 text-center text-xs text-text-quaternary">
+      <footer className="mt-8 text-center text-xs text-text-quaternary print:hidden">
         SuperSec · Automated class secretary ledger
       </footer>
     </main>

@@ -14,7 +14,15 @@ export interface ProfessorCsvStudent {
 export interface GenerateProfessorCsvArgs {
   subjectCode: string
   heldSessionsCount: number
-  students: ProfessorCsvStudent[]
+  sessionDates?: string[]
+  students: Array<
+    ProfessorCsvStudent & {
+      sessionMarks?: Record<string, string>
+      presentStarCount?: number
+      eligibleSessionsCount?: number
+      attendanceRate?: number
+    }
+  >
 }
 
 export function escapeCsvField(val: string | number): string {
@@ -64,8 +72,51 @@ export function getFlagBadgeInfo(flag: ProfessorCsvStudent['flag']): {
 
 export function generateProfessorCsv({
   heldSessionsCount,
+  sessionDates,
   students,
 }: GenerateProfessorCsvArgs): string {
+  if (sessionDates && sessionDates.length > 0) {
+    const headers = [
+      'Student Name',
+      'Student Number',
+      ...sessionDates,
+      'Attended*',
+      'Absences',
+      'Excused',
+      'Schedule Conflict',
+      'Attendance %',
+      'Recitations',
+      'Absence Streak',
+      'Status Flag',
+    ]
+
+    const rows = students.map((stu) => {
+      const dateMarks = sessionDates.map((d) => stu.sessionMarks?.[d] || '—')
+      const attendedStr = stu.presentStarCount !== undefined && stu.eligibleSessionsCount !== undefined
+        ? `${stu.presentStarCount}/${stu.eligibleSessionsCount}`
+        : `${stu.presentCount}/${heldSessionsCount}`
+      const rateStr = stu.attendanceRate !== undefined
+        ? `${stu.attendanceRate}%`
+        : `${stu.attendancePercentage}%`
+
+      return [
+        `"${stu.name.replace(/"/g, '""')}"`,
+        escapeCsvField(stu.studentNumber),
+        ...dateMarks,
+        attendedStr,
+        stu.absentCount,
+        stu.excusedCount,
+        stu.conflictCount ?? 0,
+        rateStr,
+        stu.recitationsCount,
+        stu.streak,
+        escapeCsvField(getFlagLabel(stu.flag)),
+      ].join(',')
+    })
+
+    return [headers.join(','), ...rows].join('\n')
+  }
+
   const headers = [
     'Student Name',
     'Student Number',

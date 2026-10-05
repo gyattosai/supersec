@@ -126,6 +126,9 @@ export type ProfessorReportResponse =
         code: string
         name: string
         section?: string
+        sectionMark?: string
+        professor?: string
+        termName?: string
         scheduleDays?: string[]
         startTime?: string
         endTime?: string
@@ -137,6 +140,22 @@ export type ProfessorReportResponse =
         toDate?: string
       }
       heldSessionsCount: number
+      heldSessionDates: string[]
+      sessionSummaries: Array<{
+        id: string
+        date: string
+        sheetTitle?: string
+        onRosterCount: number
+        presentStarCount: number
+        presentCount: number
+        excusedCount: number
+        conflictCount: number
+        absentCount: number
+        attendanceRate: number
+      }>
+      monitoringSummary: any
+      preparedByName?: string
+      datePrepared?: string
       students: Array<{
         id: string
         name: string
@@ -146,10 +165,15 @@ export type ProfessorReportResponse =
         absentCount: number
         excusedCount: number
         conflictCount: number
+        presentStarCount: number
+        eligibleSessionsCount: number
         attendancePercentage: number
+        attendanceRate: number
         recitationsCount: number
         flag: 'none' | 'watch' | 'at_risk' | 'exceeded' | 'no_attendance'
+        categories: string[]
         streak: number
+        sessionMarks: Record<string, 'P' | 'A' | 'E' | 'C' | '—'>
       }>
     }
 
@@ -173,6 +197,7 @@ export async function getProfessorReport(
   const subjectRes = await payload.find({
     collection: 'subjects',
     where: { id: { equals: subjectId } },
+    depth: 1,
     limit: 1,
     overrideAccess: true,
   })
@@ -182,11 +207,19 @@ export async function getProfessorReport(
   }
 
   const subjectDoc = subjectRes.docs[0] as any
+  const termName =
+    typeof subjectDoc.term === 'object' && subjectDoc.term !== null
+      ? subjectDoc.term.name
+      : 'Prelims'
+
   const subject = {
     id: subjectDoc.id,
     code: subjectDoc.code,
     name: subjectDoc.name,
     section: subjectDoc.section || undefined,
+    sectionMark: subjectDoc.sectionMark || subjectDoc.section || undefined,
+    professor: subjectDoc.professor || undefined,
+    termName,
     scheduleDays: subjectDoc.scheduleDays || undefined,
     startTime: subjectDoc.startTime || undefined,
     endTime: subjectDoc.endTime || undefined,
@@ -214,6 +247,7 @@ export async function getProfessorReport(
   })
   sessions.sort((a, b) => a.date.localeCompare(b.date))
   const heldSessionsCount = sessions.length
+  const heldSessionDates = sessions.map((s) => s.date)
 
   // 4. Fetch enrollments
   const enrollmentsRes = await payload.find({
@@ -234,14 +268,30 @@ export async function getProfessorReport(
     const studentName = formatStudentDisplayName(studentObj)
     const studentNumber = studentObj ? studentObj.studentNumber : ''
 
+    let eligibleSessionsCount = 0
     let presentCount = 0
     let absentCount = 0
     let excusedCount = 0
     let conflictCount = 0
     let recitationsCount = 0
     const attendanceHistory: Array<'P' | 'A' | 'E' | 'C'> = []
+    const sessionMarks: Record<string, 'P' | 'A' | 'E' | 'C' | '—'> = {}
 
     for (const session of sessions) {
+      if (session.kind === 'noClass') continue
+
+      if (enr.enrolledOn && session.date < enr.enrolledOn) {
+        sessionMarks[session.date] = '—'
+        continue
+      }
+
+      if (enr.dropped && enr.droppedOn && session.date > enr.droppedOn) {
+        sessionMarks[session.date] = '—'
+        continue
+      }
+
+      eligibleSessionsCount++
+
       const entry = session.entries?.find((e: any) => {
         const eStuId = typeof e.student === 'object' && e.student !== null ? e.student.id : e.student
         return eStuId === studentId
@@ -251,22 +301,32 @@ export async function getProfessorReport(
         if (entry.attendance === 'P') {
           presentCount++
           attendanceHistory.push('P')
+          sessionMarks[session.date] = 'P'
         } else if (entry.attendance === 'A') {
           absentCount++
           attendanceHistory.push('A')
+          sessionMarks[session.date] = 'A'
         } else if (entry.attendance === 'E') {
           excusedCount++
           attendanceHistory.push('E')
+          sessionMarks[session.date] = 'E'
         } else if (entry.attendance === 'C') {
           conflictCount++
           attendanceHistory.push('C')
+          sessionMarks[session.date] = 'C'
         }
         recitationsCount += entry.recitations || 0
+      } else {
+        absentCount++
+        attendanceHistory.push('A')
+        sessionMarks[session.date] = 'A'
       }
     }
 
-    const denominator = heldSessionsCount - excusedCount - conflictCount
-    const attendancePercentage = denominator <= 0 ? 100 : Math.round((presentCount / denominator) * 100)
+    const presentStarCount = presentCount + excusedCount + conflictCount
+    const legacyDenominator = heldSessionsCount - excusedCount - conflictCount
+    const attendancePercentage = legacyDenominator <= 0 ? 100 : Math.round((presentCount / legacyDenominator) * 100)
+    const attendanceRate = eligibleSessionsCount <= 0 ? 100 : Math.round((presentStarCount / eligibleSessionsCount) * 1000) / 10
 
     // Streak calculation (Rule R2: Excused & Schedule Conflict days neither break nor extend streaks)
     let streak = 0
@@ -296,6 +356,13 @@ export async function getProfessorReport(
       flag = 'no_attendance'
     }
 
+    const categories: string[] = []
+    if (presentStarCount === 0 && eligibleSessionsCount > 0) categories.push('No Attendance')
+    if (attendanceRate < 50 && eligibleSessionsCount > 0 && presentStarCount > 0) categories.push('Below 50%')
+    if (absentCount >= absenceLimit) categories.push('Exceeded Limit')
+    else if (absentCount >= absenceLimit * 0.75) categories.push('At Risk')
+    else if (absentCount >= absenceLimit * 0.5) categories.push('Watch')
+
     return {
       id: studentId,
       name: studentName,
@@ -305,12 +372,58 @@ export async function getProfessorReport(
       absentCount,
       excusedCount,
       conflictCount,
+      presentStarCount,
+      eligibleSessionsCount,
       attendancePercentage,
+      attendanceRate,
       recitationsCount,
       flag,
+      categories,
       streak,
+      sessionMarks,
     }
   })
+
+  // 6. Session Summaries Breakdown
+  const sessionSummaries = sessions.map((sess) => {
+    let pCount = 0
+    let eCount = 0
+    let cCount = 0
+    let aCount = 0
+
+    const entries = sess.entries || []
+    for (const ent of entries) {
+      if (ent.attendance === 'P') pCount++
+      else if (ent.attendance === 'E') eCount++
+      else if (ent.attendance === 'C') cCount++
+      else if (ent.attendance === 'A') aCount++
+    }
+
+    const presentStarCount = pCount + eCount + cCount
+    const onRosterCount = entries.length
+    const attendanceRate = onRosterCount > 0 ? Math.round((presentStarCount / onRosterCount) * 1000) / 10 : 0
+
+    return {
+      id: sess.id,
+      date: sess.date,
+      sheetTitle: sess.changeNote || (sess.kind === 'noClass' ? sess.noClassReason : 'Class Session'),
+      onRosterCount,
+      presentStarCount,
+      presentCount: pCount,
+      excusedCount: eCount,
+      conflictCount: cCount,
+      absentCount: aCount,
+      attendanceRate,
+    }
+  })
+
+  // 7. Date prepared
+  const datePrepared = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date())
 
   return {
     status: 'active',
@@ -320,6 +433,17 @@ export async function getProfessorReport(
       toDate: options?.toDate,
     },
     heldSessionsCount,
+    heldSessionDates,
+    sessionSummaries,
+    monitoringSummary: {
+      totalHeldClassSessions: sessions.filter((s) => s.kind !== 'noClass').length,
+      activeStudents: enrollments.filter((e) => !e.dropped).length,
+      noAttendanceCount: students.filter((s) => s.presentStarCount === 0 && s.eligibleSessionsCount > 0).length,
+      below50Count: students.filter((s) => s.attendanceRate < 50 && s.eligibleSessionsCount > 0).length,
+      totalFlaggedCount: students.filter((s) => s.categories.length > 0 || s.streak >= 3).length,
+    },
+    preparedByName: 'Matthew Balubar, Class Secretary',
+    datePrepared,
     students,
   }
 }
