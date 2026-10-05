@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Navigating from any subject card on `/console/dashboard` opens `/console/subjects/[id]`.
-- [ ] Action header displays the subject code, subject title, section mark, professor name, and next scheduled class badge.
-- [ ] Tapping "Start Class Session" creates or resumes today's session and navigates to the roll call screen.
-- [ ] Tapping "Copy Public Link" copies the unlisted public URL (`/s/[slug]`) to the clipboard with visual confirmation.
-- [ ] Navigation tab bar renders tabs for Sessions, Roster, Requests, Monitoring, and Reports.
+- [x] Navigating from any subject card on `/console/dashboard` opens `/console/subjects/[id]`.
+- [x] Action header displays the subject code, subject title, section mark, professor name, and next scheduled class badge.
+- [x] Tapping "Start Class Session" creates or resumes today's session and navigates to the roll call screen.
+- [x] Tapping "Copy Public Link" copies the unlisted public URL (`/s/[slug]`) to the clipboard with visual confirmation.
+- [x] Navigation tab bar renders tabs for Sessions, Roster, Requests, Monitoring, and Reports.

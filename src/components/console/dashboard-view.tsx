@@ -345,9 +345,14 @@ export function DashboardView({
                       {subj.studentCount} student{subj.studentCount === 1 ? '' : 's'}
                     </Badge>
                   </div>
-                  <h3 className="text-sm font-semibold text-text-primary">
-                    {subj.name}
-                  </h3>
+                  <Link
+                    href={`/console/subjects/${subj.id}`}
+                    className="group block hover:opacity-90 transition-opacity"
+                  >
+                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
+                      {subj.name}
+                    </h3>
+                  </Link>
                   {subj.professor && (
                     <p className="text-xs text-text-tertiary mt-0.5">
                       Prof. {subj.professor}
