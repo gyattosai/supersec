@@ -128,6 +128,70 @@ export async function pasteRoster(
   }
 }
 
+export async function bulkEnrollStudents(
+  payload: Payload,
+  data: {
+    subjectId: string
+    students: Array<{
+      lastName: string
+      firstName: string
+      middleName?: string
+      studentNumber?: string
+    }>
+    enrolledOn: string
+  },
+): Promise<{ enrolledCount: number; studentIds: string[] }> {
+  if (!data.students || data.students.length === 0) {
+    return { enrolledCount: 0, studentIds: [] }
+  }
+
+  // Count existing enrollments for proper displayOrder (Rule R9)
+  const existing = await payload.count({
+    collection: 'enrollments',
+    where: { subject: { equals: data.subjectId } },
+    overrideAccess: true,
+  })
+
+  let startOrder = existing.totalDocs || 0
+  const studentIds: string[] = []
+
+  for (const item of data.students) {
+    startOrder++
+
+    const student = await payload.create({
+      collection: 'students',
+      data: {
+        lastName: item.lastName,
+        firstName: item.firstName,
+        middleName: item.middleName || undefined,
+        studentNumber: item.studentNumber || undefined,
+      },
+      overrideAccess: true,
+    })
+
+    const studentId = student.id
+
+    await payload.create({
+      collection: 'enrollments',
+      data: {
+        student: studentId,
+        subject: data.subjectId,
+        status: 'active',
+        enrolledOn: data.enrolledOn,
+        displayOrder: startOrder,
+      },
+      overrideAccess: true,
+    })
+
+    studentIds.push(studentId)
+  }
+
+  return {
+    enrolledCount: studentIds.length,
+    studentIds,
+  }
+}
+
 export function getActiveEnrollments(
   students: RosterStudent[],
   targetDate: string,

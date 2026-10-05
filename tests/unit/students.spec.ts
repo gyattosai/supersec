@@ -5,6 +5,7 @@ import {
   parseStudentName,
   parseRosterText,
   pasteRoster,
+  bulkEnrollStudents,
   getRoster,
   type RosterStudent,
 } from '@/lib/data/students'
@@ -152,6 +153,45 @@ describe('Students & Enrollments Collections & Domain Data Seam (Stage 1.3 / Iss
 
       const byAlphabetical = getRoster(roster, 'alphabetical')
       expect(byAlphabetical.map((s) => s.lastName)).toEqual(['Abad', 'Mercado', 'Zaragoza'])
+    })
+
+    it('bulk-enrolls cleaned student records with consecutive displayOrder (Rule R9)', async () => {
+      const createdStudents: any[] = []
+      const createdEnrollments: any[] = []
+
+      const mockPayload = {
+        count: async () => ({ totalDocs: 5 }), // already 5 students enrolled
+        create: async ({ collection, data }: { collection: string; data: any }) => {
+          if (collection === 'students') {
+            const doc = { id: `stu-${createdStudents.length + 6}`, ...data }
+            createdStudents.push(doc)
+            return doc
+          }
+          if (collection === 'enrollments') {
+            const doc = { id: `enr-${createdEnrollments.length + 6}`, ...data }
+            createdEnrollments.push(doc)
+            return doc
+          }
+          throw new Error(`Unexpected collection: ${collection}`)
+        },
+      }
+
+      const students = [
+        { lastName: 'Dela Cruz', firstName: 'Juan', studentNumber: '2023-0001' },
+        { lastName: 'Santos', firstName: 'Maria' },
+      ]
+
+      const result = await bulkEnrollStudents(mockPayload as any, {
+        subjectId: 'subj-1',
+        students,
+        enrolledOn: '2026-10-05',
+      })
+
+      expect(result.enrolledCount).toBe(2)
+      expect(createdEnrollments).toHaveLength(2)
+      // Display order should start after existing 5 students
+      expect(createdEnrollments[0].displayOrder).toBe(6)
+      expect(createdEnrollments[1].displayOrder).toBe(7)
     })
   })
 })
