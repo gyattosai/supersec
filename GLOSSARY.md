@@ -276,6 +276,16 @@ _Avoid_: Prof link, secret URL
 A full downloadable archive of all secretary data for offline backup.
 _Avoid_: Backup (which refers to managed database snapshots)
 
+## Console & Navigation
+
+**Subject Home**:
+The dedicated operational hub for an individual subject in the secretary console (`/console/subjects/[id]`), providing quick actions (Start Session, No Class, Public Link) and tabs for Sessions, Roster, Requests, Monitoring, and Reports.
+_Avoid_: Subject detail, subject dashboard, course page
+
+**Console Dashboard**:
+The secretary's central command center (`/console/dashboard`), presenting high-level summaries (Today's classes, Pending Requests counter, At-Risk counter, All Subjects grid) and global action shortcuts ("No Class for all").
+_Avoid_: Home, main page, overview
+
 ## Privacy Tiers
 
 **Privacy Tier**:
