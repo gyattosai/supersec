@@ -1,6 +1,8 @@
 import type { Payload } from 'payload'
 import { DATE_REGEX } from '@/collections/Terms'
 import { validatePublishableSession } from '@/collections/Sessions'
+import { getActiveTerm } from './terms'
+import { getWeekdayAbbrev } from '../dashboard-helpers'
 
 export interface SessionEntry {
   student: string
@@ -128,6 +130,145 @@ export async function markNoClass(
   })
 
   return session
+}
+
+export interface MarkGlobalNoClassParams {
+  date: string
+  reason: string
+  termId?: string
+  subjectIds?: string[]
+}
+
+export interface MarkGlobalNoClassResult {
+  success: boolean
+  date: string
+  reason: string
+  affectedSubjectIds: string[]
+  createdSessionIds: string[]
+  skippedSubjectIds: string[]
+}
+
+export async function markGlobalNoClass(
+  payload: Payload,
+  data: MarkGlobalNoClassParams,
+): Promise<MarkGlobalNoClassResult> {
+  if (!data.date || !DATE_REGEX.test(data.date)) {
+    throw new Error('Date must be in YYYY-MM-DD format')
+  }
+
+  const cleanReason = (data.reason || '').trim()
+  if (!cleanReason) {
+    throw new Error('A reason is required when marking No Class')
+  }
+
+  let targetSubjectIds: string[] = []
+
+  if (Array.isArray(data.subjectIds) && data.subjectIds.length > 0) {
+    targetSubjectIds = data.subjectIds
+  } else {
+    let termId = data.termId
+    if (!termId) {
+      const activeTerm = await getActiveTerm(payload, data.date)
+      termId = activeTerm?.id
+    }
+
+    if (!termId) {
+      return {
+        success: true,
+        date: data.date,
+        reason: cleanReason,
+        affectedSubjectIds: [],
+        createdSessionIds: [],
+        skippedSubjectIds: [],
+      }
+    }
+
+    const subjectsRes = await payload.find({
+      collection: 'subjects',
+      where: {
+        and: [
+          { term: { equals: termId } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 100,
+      overrideAccess: true,
+    })
+
+    const weekday = getWeekdayAbbrev(data.date)
+    const scheduledSubjects = (subjectsRes.docs as any[]).filter((subj) => {
+      if (!Array.isArray(subj.schedule)) return false
+      return subj.schedule.some((slot: any) => slot.weekday === weekday)
+    })
+
+    const targetSubjects = scheduledSubjects.length > 0 ? scheduledSubjects : subjectsRes.docs
+    targetSubjectIds = targetSubjects.map((s: any) => s.id)
+  }
+
+  const affectedSubjectIds: string[] = []
+  const createdSessionIds: string[] = []
+  const skippedSubjectIds: string[] = []
+
+  for (const subjectId of targetSubjectIds) {
+    const existing = await payload.find({
+      collection: 'sessions',
+      where: {
+        and: [
+          { subject: { equals: subjectId } },
+          { date: { equals: data.date } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    const existingSession = existing.docs?.[0] as any
+    if (existingSession) {
+      if (existingSession.kind === 'noClass') {
+        skippedSubjectIds.push(subjectId)
+        continue
+      }
+      const updated = await payload.update({
+        collection: 'sessions',
+        id: existingSession.id,
+        data: {
+          kind: 'noClass',
+          phase: 'finished',
+          noClassReason: cleanReason,
+          _status: 'published',
+        },
+        overrideAccess: true,
+      })
+      affectedSubjectIds.push(subjectId)
+      createdSessionIds.push(updated.id)
+      continue
+    }
+
+    const session = await payload.create({
+      collection: 'sessions',
+      data: {
+        subject: subjectId,
+        date: data.date,
+        kind: 'noClass',
+        phase: 'finished',
+        noClassReason: cleanReason,
+        _status: 'published',
+      },
+      overrideAccess: true,
+    })
+
+    affectedSubjectIds.push(subjectId)
+    createdSessionIds.push(session.id)
+  }
+
+  return {
+    success: true,
+    date: data.date,
+    reason: cleanReason,
+    affectedSubjectIds,
+    createdSessionIds,
+    skippedSubjectIds,
+  }
 }
 
 export async function recordAttendance(

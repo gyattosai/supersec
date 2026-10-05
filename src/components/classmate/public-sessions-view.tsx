@@ -28,35 +28,60 @@ export function PublicSessionsView({
 
   return (
     <div className="flex flex-col gap-4">
-      {sessions.map((sess) => (
-        <div
-          key={sess.id}
-          className="p-4 rounded-xl border border-border bg-surface-1 shadow-1 flex flex-col gap-3"
-        >
-          {/* Session Header */}
-          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-border/60">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-brand-text" />
-              <span className="text-sm font-semibold text-text-primary">
-                {sess.date}
-              </span>
+      {sessions.map((sess) => {
+        if (sess.kind === 'noClass') {
+          return (
+            <div
+              key={sess.id}
+              className="p-4 rounded-xl border border-border/80 bg-surface-1/70 shadow-1 flex flex-col gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-text-tertiary" />
+                  <span className="text-sm font-semibold text-text-primary">
+                    {sess.date}
+                  </span>
+                </div>
+                <Badge variant="neutral" className="text-[11px]">
+                  No Class
+                </Badge>
+              </div>
+              <p className="text-xs text-text-secondary">
+                {sess.noClassReason || 'Class cancelled / suspended.'}
+              </p>
+            </div>
+          )
+        }
+
+        return (
+          <div
+            key={sess.id}
+            className="p-4 rounded-xl border border-border bg-surface-1 shadow-1 flex flex-col gap-3"
+          >
+            {/* Session Header */}
+            <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-brand-text" />
+                <span className="text-sm font-semibold text-text-primary">
+                  {sess.date}
+                </span>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenDispute(sess)}
+                className="text-xs text-text-secondary hover:text-text-primary h-8 min-h-[44px] px-2.5"
+              >
+                <HelpCircle className="h-3.5 w-3.5 mr-1" />
+                Something wrong?
+              </Button>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleOpenDispute(sess)}
-              className="text-xs text-text-secondary hover:text-text-primary h-8 min-h-[44px] px-2.5"
-            >
-              <HelpCircle className="h-3.5 w-3.5 mr-1" />
-              Something wrong?
-            </Button>
-          </div>
-
-          {/* Student Entries Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {sess.entries.map((entry) => {
+            {/* Student Entries Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {sess.entries.map((entry) => {
               const att = entry.attendance
               const isPresent = att === 'P'
               const isAbsent = att === 'A'
@@ -111,7 +136,8 @@ export function PublicSessionsView({
             })}
           </div>
         </div>
-      ))}
+      )
+    })}
 
       {sessions.length === 0 && (
         <div className="text-center py-12 rounded-xl border border-dashed border-border bg-surface-1 p-6">

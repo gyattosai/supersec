@@ -79,12 +79,57 @@ export function DashboardView({
   const [noClassReason, setNoClassReason] = React.useState('')
   const [submittingNoClass, setSubmittingNoClass] = React.useState(false)
 
+  // Global No Class modal state
+  const [globalNoClassOpen, setGlobalNoClassOpen] = React.useState(false)
+  const [globalNoClassDate, setGlobalNoClassDate] = React.useState(todayDate)
+  const [globalNoClassReason, setGlobalNoClassReason] = React.useState('')
+  const [submittingGlobalNoClass, setSubmittingGlobalNoClass] = React.useState(false)
+
+  const REASON_PRESETS = [
+    'Typhoon / Weather suspension',
+    'Administrative holiday',
+    'University activity / event',
+    'Dean / Dept suspension',
+  ]
+
   const firstFlaggedSubject = allSubjects.find((s) => (s.flaggedCount ?? 0) > 0)
   const monitoringHref = firstFlaggedSubject
     ? `/console/subjects/${firstFlaggedSubject.id}?tab=monitoring`
     : allSubjects.length > 0
       ? `/console/subjects/${allSubjects[0].id}?tab=monitoring`
       : '#all-subjects'
+
+  const handleConfirmGlobalNoClass = async () => {
+    if (!globalNoClassReason.trim()) {
+      alert('Please enter or select a cancellation reason.')
+      return
+    }
+
+    try {
+      setSubmittingGlobalNoClass(true)
+      const res = await fetch('/api/sessions/global-no-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: globalNoClassDate,
+          reason: globalNoClassReason.trim(),
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to mark global cancellation')
+      }
+
+      setGlobalNoClassOpen(false)
+      setGlobalNoClassReason('')
+      router.refresh()
+    } catch (err: any) {
+      alert(err?.message || 'Error marking global cancellation')
+    } finally {
+      setSubmittingGlobalNoClass(false)
+    }
+  }
 
   const handleStartSession = async (item: TodayClassItem) => {
     if (item.existingSession) {
@@ -250,7 +295,7 @@ export function DashboardView({
       </div>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-text-primary">
             Today&apos;s Classes
@@ -259,6 +304,21 @@ export function DashboardView({
             {todayDate} {activeTermName ? `· ${activeTermName}` : ''}
           </p>
         </div>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setGlobalNoClassDate(todayDate)
+            setGlobalNoClassReason('')
+            setGlobalNoClassOpen(true)
+          }}
+          className="text-xs font-semibold text-text-secondary min-h-[44px] sm:min-h-[36px] w-full sm:w-auto"
+        >
+          <Ban className="h-3.5 w-3.5 mr-1.5 text-warning" />
+          No Class for all
+        </Button>
       </div>
 
       {/* Class Cards */}
@@ -510,6 +570,82 @@ export function DashboardView({
             className="w-full text-xs font-semibold"
           >
             Confirm Cancellation
+          </Button>
+        </div>
+      </BottomSheet>
+
+      {/* Global No Class Modal */}
+      <BottomSheet
+        open={globalNoClassOpen}
+        onClose={() => setGlobalNoClassOpen(false)}
+        title="Mark No Class for All"
+        description="Record a school-wide or weather cancellation across all scheduled subjects in a single tap."
+      >
+        <div className="flex flex-col gap-4 py-2">
+          {/* Date Picker */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="globalDate" className="text-xs font-medium text-text-secondary">
+              Cancellation Date
+            </label>
+            <input
+              id="globalDate"
+              type="date"
+              value={globalNoClassDate}
+              onChange={(e) => setGlobalNoClassDate(e.target.value)}
+              className="h-11 min-h-[44px] rounded-lg border border-border bg-surface-2 px-3 text-sm text-text-primary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand font-mono"
+            />
+          </div>
+
+          {/* Quick Reason Chips */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-text-secondary">
+              Common Presets
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {REASON_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setGlobalNoClassReason(preset)}
+                  className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors min-h-[32px] ${
+                    globalNoClassReason === preset
+                      ? 'border-brand bg-brand/15 text-brand-text font-semibold'
+                      : 'border-border bg-surface-2 text-text-secondary hover:text-text-primary hover:bg-surface-3'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reason Input */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="globalReason" className="text-xs font-medium text-text-secondary">
+              Cancellation Reason
+            </label>
+            <input
+              id="globalReason"
+              type="text"
+              value={globalNoClassReason}
+              onChange={(e) => setGlobalNoClassReason(e.target.value)}
+              placeholder="e.g. Typhoon Signal No. 2 / Holiday"
+              className="h-11 min-h-[44px] rounded-lg border border-border bg-surface-2 px-3 text-sm text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+
+          <div className="p-3 rounded-lg border border-border/60 bg-surface-2/60 text-xs text-text-tertiary">
+            This will publish a <code className="text-text-primary font-mono text-[11px]">noClass</code> session for all scheduled active subjects on {globalNoClassDate}. Public classmate pages will display the cancellation notice and attendance records will exclude this date.
+          </div>
+
+          <Button
+            type="button"
+            variant="primary"
+            loading={submittingGlobalNoClass}
+            onClick={handleConfirmGlobalNoClass}
+            className="w-full text-xs font-semibold min-h-[44px]"
+          >
+            Confirm Global Cancellation
           </Button>
         </div>
       </BottomSheet>

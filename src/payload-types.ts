@@ -274,6 +274,7 @@ export interface Request {
   proofStorageId?: string | null;
   status: 'pending' | 'approved' | 'declined' | 'expired';
   decidedAt?: string | null;
+  decisionNote?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -540,6 +541,7 @@ export interface RequestsSelect<T extends boolean = true> {
   proofStorageId?: T;
   status?: T;
   decidedAt?: T;
+  decisionNote?: T;
   updatedAt?: T;
   createdAt?: T;
 }

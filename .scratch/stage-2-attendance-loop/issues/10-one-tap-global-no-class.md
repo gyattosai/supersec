@@ -8,10 +8,10 @@
 
 **Blocked by:** 01 (Subject Home Shell & Quick Actions Header).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] "No Class for all" button appears prominently on the Console Dashboard.
-- [ ] Modal allows the secretary to select a date and suspension reason.
-- [ ] Confirming the action creates published `noClass` sessions across all active subjects for that day in a single batch.
-- [ ] Public subject pages reflect the cancellation banner immediately.
-- [ ] The cancelled date is excluded from held sessions and absentee counts.
+- [x] "No Class for all" button appears prominently on the Console Dashboard.
+- [x] Modal allows the secretary to select a date and suspension reason.
+- [x] Confirming the action creates published `noClass` sessions across all active subjects for that day in a single batch.
+- [x] Public subject pages reflect the cancellation banner immediately.
+- [x] The cancelled date is excluded from held sessions and absentee counts.

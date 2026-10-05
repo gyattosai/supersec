@@ -16,6 +16,8 @@ export interface PublicSessionEntry {
 export interface PublicSessionInfo {
   id: string
   date: string
+  kind?: 'class' | 'noClass'
+  noClassReason?: string
   entries: PublicSessionEntry[]
 }
 
@@ -48,14 +50,13 @@ export async function getPublicSubjectPageData(
 
   const subjectId = subjectDoc.id
 
-  // 2. Fetch published sessions only
+  // 2. Fetch published sessions (including published noClass notices)
   const sessionsRes = await payload.find({
     collection: 'sessions',
     where: {
       and: [
         { subject: { equals: subjectId } },
         { _status: { equals: 'published' } },
-        { kind: { not_equals: 'noClass' } },
       ],
     },
     depth: 2,
@@ -89,6 +90,8 @@ export async function getPublicSubjectPageData(
     return {
       id: sess.id,
       date: sess.date,
+      kind: sess.kind || 'class',
+      noClassReason: sess.noClassReason,
       entries,
     }
   })

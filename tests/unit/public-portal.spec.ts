@@ -46,6 +46,15 @@ describe('Classmate Public Portal & Dispute Sheet (Ticket 06)', () => {
       _status: 'draft',
       entries: [],
     },
+    {
+      id: 'sess-noclass',
+      subject: 'subj-1',
+      date: '2026-10-04',
+      kind: 'noClass',
+      noClassReason: 'Typhoon Suspension Signal No. 2',
+      _status: 'published',
+      entries: [],
+    },
   ]
 
   const mockEnrollments = [
@@ -73,17 +82,21 @@ describe('Classmate Public Portal & Dispute Sheet (Ticket 06)', () => {
     },
   }
 
-  it('fetches subject and only published sessions (zero draft sessions)', async () => {
+  it('fetches subject and published sessions including noClass cancellation notices (zero draft sessions)', async () => {
     const data = await getPublicSubjectPageData(mockPayload as any, 'cs101-abcd')
     expect(data).not.toBeNull()
     expect(data?.subject.code).toBe('CS101')
-    expect(data?.sessions).toHaveLength(1)
-    expect(data?.sessions[0].id).toBe('sess-pub')
+    expect(data?.sessions).toHaveLength(2)
+    // Sorted chronologically descending: 2026-10-04 then 2026-10-01
+    expect(data?.sessions[0].id).toBe('sess-noclass')
+    expect(data?.sessions[0].kind).toBe('noClass')
+    expect(data?.sessions[0].noClassReason).toBe('Typhoon Suspension Signal No. 2')
+    expect(data?.sessions[1].id).toBe('sess-pub')
   })
 
   it('strictly excludes 🔒 private and 📋 report-only fields from public session entries (ADR 0002)', async () => {
     const data = await getPublicSubjectPageData(mockPayload as any, 'cs101-abcd')
-    const session = data?.sessions[0]
+    const session = data?.sessions.find((s) => s.id === 'sess-pub')
     expect(session).toBeDefined()
 
     // Verify 🔒 private fields on subject are not leaked
