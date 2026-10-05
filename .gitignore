@@ -33,3 +33,7 @@ pnpm-debug.log*
 # vercel & turbopack
 .vercel
 .turbo
+
+# impeccable local config & cache
+.impeccable/*.local.json
+.impeccable/*.cache.json
