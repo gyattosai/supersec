@@ -61,7 +61,7 @@ export function BottomSheet({
       {/* Slide-up Container */}
       <div
         className={cn(
-          'relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-t-2xl border-t border-border bg-surface-1 p-5 shadow-3 z-10 overflow-y-auto animate-in slide-in-from-bottom duration-200',
+          'relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-t-2xl border-t border-border bg-surface-1 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-3 z-10 overflow-y-auto animate-in slide-in-from-bottom duration-200',
           className,
         )}
       >

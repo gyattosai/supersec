@@ -21,9 +21,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Secretary navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border bg-surface-1/95 backdrop-blur md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 h-[calc(4rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] border-t border-border bg-surface-1/95 backdrop-blur md:hidden"
     >
-      <div className="flex h-full items-center justify-around px-2">
+      <div className="flex h-16 items-center justify-around px-2">
         {tabs.map((tab) => {
           const Icon = ICON_MAP[tab.id]
           return (
