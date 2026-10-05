@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import { DATE_REGEX } from '@/collections/Terms'
 
 export interface ParsedName {
   lastName: string
@@ -131,3 +132,62 @@ export async function pasteRoster(
     studentIds,
   }
 }
+
+export function getActiveEnrollments(
+  students: RosterStudent[],
+  targetDate: string,
+): RosterStudent[] {
+  return students.filter((s) => {
+    // Student must be enrolled on or before the target date
+    if (s.enrolledOn && s.enrolledOn > targetDate) {
+      return false
+    }
+
+    // Student must be active, or if dropped, the drop date must be on or after the target date
+    if (s.status === 'dropped') {
+      return Boolean(s.droppedOn && s.droppedOn >= targetDate)
+    }
+
+    return s.status === 'active'
+  })
+}
+
+export async function dropStudent(
+  payload: Payload,
+  enrollmentId: string,
+  droppedOn: string,
+): Promise<any> {
+  if (!droppedOn || !DATE_REGEX.test(droppedOn)) {
+    throw new Error('Dropped date must be in YYYY-MM-DD format')
+  }
+
+  const result = await payload.update({
+    collection: 'enrollments',
+    id: enrollmentId,
+    data: {
+      status: 'dropped',
+      droppedOn,
+    },
+    overrideAccess: true,
+  })
+
+  return result
+}
+
+export async function setConflictFlag(
+  payload: Payload,
+  enrollmentId: string,
+  flag: boolean,
+): Promise<any> {
+  const result = await payload.update({
+    collection: 'enrollments',
+    id: enrollmentId,
+    data: {
+      conflictFlag: flag,
+    },
+    overrideAccess: true,
+  })
+
+  return result
+}
+
