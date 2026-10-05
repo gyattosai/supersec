@@ -6,6 +6,11 @@ export function validatePublishableSession(data: any): { isValid: boolean; error
     return { isValid: true }
   }
 
+  // Preserve historical v1 sessions with Not Set entries exactly as recorded
+  if (data.legacyRowId || data.changeNote?.includes('Imported from supersec v1')) {
+    return { isValid: true }
+  }
+
   if (!data.changeNote || !data.changeNote.trim()) {
     return { isValid: false, error: 'A change note is required when publishing a session' }
   }
