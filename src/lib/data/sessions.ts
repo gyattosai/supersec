@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { DATE_REGEX } from '@/collections/Terms'
+import { validatePublishableSession } from '@/collections/Sessions'
 
 export interface SessionEntry {
   student: string
@@ -267,4 +268,44 @@ export async function markAllPresent(
 
   return { updatedCount, session: updated }
 }
+
+export async function publishSession(
+  payload: Payload,
+  sessionId: string,
+  changeNote: string,
+) {
+  const session = await payload.findByID({
+    collection: 'sessions',
+    id: sessionId,
+    overrideAccess: true,
+  })
+
+  if (!session) {
+    throw new Error(`Session ${sessionId} not found`)
+  }
+
+  const validation = validatePublishableSession({
+    ...session,
+    _status: 'published',
+    changeNote,
+  })
+
+  if (!validation.isValid) {
+    throw new Error(validation.error)
+  }
+
+  const updated = await payload.update({
+    collection: 'sessions',
+    id: sessionId,
+    data: {
+      changeNote: changeNote.trim(),
+      phase: 'finished',
+      _status: 'published',
+    },
+    overrideAccess: true,
+  })
+
+  return updated
+}
+
 

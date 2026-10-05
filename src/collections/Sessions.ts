@@ -1,6 +1,28 @@
 import type { CollectionConfig } from 'payload'
 import { DATE_REGEX } from './Terms'
 
+export function validatePublishableSession(data: any): { isValid: boolean; error?: string } {
+  if (data._status !== 'published') {
+    return { isValid: true }
+  }
+
+  if (!data.changeNote || !data.changeNote.trim()) {
+    return { isValid: false, error: 'A change note is required when publishing a session' }
+  }
+
+  if (data.kind === 'class') {
+    const notSetCount = (data.entries || []).filter((e: any) => !e.attendance).length
+    if (notSetCount > 0) {
+      return {
+        isValid: false,
+        error: `Cannot publish session: ${notSetCount} student(s) still marked Not Set`,
+      }
+    }
+  }
+
+  return { isValid: true }
+}
+
 export const Sessions: CollectionConfig = {
   slug: 'sessions',
   admin: {
@@ -12,6 +34,17 @@ export const Sessions: CollectionConfig = {
       autosave: true,
     },
     maxPerDoc: 0,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        const validation = validatePublishableSession(data)
+        if (!validation.isValid) {
+          throw new Error(validation.error)
+        }
+        return data
+      },
+    ],
   },
   access: {
     read: () => true,
