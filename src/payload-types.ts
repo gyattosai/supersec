@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     terms: Term;
     subjects: Subject;
+    students: Student;
+    enrollments: Enrollment;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +82,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     terms: TermsSelect<false> | TermsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
+    students: StudentsSelect<false> | StudentsSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -189,6 +193,38 @@ export interface Subject {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "students".
+ */
+export interface Student {
+  id: string;
+  lastName: string;
+  firstName: string;
+  middleName?: string | null;
+  studentNumber?: string | null;
+  privateNotes?: string | null;
+  legacyRowId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: string;
+  student: string | Student;
+  subject: string | Subject;
+  status: 'active' | 'dropped';
+  enrolledOn: string;
+  droppedOn?: string | null;
+  conflictFlag?: boolean | null;
+  displayOrder?: number | null;
+  legacyRowId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -222,6 +258,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'subjects';
         value: string | Subject;
+      } | null)
+    | ({
+        relationTo: 'students';
+        value: string | Student;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: string | Enrollment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -327,6 +371,36 @@ export interface SubjectsSelect<T extends boolean = true> {
   archivedAt?: T;
   legacyRowId?: T;
   legacyId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "students_select".
+ */
+export interface StudentsSelect<T extends boolean = true> {
+  lastName?: T;
+  firstName?: T;
+  middleName?: T;
+  studentNumber?: T;
+  privateNotes?: T;
+  legacyRowId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  student?: T;
+  subject?: T;
+  status?: T;
+  enrolledOn?: T;
+  droppedOn?: T;
+  conflictFlag?: T;
+  displayOrder?: T;
+  legacyRowId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
