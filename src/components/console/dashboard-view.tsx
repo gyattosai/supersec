@@ -25,6 +25,7 @@ export interface TodayClassItem {
   existingSession?: {
     id: string
     _status: string
+    kind?: string
     type?: string
   } | null
 }
@@ -148,7 +149,7 @@ export function DashboardView({
       {/* Class Cards */}
       <div className="flex flex-col gap-3">
         {todayClasses.map((item) => {
-          const isNoClass = item.existingSession?.type === 'no-class'
+          const isNoClass = item.existingSession?.kind === 'noClass'
           const isPublished = item.existingSession?._status === 'published'
           const isLive = item.existingSession && !isNoClass && !isPublished
           const isStarting = startingSubjectId === item.subject.id

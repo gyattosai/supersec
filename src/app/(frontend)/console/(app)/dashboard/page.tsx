@@ -53,7 +53,8 @@ export default async function DashboardPage() {
           ? {
               id: existing.id,
               _status: existing._status,
-              type: existing.type,
+              kind: existing.kind,
+              type: existing.type || existing.kind,
             }
           : null,
       }

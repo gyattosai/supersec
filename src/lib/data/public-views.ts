@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { getPublicSubject } from './subjects'
+import { formatStudentDisplayName } from './students'
 
 export interface PublicStudentInfo {
   id: string
@@ -54,7 +55,7 @@ export async function getPublicSubjectPageData(
       and: [
         { subject: { equals: subjectId } },
         { _status: { equals: 'published' } },
-        { type: { not_equals: 'no-class' } },
+        { kind: { not_equals: 'noClass' } },
       ],
     },
     depth: 2,
@@ -72,7 +73,7 @@ export async function getPublicSubjectPageData(
     const entries: PublicSessionEntry[] = (sess.entries || []).map((e: any) => {
       const studentObj = typeof e.student === 'object' && e.student !== null ? e.student : null
       const studentId = studentObj ? studentObj.id : e.student
-      const studentName = studentObj ? studentObj.name : 'Unknown'
+      const studentName = formatStudentDisplayName(studentObj)
 
       return {
         student: {
@@ -109,8 +110,8 @@ export async function getPublicSubjectPageData(
   const rosterMap = new Map<string, string>()
   for (const enr of enrollmentsRes.docs as any[]) {
     const s = typeof enr.student === 'object' && enr.student !== null ? enr.student : null
-    if (s && s.id && s.name) {
-      rosterMap.set(s.id, s.name)
+    if (s && s.id) {
+      rosterMap.set(s.id, formatStudentDisplayName(s))
     }
   }
 

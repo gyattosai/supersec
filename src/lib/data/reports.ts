@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import crypto from 'crypto'
+import { formatStudentDisplayName } from './students'
 
 export interface CreateReportLinkInput {
   subjectId: string
@@ -218,6 +219,7 @@ export async function getProfessorReport(
   const enrollmentsRes = await payload.find({
     collection: 'enrollments',
     where: { subject: { equals: subjectId } },
+    depth: 1,
     limit: 500,
     overrideAccess: true,
   })
@@ -229,7 +231,7 @@ export async function getProfessorReport(
   const students = enrollments.map((enr) => {
     const studentObj = typeof enr.student === 'object' && enr.student !== null ? enr.student : null
     const studentId = studentObj ? studentObj.id : enr.student
-    const studentName = studentObj ? studentObj.name : ''
+    const studentName = formatStudentDisplayName(studentObj)
     const studentNumber = studentObj ? studentObj.studentNumber : ''
 
     let presentCount = 0

@@ -21,6 +21,18 @@ export interface RosterStudent {
   droppedOn?: string
 }
 
+export function formatStudentDisplayName(student: {
+  name?: string
+  lastName?: string
+  firstName?: string
+  middleName?: string
+} | null | undefined): string {
+  if (!student) return 'Unknown'
+  if (student.name && student.name.trim()) return student.name.trim()
+  const parts = [student.lastName, student.firstName].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : 'Unknown'
+}
+
 export function parseStudentName(nameStr: string): ParsedName {
   const clean = nameStr.trim().replace(/^\d+[\.\)]\s*/, '') // strip leading numbers like "1. " or "1) "
 
