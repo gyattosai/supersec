@@ -1,12 +1,13 @@
 # 04: 30-Day Proof Retention Cleanup Cron
 
-**What to build:** Authenticated endpoint `POST /api/cron/cleanup` enforcing Rule R4 (purging dispute proofs after 30 days and expiring old requests) with Appwrite Function documentation.
+**What to build:** Authenticated background retention cron endpoint that permanently purges student dispute proofs older than 30 days and marks stale requests as expired per Rule R4.
 
-**Blocked by:** none
+**Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Route handler `POST /api/cron/cleanup` requiring `Authorization: Bearer <CRON_SECRET>`.
-- [ ] Query and delete expired dispute files from Appwrite Storage bucket `proofs`.
-- [ ] Transition pending requests older than 30 days to `status: 'expired'`.
-- [ ] Unit tests for 30-day date calculation, authentication verification, and idempotent runs.
+- [x] Retention endpoint requires a secure Bearer token matching the configured cron secret.
+- [x] Deletes uploaded dispute files older than 30 days from cloud storage.
+- [x] Automatically transitions pending requests older than 30 days to expired status.
+- [x] Rejects unauthorized or missing token requests with 401 Unauthorized.
+- [x] Unit tests for 30-day temporal calculation, authorization checks, and idempotent repeated runs.
