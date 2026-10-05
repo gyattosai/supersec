@@ -75,6 +75,7 @@ export interface Config {
     sessions: Session;
     requests: Request;
     rateLimits: RateLimit;
+    reportLinks: ReportLink;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     sessions: SessionsSelect<false> | SessionsSelect<true>;
     requests: RequestsSelect<false> | RequestsSelect<true>;
     rateLimits: RateLimitsSelect<false> | RateLimitsSelect<true>;
+    reportLinks: ReportLinksSelect<false> | ReportLinksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -289,6 +291,19 @@ export interface RateLimit {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reportLinks".
+ */
+export interface ReportLink {
+  id: string;
+  subject: string | Subject;
+  token: string;
+  revokedAt?: string | null;
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -342,6 +357,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'rateLimits';
         value: string | RateLimit;
+      } | null)
+    | ({
+        relationTo: 'reportLinks';
+        value: string | ReportLink;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -532,6 +551,18 @@ export interface RateLimitsSelect<T extends boolean = true> {
   key?: T;
   count?: T;
   expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reportLinks_select".
+ */
+export interface ReportLinksSelect<T extends boolean = true> {
+  subject?: T;
+  token?: T;
+  revokedAt?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
