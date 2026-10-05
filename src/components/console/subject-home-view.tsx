@@ -53,6 +53,7 @@ export interface SubjectPostItem {
   priority?: boolean
   pinnedUntil?: string
   category?: string
+  url?: string
   tags?: string[]
   official?: boolean
 }
@@ -724,11 +725,21 @@ export function SubjectHomeView({
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-brand/10 text-brand-text border border-brand/20">
                               <Pin className="h-3 w-3" />
                               Pinned
+                              {post.pinnedUntil && (
+                                <span className="font-normal opacity-80 text-[10px]">
+                                  ({post.pinnedUntil})
+                                </span>
+                              )}
                             </span>
                           )}
                           {post.official && (
                             <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                               Official
+                            </span>
+                          )}
+                          {post.type === 'resource' && post.category && (
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-surface-2 text-text-secondary border border-border">
+                              {post.category}
                             </span>
                           )}
                           <span
@@ -751,7 +762,31 @@ export function SubjectHomeView({
                             {post.body}
                           </p>
                         )}
+                        {post.type === 'question' && post.tags && post.tags.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                            {post.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-text-tertiary border border-border"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
+                      {post.type === 'resource' && post.url && (
+                        <a
+                          href={post.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[36px] shrink-0"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-brand" />
+                          <span>Open Resource</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}

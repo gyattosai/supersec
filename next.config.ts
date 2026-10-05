@@ -10,6 +10,28 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/s/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+        ],
+      },
+      {
+        source: '/prof/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

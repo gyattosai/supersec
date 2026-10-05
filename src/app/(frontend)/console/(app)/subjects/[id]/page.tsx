@@ -47,7 +47,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
   }).format(now)
 
   // Query data for tabs
-  const [sessionsRes, enrollmentsRes, requestsRes, activeLinkRes] = await Promise.all([
+  const [sessionsRes, enrollmentsRes, requestsRes, activeLinkRes, announcementsRes, resourcesRes, questionsRes] = await Promise.all([
     payload.find({
       collection: 'sessions',
       where: { subject: { equals: subject.id } },
@@ -86,6 +86,30 @@ export default async function SubjectHomePage({ params }: PageProps) {
       limit: 1,
       overrideAccess: true,
     }),
+    payload.find({
+      collection: 'announcements',
+      where: {
+        subjects: { contains: subject.id },
+      },
+      limit: 100,
+      overrideAccess: true,
+    }),
+    payload.find({
+      collection: 'resources',
+      where: {
+        subjects: { contains: subject.id },
+      },
+      limit: 100,
+      overrideAccess: true,
+    }),
+    payload.find({
+      collection: 'questions',
+      where: {
+        subjects: { contains: subject.id },
+      },
+      limit: 100,
+      overrideAccess: true,
+    }),
   ])
 
   let reportToken = activeLinkRes.docs[0]?.token
@@ -113,6 +137,9 @@ export default async function SubjectHomePage({ params }: PageProps) {
     projectSubjectSessionsList,
     projectSubjectRosterList,
     projectSubjectRequestsList,
+    projectSubjectAnnouncementsList,
+    projectSubjectResourcesList,
+    projectSubjectQuestionsList,
   } = await import('@/lib/subjects/subject-home')
   const { computeAbsenteeMonitoring } = await import('@/lib/stats/absentee-monitoring')
 
@@ -120,6 +147,44 @@ export default async function SubjectHomePage({ params }: PageProps) {
   const roster = projectSubjectRosterList(enrollmentsRes.docs)
   const requests = projectSubjectRequestsList(requestsRes.docs)
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length
+
+  const projectedAnnouncements = projectSubjectAnnouncementsList(announcementsRes.docs, todayDate)
+  const announcementPosts = projectedAnnouncements.map((a) => ({
+    id: a.id,
+    type: 'announcement' as const,
+    title: a.title,
+    body: typeof a.body === 'string' ? a.body : undefined,
+    status: a.status,
+    publishedAt: a.publishedAt,
+    priority: a.priority,
+    pinnedUntil: a.pinnedUntil,
+  }))
+
+  const projectedResources = projectSubjectResourcesList(resourcesRes.docs)
+  const resourcePosts = projectedResources.map((r) => ({
+    id: r.id,
+    type: 'resource' as const,
+    title: r.title,
+    body: typeof r.body === 'string' ? r.body : undefined,
+    status: r.status,
+    publishedAt: r.publishedAt,
+    category: r.category,
+    url: r.url,
+  }))
+
+  const projectedQuestions = projectSubjectQuestionsList(questionsRes.docs)
+  const questionPosts = projectedQuestions.map((q) => ({
+    id: q.id,
+    type: 'question' as const,
+    title: q.question,
+    body: typeof q.answer === 'string' ? q.answer : undefined,
+    status: q.status,
+    publishedAt: q.publishedAt,
+    official: q.official,
+    tags: q.tags,
+  }))
+
+  const posts = [...announcementPosts, ...resourcePosts, ...questionPosts]
 
   const monitoringEnrollments = enrollmentsRes.docs.map((enr: any) => {
     const student = typeof enr.student === 'object' && enr.student !== null ? enr.student : {}
@@ -161,14 +226,14 @@ export default async function SubjectHomePage({ params }: PageProps) {
       todayDate={todayDate}
       sessions={sessions}
       roster={roster}
-      posts={[]}
+      posts={posts}
       requests={requests}
       monitoring={monitoring}
       reportToken={reportToken}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,
-        posts: 0,
+        posts: posts.length,
         pendingRequests: pendingRequestsCount,
         flaggedStudents: monitoring.totalFlaggedCount,
       }}

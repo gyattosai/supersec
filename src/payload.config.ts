@@ -14,6 +14,9 @@ import { Sessions } from './collections/Sessions'
 import { Requests } from './collections/Requests'
 import { RateLimits } from './collections/RateLimits'
 import { ReportLinks } from './collections/ReportLinks'
+import { Announcements } from './collections/Announcements'
+import { Resources } from './collections/Resources'
+import { Questions } from './collections/Questions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -25,7 +28,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Terms, Subjects, Students, Enrollments, Sessions, Requests, RateLimits, ReportLinks],
+  collections: [Users, Terms, Subjects, Students, Enrollments, Sessions, Requests, RateLimits, ReportLinks, Announcements, Resources, Questions],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'supersec-local-development-secret-key-32chars-min',
   typescript: {

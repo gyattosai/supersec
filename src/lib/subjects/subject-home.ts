@@ -1,5 +1,6 @@
 import { getWeekdayAbbrev } from '@/lib/dashboard-helpers'
 import { formatTimeRange12 } from '@/lib/format-time'
+import { isAnnouncementPinned } from '@/lib/posts/lifecycle'
 
 export interface SubjectScheduleSlot {
   weekday: string
@@ -263,6 +264,187 @@ export function projectSubjectRequestsList(rawRequests: any[]): SubjectRequestIt
       decidedAt: req.decidedAt,
       decisionNote: req.decisionNote,
     }
+  })
+}
+
+export interface SubjectAnnouncementItem {
+  id: string
+  title: string
+  slug: string
+  body?: any
+  image?: string
+  priority: boolean
+  isPinned: boolean
+  pinnedUntil?: string
+  status: 'draft' | 'published' | 'archived'
+  publishedAt?: string
+  changeNote?: string
+  createdAt?: string
+}
+
+export function projectSubjectAnnouncementsList(
+  rawAnnouncements: any[],
+  todayDate: string,
+): SubjectAnnouncementItem[] {
+  if (!rawAnnouncements || !Array.isArray(rawAnnouncements)) return []
+
+  const mapped: SubjectAnnouncementItem[] = rawAnnouncements.map((doc) => {
+    let status: 'draft' | 'published' | 'archived' = 'draft'
+    if (doc.archivedAt) {
+      status = 'archived'
+    } else if (doc._status === 'published' || doc.publishedAt) {
+      status = 'published'
+    }
+
+    const priority = Boolean(doc.priority)
+    const isPinned = priority && isAnnouncementPinned(doc.pinnedUntil, todayDate)
+
+    return {
+      id: doc.id,
+      title: doc.title || 'Untitled Announcement',
+      slug: doc.slug,
+      body: doc.body,
+      image: doc.image,
+      priority,
+      isPinned,
+      pinnedUntil: doc.pinnedUntil,
+      status,
+      publishedAt: doc.publishedAt,
+      changeNote: doc.changeNote,
+      createdAt: doc.createdAt,
+    }
+  })
+
+  // Sort: active pinned first, then by publishedAt / createdAt descending
+  return mapped.sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1
+    if (!a.isPinned && b.isPinned) return 1
+
+    const timeA = new Date(a.publishedAt || a.createdAt || 0).getTime()
+    const timeB = new Date(b.publishedAt || b.createdAt || 0).getTime()
+    return timeB - timeA
+  })
+}
+
+export interface SubjectResourceItem {
+  id: string
+  title: string
+  slug: string
+  url?: string
+  category?: string
+  attachments?: Array<{
+    name: string
+    fileUrl: string
+    size?: string
+  }>
+  body?: any
+  status: 'draft' | 'published' | 'archived'
+  publishedAt?: string
+  changeNote?: string
+  createdAt?: string
+}
+
+export function projectSubjectResourcesList(
+  rawResources: any[],
+  categoryFilter?: string,
+): SubjectResourceItem[] {
+  if (!rawResources || !Array.isArray(rawResources)) return []
+
+  const filtered = categoryFilter
+    ? rawResources.filter(
+        (r) => (r.category || '').toLowerCase() === categoryFilter.toLowerCase(),
+      )
+    : rawResources
+
+  const mapped: SubjectResourceItem[] = filtered.map((doc) => {
+    let status: 'draft' | 'published' | 'archived' = 'draft'
+    if (doc.archivedAt) {
+      status = 'archived'
+    } else if (doc._status === 'published' || doc.publishedAt) {
+      status = 'published'
+    }
+
+    return {
+      id: doc.id,
+      title: doc.title || 'Untitled Resource',
+      slug: doc.slug,
+      url: doc.url,
+      category: doc.category,
+      attachments: Array.isArray(doc.attachments) ? doc.attachments : [],
+      body: doc.body,
+      status,
+      publishedAt: doc.publishedAt,
+      changeNote: doc.changeNote,
+      createdAt: doc.createdAt,
+    }
+  })
+
+  // Sort by publishedAt / createdAt descending
+  return mapped.sort((a, b) => {
+    const timeA = new Date(a.publishedAt || a.createdAt || 0).getTime()
+    const timeB = new Date(b.publishedAt || b.createdAt || 0).getTime()
+    return timeB - timeA
+  })
+}
+
+export interface SubjectQuestionItem {
+  id: string
+  question: string
+  slug: string
+  answer?: any
+  tags?: string[]
+  official: boolean
+  status: 'draft' | 'published' | 'archived'
+  publishedAt?: string
+  changeNote?: string
+  createdAt?: string
+}
+
+export function projectSubjectQuestionsList(
+  rawQuestions: any[],
+  tagFilter?: string,
+  officialOnly?: boolean,
+): SubjectQuestionItem[] {
+  if (!rawQuestions || !Array.isArray(rawQuestions)) return []
+
+  let filtered = rawQuestions
+  if (officialOnly) {
+    filtered = filtered.filter((q) => Boolean(q.official))
+  }
+  if (tagFilter) {
+    const target = tagFilter.toLowerCase()
+    filtered = filtered.filter((q) =>
+      Array.isArray(q.tags) && q.tags.some((t: string) => (t || '').toLowerCase() === target),
+    )
+  }
+
+  const mapped: SubjectQuestionItem[] = filtered.map((doc) => {
+    let status: 'draft' | 'published' | 'archived' = 'draft'
+    if (doc.archivedAt) {
+      status = 'archived'
+    } else if (doc._status === 'published' || doc.publishedAt) {
+      status = 'published'
+    }
+
+    return {
+      id: doc.id,
+      question: doc.question || 'Untitled Question',
+      slug: doc.slug,
+      answer: doc.answer,
+      tags: Array.isArray(doc.tags) ? doc.tags : [],
+      official: Boolean(doc.official),
+      status,
+      publishedAt: doc.publishedAt,
+      changeNote: doc.changeNote,
+      createdAt: doc.createdAt,
+    }
+  })
+
+  // Sort by publishedAt / createdAt descending
+  return mapped.sort((a, b) => {
+    const timeA = new Date(a.publishedAt || a.createdAt || 0).getTime()
+    const timeB = new Date(b.publishedAt || b.createdAt || 0).getTime()
+    return timeB - timeA
   })
 }
 

@@ -4,13 +4,13 @@ import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getPublicSubjectPageData } from '@/lib/data/public-views'
-import { PublicSessionsView } from '@/components/classmate/public-sessions-view'
+import { PublicSubjectPortal } from '@/components/public/public-subject-portal'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, MapPin, Video, Clock } from 'lucide-react'
 import { formatTimeRange12 } from '@/lib/format-time'
 
 export const metadata: Metadata = {
-  title: 'Subject Attendance · SuperSec',
+  title: 'Subject Hub · SuperSec',
   robots: {
     index: false,
     follow: false,
@@ -34,7 +34,7 @@ export default async function PublicSubjectPage({
     notFound()
   }
 
-  const { subject, sessions, roster } = data
+  const { subject } = data
 
   return (
     <main className="min-h-screen bg-canvas text-text-primary px-4 py-8 max-w-2xl mx-auto flex flex-col gap-6">
@@ -102,23 +102,8 @@ export default async function PublicSubjectPage({
         </div>
       </header>
 
-      {/* Published Sessions & Dispute Trigger */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
-            Class Sessions ({sessions.length})
-          </h2>
-          <span className="text-xs text-text-secondary">
-            {roster.length} active classmates
-          </span>
-        </div>
-
-        <PublicSessionsView
-          subjectId={subject.id}
-          sessions={sessions}
-          roster={roster}
-        />
-      </section>
+      {/* Classmate Portal Hub: Sessions, Announcements, Resources, Q&A */}
+      <PublicSubjectPortal data={data} />
 
       {/* Footer Disclaimer */}
       <footer className="mt-8 text-center text-xs text-text-quaternary">

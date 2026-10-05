@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 import { getPublicSubject } from './subjects'
 import { formatStudentDisplayName } from './students'
+import { projectPublicPostsHub, type PublicPostsHub } from '../posts/public-projection'
 
 export interface PublicStudentInfo {
   id: string
@@ -36,6 +37,7 @@ export interface PublicSubjectPageData {
   }
   sessions: PublicSessionInfo[]
   roster: PublicStudentInfo[]
+  postsHub: PublicPostsHub
 }
 
 export async function getPublicSubjectPageData(
@@ -50,19 +52,70 @@ export async function getPublicSubjectPageData(
 
   const subjectId = subjectDoc.id
 
-  // 2. Fetch published sessions (including published noClass notices)
-  const sessionsRes = await payload.find({
-    collection: 'sessions',
-    where: {
-      and: [
-        { subject: { equals: subjectId } },
-        { _status: { equals: 'published' } },
-      ],
-    },
-    depth: 2,
-    limit: 100,
-    overrideAccess: true,
-  })
+  const now = new Date()
+  const todayDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now)
+
+  // 2. Fetch published sessions, active enrollments, announcements, resources, questions
+  const [sessionsRes, enrollmentsRes, announcementsRes, resourcesRes, questionsRes] =
+    await Promise.all([
+      payload.find({
+        collection: 'sessions',
+        where: {
+          and: [
+            { subject: { equals: subjectId } },
+            { _status: { equals: 'published' } },
+          ],
+        },
+        depth: 2,
+        limit: 100,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [
+            { subject: { equals: subjectId } },
+            { status: { equals: 'active' } },
+          ],
+        },
+        depth: 1,
+        limit: 200,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'announcements',
+        where: {
+          and: [
+            { subjects: { in: [subjectId] } },
+            { _status: { equals: 'published' } },
+          ],
+        },
+        limit: 50,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'resources',
+        where: {
+          and: [
+            { subjects: { in: [subjectId] } },
+            { _status: { equals: 'published' } },
+          ],
+        },
+        limit: 50,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'questions',
+        where: {
+          and: [
+            { subjects: { in: [subjectId] } },
+            { _status: { equals: 'published' } },
+          ],
+        },
+        limit: 50,
+        overrideAccess: true,
+      }),
+    ])
 
   // Sort sessions chronologically descending (latest session first)
   const sortedSessions = [...(sessionsRes.docs as any[])].sort((a, b) =>
@@ -96,20 +149,7 @@ export async function getPublicSubjectPageData(
     }
   })
 
-  // 4. Fetch roster of active students for dispute student selector
-  const enrollmentsRes = await payload.find({
-    collection: 'enrollments',
-    where: {
-      and: [
-        { subject: { equals: subjectId } },
-        { status: { equals: 'active' } },
-      ],
-    },
-    depth: 1,
-    limit: 200,
-    overrideAccess: true,
-  })
-
+  // 4. Project active roster for dispute student selector
   const rosterMap = new Map<string, string>()
   for (const enr of enrollmentsRes.docs as any[]) {
     const s = typeof enr.student === 'object' && enr.student !== null ? enr.student : null
@@ -126,6 +166,14 @@ export async function getPublicSubjectPageData(
   // Sort roster alphabetically by name
   roster.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
 
+  // 5. Project Public Posts Hub (Announcements, Resources, Questions, Active Pinned Alert)
+  const postsHub = projectPublicPostsHub({
+    announcements: announcementsRes.docs,
+    resources: resourcesRes.docs,
+    questions: questionsRes.docs,
+    todayDate,
+  })
+
   return {
     subject: {
       id: subjectDoc.id,
@@ -141,5 +189,6 @@ export async function getPublicSubjectPageData(
     },
     sessions,
     roster,
+    postsHub,
   }
 }

@@ -76,6 +76,9 @@ export interface Config {
     requests: Request;
     rateLimits: RateLimit;
     reportLinks: ReportLink;
+    announcements: Announcement;
+    resources: Resource;
+    questions: Question;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +95,9 @@ export interface Config {
     requests: RequestsSelect<false> | RequestsSelect<true>;
     rateLimits: RateLimitsSelect<false> | RateLimitsSelect<true>;
     reportLinks: ReportLinksSelect<false> | ReportLinksSelect<true>;
+    announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
+    resources: ResourcesSelect<false> | ResourcesSelect<true>;
+    questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -305,6 +311,135 @@ export interface ReportLink {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: string;
+  title: string;
+  slug?: string | null;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Cover image URL or upload ID
+   */
+  image?: string | null;
+  priority?: boolean | null;
+  /**
+   * Pin end date (YYYY-MM-DD)
+   */
+  pinnedUntil?: string | null;
+  publishedAt?: string | null;
+  changeNote?: string | null;
+  archivedAt?: string | null;
+  subjects: (string | Subject)[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "resources".
+ */
+export interface Resource {
+  id: string;
+  title: string;
+  slug?: string | null;
+  /**
+   * External link to Google Drive, slides, recording, or document
+   */
+  url?: string | null;
+  /**
+   * Resource category (e.g. Syllabus, Lecture Notes, Problem Sets)
+   */
+  category?: string | null;
+  /**
+   * Up to 6 file attachments or download links
+   */
+  attachments?:
+    | {
+        name: string;
+        fileUrl: string;
+        size?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  publishedAt?: string | null;
+  changeNote?: string | null;
+  archivedAt?: string | null;
+  subjects: (string | Subject)[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions".
+ */
+export interface Question {
+  id: string;
+  question: string;
+  slug?: string | null;
+  answer?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Topic keywords (e.g. grading, schedule, project, exams)
+   */
+  tags?: string[] | null;
+  /**
+   * Official badge: verified directly by the professor or school
+   */
+  official?: boolean | null;
+  publishedAt?: string | null;
+  changeNote?: string | null;
+  archivedAt?: string | null;
+  subjects: (string | Subject)[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -362,6 +497,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reportLinks';
         value: string | ReportLink;
+      } | null)
+    | ({
+        relationTo: 'announcements';
+        value: string | Announcement;
+      } | null)
+    | ({
+        relationTo: 'resources';
+        value: string | Resource;
+      } | null)
+    | ({
+        relationTo: 'questions';
+        value: string | Question;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -567,6 +714,69 @@ export interface ReportLinksSelect<T extends boolean = true> {
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements_select".
+ */
+export interface AnnouncementsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  body?: T;
+  image?: T;
+  priority?: T;
+  pinnedUntil?: T;
+  publishedAt?: T;
+  changeNote?: T;
+  archivedAt?: T;
+  subjects?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "resources_select".
+ */
+export interface ResourcesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  url?: T;
+  category?: T;
+  attachments?:
+    | T
+    | {
+        name?: T;
+        fileUrl?: T;
+        size?: T;
+        id?: T;
+      };
+  body?: T;
+  publishedAt?: T;
+  changeNote?: T;
+  archivedAt?: T;
+  subjects?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions_select".
+ */
+export interface QuestionsSelect<T extends boolean = true> {
+  question?: T;
+  slug?: T;
+  answer?: T;
+  tags?: T;
+  official?: T;
+  publishedAt?: T;
+  changeNote?: T;
+  archivedAt?: T;
+  subjects?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
