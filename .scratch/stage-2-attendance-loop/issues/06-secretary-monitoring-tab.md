@@ -13,10 +13,10 @@
 
 **Blocked by:** 01 (Subject Home Shell & Quick Actions Header), 05 (Pure Absentee Monitoring Engine & Streak Rules).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Monitoring Tab displays the 5 summary metric cards computed dynamically from subject session records.
-- [ ] Flagged students table ranks students with lowest attendance first.
-- [ ] Category badges accurately show `No Attendance` and `Below 50%`.
-- [ ] Students on consecutive absence streaks display the streak warning badge.
-- [ ] Clicking on a student opens their enrollment details.
+- [x] Monitoring Tab displays the 5 summary metric cards computed dynamically from subject session records.
+- [x] Flagged students table ranks students with lowest attendance first.
+- [x] Category badges accurately show `No Attendance` and `Below 50%`.
+- [x] Students on consecutive absence streaks display the streak warning badge.
+- [x] Clicking on a student opens their enrollment details.

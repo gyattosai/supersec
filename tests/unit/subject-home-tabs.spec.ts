@@ -115,5 +115,58 @@ describe('Subject Home Sessions & Roster Tabs (Ticket 02)', () => {
       expect(projected[0].proofUrl).toBe('data:image/webp;base64,xxxx')
     })
   })
+
+  describe('Monitoring Tab Projection (Ticket 06)', () => {
+    it('produces 5 summary metric counts and ranks flagged students by lowest attendance', async () => {
+      const { computeAbsenteeMonitoring } = await import('@/lib/stats/absentee-monitoring')
+
+      const enrollments = [
+        { id: 'enr-1', studentId: 'stu-1', name: 'Alvarez, Carla' },
+        { id: 'enr-2', studentId: 'stu-2', name: 'Santos, Juan' },
+        { id: 'enr-3', studentId: 'stu-3', name: 'Cruz, Maria' },
+      ]
+
+      const sessions = [
+        {
+          id: 's-1',
+          date: '2026-09-01',
+          kind: 'class' as const,
+          entries: [
+            { studentId: 'stu-1', attendance: 'P' as const },
+            { studentId: 'stu-2', attendance: 'A' as const },
+            { studentId: 'stu-3', attendance: 'A' as const },
+          ],
+        },
+        {
+          id: 's-2',
+          date: '2026-09-08',
+          kind: 'class' as const,
+          entries: [
+            { studentId: 'stu-1', attendance: 'P' as const },
+            { studentId: 'stu-2', attendance: 'P' as const },
+            { studentId: 'stu-3', attendance: 'A' as const },
+          ],
+        },
+      ]
+
+      const summary = computeAbsenteeMonitoring({
+        enrollments,
+        sessions,
+        absenceLimit: 4,
+      })
+
+      // 5 summary metrics
+      expect(summary.totalHeldClassSessions).toBe(2)
+      expect(summary.activeStudents).toBe(3)
+      expect(summary.noAttendanceCount).toBe(1) // stu-3 has 0 attended
+      expect(summary.below50Count).toBe(1)
+      expect(summary.totalFlaggedCount).toBe(1) // stu-3 (no attendance + below 50% + watch)
+
+      // stu-3 has attendanceRate 0% (lowest attendance)
+      expect(summary.flaggedStudents[0].studentId).toBe('stu-3')
+      expect(summary.flaggedStudents[0].attendanceRate).toBe(0)
+      expect(summary.flaggedStudents[0].isNoAttendance).toBe(true)
+    })
+  })
 })
 

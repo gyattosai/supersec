@@ -21,6 +21,8 @@ import {
   XCircle,
   Eye,
   MessageSquare,
+  Flame,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -30,6 +32,10 @@ import type {
   SubjectRosterItem,
   SubjectRequestItem,
 } from '@/lib/subjects/subject-home'
+import type {
+  SubjectMonitoringSummary,
+  StudentMonitoringResult,
+} from '@/lib/stats/absentee-monitoring'
 
 export type SubjectHomeTab = 'sessions' | 'roster' | 'requests' | 'monitoring' | 'reports'
 
@@ -39,10 +45,12 @@ interface SubjectHomeViewProps {
   sessions?: SubjectSessionSummaryItem[]
   roster?: SubjectRosterItem[]
   requests?: SubjectRequestItem[]
+  monitoring?: SubjectMonitoringSummary
   counts?: {
     sessions?: number
     students?: number
     pendingRequests?: number
+    flaggedStudents?: number
   }
 }
 
@@ -52,6 +60,7 @@ export function SubjectHomeView({
   sessions = [],
   roster = [],
   requests = [],
+  monitoring,
   counts,
 }: SubjectHomeViewProps) {
   const router = useRouter()
@@ -59,6 +68,13 @@ export function SubjectHomeView({
   const [startingSession, setStartingSession] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
+
+  // Absentee Monitoring State
+  const [monitoringFilter, setMonitoringFilter] = useState<
+    'all_flagged' | 'no_attendance' | 'below_50' | 'exceeded' | 'watch_risk' | 'all'
+  >('all_flagged')
+  const [monitoringSearch, setMonitoringSearch] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState<StudentMonitoringResult | null>(null)
 
   // Requests Review State
   const [requestFilter, setRequestFilter] = useState<'pending' | 'approved' | 'declined' | 'all'>('pending')
@@ -327,6 +343,11 @@ export function SubjectHomeView({
         >
           <AlertTriangle className="h-4 w-4" />
           Monitoring
+          {typeof monitoring?.totalFlaggedCount === 'number' && monitoring.totalFlaggedCount > 0 && (
+            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30">
+              {monitoring.totalFlaggedCount}
+            </span>
+          )}
         </button>
 
         <button
@@ -700,10 +721,275 @@ export function SubjectHomeView({
         )}
 
         {activeTab === 'monitoring' && (
-          <div className="rounded-xl border border-border bg-surface-1 p-6 text-center text-xs text-text-secondary">
-            <AlertTriangle className="h-8 w-8 text-text-tertiary mx-auto mb-2 opacity-60" />
-            <p className="font-medium text-text-primary">Absentee Monitoring</p>
-            <p className="mt-1">Flagged students and absence threshold warnings (Ticket 06).</p>
+          <div className="flex flex-col gap-5">
+            {/* 1. 5 Summary Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-1">
+                <span className="text-[11px] text-text-secondary font-medium">Class Sessions</span>
+                <span className="text-xl font-bold font-mono text-text-primary">
+                  {monitoring?.totalHeldClassSessions ?? 0}
+                </span>
+                <span className="text-[10px] text-text-tertiary">held this term</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-1">
+                <span className="text-[11px] text-text-secondary font-medium">Active Roster</span>
+                <span className="text-xl font-bold font-mono text-text-primary">
+                  {monitoring?.activeStudents ?? 0}
+                </span>
+                <span className="text-[10px] text-text-tertiary">enrolled students</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-1">
+                <span className="text-[11px] text-text-secondary font-medium">No Attendance</span>
+                <span
+                  className={`text-xl font-bold font-mono ${
+                    (monitoring?.noAttendanceCount ?? 0) > 0 ? 'text-red-400' : 'text-text-primary'
+                  }`}
+                >
+                  {monitoring?.noAttendanceCount ?? 0}
+                </span>
+                <span className="text-[10px] text-text-tertiary">0 sessions attended</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-1">
+                <span className="text-[11px] text-text-secondary font-medium">Below 50%</span>
+                <span
+                  className={`text-xl font-bold font-mono ${
+                    (monitoring?.below50Count ?? 0) > 0 ? 'text-amber-400' : 'text-text-primary'
+                  }`}
+                >
+                  {monitoring?.below50Count ?? 0}
+                </span>
+                <span className="text-[10px] text-text-tertiary">&lt; 50% attendance rate</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col gap-1 col-span-2 sm:col-span-1">
+                <span className="text-[11px] text-text-secondary font-medium">Total Flagged</span>
+                <span
+                  className={`text-xl font-bold font-mono ${
+                    (monitoring?.totalFlaggedCount ?? 0) > 0 ? 'text-rose-400' : 'text-emerald-400'
+                  }`}
+                >
+                  {monitoring?.totalFlaggedCount ?? 0}
+                </span>
+                <span className="text-[10px] text-text-tertiary">needs attention</span>
+              </div>
+            </div>
+
+            {/* 2. Filter Buttons & Search */}
+            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
+                {(
+                  [
+                    { id: 'all_flagged', label: 'Flagged', count: monitoring?.totalFlaggedCount ?? 0 },
+                    { id: 'no_attendance', label: 'No Attendance', count: monitoring?.noAttendanceCount ?? 0 },
+                    { id: 'below_50', label: 'Below 50%', count: monitoring?.below50Count ?? 0 },
+                    { id: 'exceeded', label: 'Exceeded', count: monitoring?.exceededCount ?? 0 },
+                    {
+                      id: 'watch_risk',
+                      label: 'Watch / Risk',
+                      count: (monitoring?.atRiskCount ?? 0) + (monitoring?.watchCount ?? 0),
+                    },
+                    { id: 'all', label: 'All Roster', count: monitoring?.totalStudents ?? 0 },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMonitoringFilter(tab.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[38px] ${
+                      monitoringFilter === tab.id
+                        ? 'bg-brand text-on-brand'
+                        : 'bg-surface-2 text-text-secondary hover:text-text-primary border border-border'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        monitoringFilter === tab.id
+                          ? 'bg-white/20 text-white'
+                          : 'bg-surface-3 text-text-tertiary'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative shrink-0 md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-tertiary" />
+                <input
+                  type="text"
+                  value={monitoringSearch}
+                  onChange={(e) => setMonitoringSearch(e.target.value)}
+                  placeholder="Filter student..."
+                  className="w-full h-10 min-h-[40px] rounded-lg border border-border bg-surface-1 pl-8 pr-3 text-xs text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* 3. Flagged Students Table / Cards (Ranked lowest attendance first) */}
+            {(() => {
+              const studentsSource = monitoring
+                ? monitoringFilter === 'all'
+                  ? monitoring.students
+                  : monitoring.flaggedStudents
+                : []
+
+              const filtered = studentsSource
+                .filter((s) => {
+                  if (monitoringFilter === 'no_attendance' && !s.isNoAttendance) return false
+                  if (monitoringFilter === 'below_50' && !s.isBelow50) return false
+                  if (monitoringFilter === 'exceeded' && !s.isExceeded) return false
+                  if (monitoringFilter === 'watch_risk' && !s.isWatch && !s.isAtRisk) return false
+
+                  if (monitoringSearch.trim()) {
+                    const q = monitoringSearch.toLowerCase()
+                    const matchName = s.name.toLowerCase().includes(q)
+                    const matchNum = s.studentNumber?.toLowerCase().includes(q)
+                    if (!matchName && !matchNum) return false
+                  }
+                  return true
+                })
+                .sort((a, b) => a.attendanceRate - b.attendanceRate || b.absentCount - a.absentCount)
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="rounded-xl border border-border bg-surface-1 p-8 text-center text-xs text-text-secondary">
+                    <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2 opacity-80" />
+                    <p className="font-semibold text-text-primary">
+                      {monitoringFilter === 'all_flagged'
+                        ? 'No students are currently flagged!'
+                        : `No students found matching this filter.`}
+                    </p>
+                    <p className="mt-1">
+                      {monitoringFilter === 'all_flagged'
+                        ? 'All enrolled students maintain satisfactory attendance above syllabus thresholds.'
+                        : 'Try selecting a different filter above.'}
+                    </p>
+                  </div>
+                )
+              }
+
+              return (
+                <div className="rounded-xl border border-border bg-surface-1 divide-y divide-border overflow-hidden shadow-sm">
+                  {filtered.map((s, idx) => (
+                    <div
+                      key={s.studentId}
+                      onClick={() => setSelectedStudent(s)}
+                      className="p-3.5 hover:bg-surface-2/50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      {/* Left: Name and student info */}
+                      <div className="flex items-start sm:items-center gap-3 min-w-0">
+                        <span className="text-xs font-mono text-text-quaternary w-6 shrink-0 text-right pt-0.5 sm:pt-0">
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex flex-col gap-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-text-primary truncate">
+                              {s.name}
+                            </span>
+                            {s.hasScheduleConflict && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                                Conflict
+                              </span>
+                            )}
+                            {s.dropped && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-surface-3 text-text-tertiary border border-border">
+                                Dropped
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs text-text-tertiary flex-wrap">
+                            {s.studentNumber && (
+                              <span className="font-mono text-[11px]">{s.studentNumber}</span>
+                            )}
+                            <span>·</span>
+                            <span className="text-text-secondary font-medium">
+                              {s.presentStarCount} / {s.eligibleSessionsCount} attended
+                            </span>
+                            <span>·</span>
+                            <span
+                              className={
+                                s.absentCount >= (monitoring?.absenceLimit ?? 4)
+                                  ? 'text-rose-400 font-semibold'
+                                  : 'text-text-secondary'
+                              }
+                            >
+                              {s.absentCount} absences
+                            </span>
+                            {s.recitationsCount > 0 && (
+                              <>
+                                <span>·</span>
+                                <span className="text-purple-400 font-medium">
+                                  {s.recitationsCount} recitations
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Badges, Rate %, and Inspect Arrow */}
+                      <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto flex-wrap">
+                        {/* Threshold Category Badges */}
+                        {s.isNoAttendance && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
+                            No Attendance
+                          </span>
+                        )}
+                        {s.isBelow50 && !s.isNoAttendance && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                            Below 50%
+                          </span>
+                        )}
+                        {s.isExceeded && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                            Exceeded Limit
+                          </span>
+                        )}
+                        {s.isAtRisk && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                            At Risk
+                          </span>
+                        )}
+                        {s.isWatch && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                            Watch
+                          </span>
+                        )}
+
+                        {/* Streak Badge */}
+                        {s.hasStreak && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                            <Flame className="h-3 w-3" />
+                            {s.consecutiveAbsences} Streak
+                          </span>
+                        )}
+
+                        {/* Attendance Rate Badge */}
+                        <div
+                          className={`min-w-[48px] text-right font-mono text-xs font-bold px-2 py-1 rounded-lg border ${
+                            s.attendanceRate < 50
+                              ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                              : s.attendanceRate < 75
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          }`}
+                        >
+                          {s.attendanceRate}%
+                        </div>
+
+                        <ChevronRight className="h-4 w-4 text-text-quaternary" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -776,6 +1062,165 @@ export function SubjectHomeView({
             Close
           </Button>
         </div>
+      </BottomSheet>
+
+      {/* Student Attendance Inspection Drawer */}
+      <BottomSheet
+        open={Boolean(selectedStudent)}
+        onClose={() => setSelectedStudent(null)}
+        title={selectedStudent ? selectedStudent.name : 'Student Attendance'}
+        description={
+          selectedStudent
+            ? `${selectedStudent.studentNumber || 'No student #'} · ${
+                selectedStudent.sectionMark || 'Enrolled'
+              }`
+            : undefined
+        }
+      >
+        {selectedStudent && (
+          <div className="flex flex-col gap-4 py-2">
+            {/* Quick Metrics Grid */}
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="p-2.5 rounded-lg border border-border bg-surface-2">
+                <span className="text-[10px] text-text-tertiary block">Attendance</span>
+                <span className="text-base font-bold font-mono text-text-primary">
+                  {selectedStudent.attendanceRate}%
+                </span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-surface-2">
+                <span className="text-[10px] text-text-tertiary block">Attended*</span>
+                <span className="text-base font-bold font-mono text-brand">
+                  {selectedStudent.presentStarCount}/{selectedStudent.eligibleSessionsCount}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-surface-2">
+                <span className="text-[10px] text-text-tertiary block">Absences</span>
+                <span
+                  className={`text-base font-bold font-mono ${
+                    selectedStudent.absentCount >= (monitoring?.absenceLimit ?? 4)
+                      ? 'text-rose-400'
+                      : 'text-text-primary'
+                  }`}
+                >
+                  {selectedStudent.absentCount}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-surface-2">
+                <span className="text-[10px] text-text-tertiary block">Streak</span>
+                <span
+                  className={`text-base font-bold font-mono ${
+                    selectedStudent.hasStreak ? 'text-orange-400' : 'text-text-secondary'
+                  }`}
+                >
+                  {selectedStudent.consecutiveAbsences}
+                </span>
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {selectedStudent.isNoAttendance && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
+                  No Attendance
+                </span>
+              )}
+              {selectedStudent.isBelow50 && !selectedStudent.isNoAttendance && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  Below 50%
+                </span>
+              )}
+              {selectedStudent.isExceeded && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                  Exceeded Absence Limit
+                </span>
+              )}
+              {selectedStudent.isAtRisk && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                  At Risk of Dropping
+                </span>
+              )}
+              {selectedStudent.isWatch && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                  Watch (50% absences)
+                </span>
+              )}
+              {selectedStudent.hasStreak && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                  <Flame className="h-3.5 w-3.5" />
+                  {selectedStudent.consecutiveAbsences} Consecutive Absences
+                </span>
+              )}
+              {selectedStudent.hasScheduleConflict && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                  Schedule Conflict
+                </span>
+              )}
+            </div>
+
+            {/* Session Timeline Breakdown */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-bold text-text-primary">
+                Session Roll Call History
+              </span>
+              <div className="rounded-xl border border-border bg-surface-2/60 divide-y divide-border/60 max-h-56 overflow-y-auto">
+                {Object.entries(selectedStudent.sessionMarks).length > 0 ? (
+                  Object.entries(selectedStudent.sessionMarks)
+                    .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+                    .map(([date, mark]) => (
+                      <div
+                        key={date}
+                        className="flex items-center justify-between p-2.5 text-xs"
+                      >
+                        <span className="font-mono font-medium text-text-primary">
+                          {date}
+                        </span>
+                        <span>
+                          {mark === 'P' && (
+                            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                              Present (P)
+                            </span>
+                          )}
+                          {mark === 'E' && (
+                            <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                              Excused (E)
+                            </span>
+                          )}
+                          {mark === 'C' && (
+                            <span className="text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded">
+                              Conflict (C)
+                            </span>
+                          )}
+                          {mark === 'A' && (
+                            <span className="text-[11px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">
+                              Absent (A)
+                            </span>
+                          )}
+                          {mark === '—' && (
+                            <span className="text-[11px] text-text-tertiary">
+                              Not enrolled yet (—)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-text-tertiary">
+                    No sessions held yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setSelectedStudent(null)}
+              className="w-full text-xs font-semibold min-h-[44px] mt-2"
+            >
+              Done
+            </Button>
+          </div>
+        )}
       </BottomSheet>
     </div>
   )

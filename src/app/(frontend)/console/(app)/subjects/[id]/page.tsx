@@ -96,11 +96,46 @@ export default async function SubjectHomePage({ params }: PageProps) {
     projectSubjectRosterList,
     projectSubjectRequestsList,
   } = await import('@/lib/subjects/subject-home')
+  const { computeAbsenteeMonitoring } = await import('@/lib/stats/absentee-monitoring')
 
   const sessions = projectSubjectSessionsList(sessionsRes.docs)
   const roster = projectSubjectRosterList(enrollmentsRes.docs)
   const requests = projectSubjectRequestsList(requestsRes.docs)
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length
+
+  const monitoringEnrollments = enrollmentsRes.docs.map((enr: any) => {
+    const student = typeof enr.student === 'object' && enr.student !== null ? enr.student : {}
+    return {
+      id: enr.id,
+      studentId: student.id || enr.student,
+      name: student.name || 'Unnamed Student',
+      studentNumber: student.studentNumber,
+      sectionMark: enr.sectionMark,
+      hasScheduleConflict: Boolean(enr.hasScheduleConflict),
+      enrolledOn: enr.enrolledOn,
+      dropped: Boolean(enr.dropped),
+      droppedOn: enr.droppedOn,
+      displayOrder: enr.displayOrder,
+    }
+  })
+
+  const monitoringSessions = sessionsRes.docs.map((s: any) => ({
+    id: s.id,
+    date: s.date,
+    kind: (s.kind || 'class') as 'class' | 'noClass',
+    entries: (s.entries || []).map((e: any) => ({
+      studentId: typeof e.student === 'object' && e.student !== null ? e.student.id : e.student,
+      attendance: e.attendance,
+      recitations: e.recitations,
+    })),
+  }))
+
+  const monitoring = computeAbsenteeMonitoring({
+    enrollments: monitoringEnrollments,
+    sessions: monitoringSessions,
+    absenceLimit: subject.absenceLimit ?? 4,
+    subjectId: subject.id,
+  })
 
   return (
     <SubjectHomeView
@@ -109,10 +144,12 @@ export default async function SubjectHomePage({ params }: PageProps) {
       sessions={sessions}
       roster={roster}
       requests={requests}
+      monitoring={monitoring}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,
         pendingRequests: pendingRequestsCount,
+        flaggedStudents: monitoring.totalFlaggedCount,
       }}
     />
   )

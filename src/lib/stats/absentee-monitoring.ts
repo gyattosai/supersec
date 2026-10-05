@@ -269,15 +269,17 @@ export function computeAbsenteeMonitoring(options: MonitoringOptions): SubjectMo
     if (s.hasStreak) streakCount++
   }
 
-  const flaggedStudents = students.filter(
-    (s) =>
-      s.isNoAttendance ||
-      s.isBelow50 ||
-      s.isExceeded ||
-      s.isAtRisk ||
-      s.isWatch ||
-      s.hasStreak,
-  )
+  const flaggedStudents = students
+    .filter(
+      (s) =>
+        s.isNoAttendance ||
+        s.isBelow50 ||
+        s.isExceeded ||
+        s.isAtRisk ||
+        s.isWatch ||
+        s.hasStreak,
+    )
+    .sort((a, b) => a.attendanceRate - b.attendanceRate || b.absentCount - a.absentCount)
 
   const activeStudents = options.enrollments.filter((e) => !e.dropped).length
   const droppedStudents = options.enrollments.filter((e) => e.dropped).length
