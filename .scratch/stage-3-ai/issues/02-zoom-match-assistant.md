@@ -1,13 +1,14 @@
 # 02: AI Zoom Log Participant Matcher
 
-**What to build:** Natural-language Zoom chat and attendee list matcher matching pasted text against enrolled students, with a two-phase confirmation drawer.
+**What to build:** Natural-language Zoom log parser that extracts attendee names from raw chat and attendee exports, matches them against enrolled students, and presents a two-phase confirmation drawer to mark attendance.
 
 **Blocked by:** 01: Gemini Client & AI Change-Note Generator
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Implement `POST /api/ai/zoom-match` with structured schema output (`matched`, `ambiguous`, `unmatched`).
-- [ ] Build `ZoomMatchDrawer` component for `/console/session/[id]`.
-- [ ] Add "Import from Zoom" action to session runner header.
-- [ ] Confirmation action feeding marked students directly into the single-flight `RollCallQueue`.
-- [ ] Unit tests for Zoom log extraction, confidence matching, and empty/unmatched fallbacks.
+- [x] Zoom log parser endpoint accepts unstructured meeting text and enrolled student roster.
+- [x] Returns structured groups: high-confidence matches, ambiguous candidates, and unrecognized attendees.
+- [x] Roll call runner screen provides an "Import from Zoom" action drawer.
+- [x] Two-phase confirmation screen allows reviewing and unchecking matches before committing.
+- [x] Confirmed attendees batch cleanly into the single-flight roll call queue as Present.
+- [x] Unit tests for noisy chat parsing, confidence scoring, and unauthenticated error handling.

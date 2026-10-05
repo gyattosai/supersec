@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, CheckCircle2, AlertCircle, RefreshCw, Sparkles } from 'lucide-react'
+import { Search, CheckCircle2, AlertCircle, RefreshCw, Sparkles, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -10,6 +10,7 @@ import { RollCallRow, type RollCallEntry } from '@/components/console/roll-call-
 import { RollCallQueue, type SessionOp } from '@/lib/roll-call-queue'
 import { canPublishSession, filterRosterEntries, countUnsetStudents } from '@/lib/roll-call-helpers'
 import { computeSessionDeltas } from '@/lib/ai/change-note'
+import { ZoomMatchDrawer } from '@/components/console/zoom-match-drawer'
 import { type PresenceState } from '@/components/ui/segmented-toggle'
 
 export interface RollCallRunnerProps {
@@ -41,6 +42,7 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
   const [publishing, setPublishing] = React.useState(false)
   const [publishError, setPublishError] = React.useState<string | null>(null)
   const [suggestingNote, setSuggestingNote] = React.useState(false)
+  const [zoomDrawerOpen, setZoomDrawerOpen] = React.useState(false)
 
   const initialEntriesRef = React.useRef<any[]>(session.entries || [])
 
@@ -72,6 +74,40 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
     } finally {
       setSuggestingNote(false)
     }
+  }
+
+  const rosterList = React.useMemo(() => {
+    return entries.map((e) => {
+      const sId = typeof e.student === 'object' && e.student !== null ? e.student.id : e.student
+      const sName = typeof e.student === 'object' && e.student !== null ? e.student.name : 'Unknown'
+      return { id: sId, name: sName }
+    })
+  }, [entries])
+
+  const handleApplyZoomMatches = (studentIds: string[]) => {
+    if (studentIds.length === 0) return
+
+    // 1. Optimistic state updates for all matched students
+    setEntries((prev) =>
+      prev.map((e) => {
+        const sId = typeof e.student === 'object' && e.student !== null ? e.student.id : e.student
+        if (studentIds.includes(sId)) {
+          return { ...e, attendance: 'P' }
+        }
+        return e
+      }),
+    )
+
+    // 2. Push batch ops into queue
+    studentIds.forEach((sId) => {
+      queueRef.current?.enqueue({
+        idempotencyKey: crypto.randomUUID(),
+        type: 'set_attendance',
+        studentId: sId,
+        attendance: 'P',
+      })
+    })
+    setPendingSyncCount(queueRef.current?.getPendingCount() || 0)
   }
 
   // Single-flight queue instance
@@ -257,6 +293,17 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
           <Sparkles className="h-3.5 w-3.5 mr-1.5" />
           Recited
         </Button>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="default"
+          onClick={() => setZoomDrawerOpen(true)}
+          className="shrink-0 text-xs font-semibold"
+        >
+          <Video className="h-3.5 w-3.5 mr-1.5" />
+          Zoom
+        </Button>
       </div>
 
       {/* Student List */}
@@ -400,6 +447,14 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
           </Button>
         </div>
       </BottomSheet>
+
+      {/* Zoom Match Assistant Drawer */}
+      <ZoomMatchDrawer
+        open={zoomDrawerOpen}
+        onClose={() => setZoomDrawerOpen(false)}
+        roster={rosterList}
+        onApplyMatches={handleApplyZoomMatches}
+      />
     </div>
   )
 }
