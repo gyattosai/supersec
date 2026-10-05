@@ -8,9 +8,9 @@
 
 **Blocked by:** 01 (Subject Home Shell & Quick Actions Header).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Reports tab displays the subject's active professor report link.
-- [ ] Tapping "Copy Report Link" copies `/prof/[token]` to clipboard with confirmation.
-- [ ] Tapping "Reset Token" revokes the old token and generates a new active token.
-- [ ] Accessing a revoked token returns an explanatory "Link expired" screen.
+- [x] Reports tab displays the subject's active professor report link.
+- [x] Tapping "Copy Report Link" copies `/prof/[token]` to clipboard with confirmation.
+- [x] Tapping "Reset Token" revokes the old token and generates a new active token.
+- [x] Accessing a revoked token returns an explanatory "Link expired" screen.

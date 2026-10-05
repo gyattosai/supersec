@@ -46,6 +46,7 @@ interface SubjectHomeViewProps {
   roster?: SubjectRosterItem[]
   requests?: SubjectRequestItem[]
   monitoring?: SubjectMonitoringSummary
+  reportToken?: string
   counts?: {
     sessions?: number
     students?: number
@@ -61,6 +62,7 @@ export function SubjectHomeView({
   roster = [],
   requests = [],
   monitoring,
+  reportToken = '',
   counts,
 }: SubjectHomeViewProps) {
   const router = useRouter()
@@ -68,6 +70,12 @@ export function SubjectHomeView({
   const [startingSession, setStartingSession] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
+
+  // Professor Report Token State
+  const [currentReportToken, setCurrentReportToken] = useState(reportToken)
+  const [resettingToken, setResettingToken] = useState(false)
+  const [copiedReportLink, setCopiedReportLink] = useState(false)
+  const [resetReportConfirmOpen, setResetReportConfirmOpen] = useState(false)
 
   // Absentee Monitoring State
   const [monitoringFilter, setMonitoringFilter] = useState<
@@ -80,6 +88,38 @@ export function SubjectHomeView({
   const [requestFilter, setRequestFilter] = useState<'pending' | 'approved' | 'declined' | 'all'>('pending')
   const [reviewingId, setReviewingId] = useState<string | null>(null)
   const [selectedProof, setSelectedProof] = useState<{ url: string; studentName: string } | null>(null)
+
+  const handleCopyReportLink = async () => {
+    if (!currentReportToken) return
+    const url = `${window.location.origin}/prof/${currentReportToken}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedReportLink(true)
+      setTimeout(() => setCopiedReportLink(false), 2000)
+    } catch {
+      // Fallback
+    }
+  }
+
+  const handleResetToken = async () => {
+    try {
+      setResettingToken(true)
+      const res = await fetch('/api/reports/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjectId: header.subjectId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.token) {
+        setCurrentReportToken(data.token)
+        setResetReportConfirmOpen(false)
+      }
+    } catch (err) {
+      console.error('Failed to reset report token', err)
+    } finally {
+      setResettingToken(false)
+    }
+  }
 
   // No Class modal state
   const [noClassModalOpen, setNoClassModalOpen] = useState(false)
@@ -994,13 +1034,164 @@ export function SubjectHomeView({
         )}
 
         {activeTab === 'reports' && (
-          <div className="rounded-xl border border-border bg-surface-1 p-6 text-center text-xs text-text-secondary">
-            <FileText className="h-8 w-8 text-text-tertiary mx-auto mb-2 opacity-60" />
-            <p className="font-medium text-text-primary">Professor Reports</p>
-            <p className="mt-1">Token generation and Prelims report export (Ticket 07 & 08).</p>
+          <div className="flex flex-col gap-6">
+            {/* Header info */}
+            <div>
+              <h2 className="text-sm font-bold text-text-primary tracking-tight">
+                Professor Live Report Access
+              </h2>
+              <p className="text-xs text-text-secondary mt-1">
+                Provide your professor with an unlisted, read-only attendance report matching the official syllabus matrix. No login or password required.
+              </p>
+            </div>
+
+            {/* Active Link Box */}
+            <div className="p-4 sm:p-5 rounded-xl border border-brand/30 bg-surface-1 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-text-primary">
+                    Active Professor Link
+                  </span>
+                </div>
+                <span className="text-[11px] text-text-tertiary font-mono">
+                  Token: {currentReportToken ? `${currentReportToken.slice(0, 10)}...` : 'Generating...'}
+                </span>
+              </div>
+
+              {/* URL Display and Copy */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-xs font-mono text-text-secondary overflow-x-auto select-all">
+                  {typeof window !== 'undefined'
+                    ? `${window.location.origin}/prof/${currentReportToken}`
+                    : `/prof/${currentReportToken}`}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={handleCopyReportLink}
+                    disabled={!currentReportToken}
+                    className="text-xs min-h-[42px] px-3.5 flex-1 sm:flex-initial"
+                  >
+                    {copiedReportLink ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 mr-1" />
+                        Copy Link
+                      </>
+                    )}
+                  </Button>
+
+                  <a
+                    href={`/prof/${currentReportToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center min-h-[42px] px-3.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-semibold text-text-primary transition-colors flex-1 sm:flex-initial"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Preview
+                  </a>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-text-tertiary">
+                Anyone with this unlisted link can inspect current attendance summaries, held session dates, and student attendance rates.
+              </p>
+            </div>
+
+            {/* Token Reset / Revoke Section */}
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-surface-1 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col gap-1 max-w-xl">
+                <span className="text-xs font-bold text-text-primary">
+                  Revoke & Reset Access Token
+                </span>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Resetting the token immediately revokes the current URL. Any professor or recipient opening the old link will see an explanatory &quot;Link expired&quot; page.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setResetReportConfirmOpen(true)}
+                className="text-xs min-h-[42px] px-4 font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/20 shrink-0 self-start sm:self-auto"
+              >
+                Reset Token
+              </Button>
+            </div>
+
+            {/* Feature Highlights Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1/60 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-text-primary">
+                  Official Prelims Format
+                </span>
+                <p className="text-[11px] text-text-tertiary leading-relaxed">
+                  Generates the 3-page attendance matrix with Present*, Excused, and Schedule Conflict columns ready for print and CSV download.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1/60 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-text-primary">
+                  Real-Time Updates
+                </span>
+                <p className="text-[11px] text-text-tertiary leading-relaxed">
+                  Live reports update automatically whenever sessions are published or classmate excuse disputes are resolved.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-border bg-surface-1/60 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-text-primary">
+                  Zero Leak Guarantee
+                </span>
+                <p className="text-[11px] text-text-tertiary leading-relaxed">
+                  Private student excuse medical proofs, notes, and internal remarks are permanently stripped from the professor report view.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Reset Report Token Confirmation Modal */}
+      <BottomSheet
+        open={resetReportConfirmOpen}
+        onClose={() => setResetReportConfirmOpen(false)}
+        title="Reset Professor Access Token?"
+        description="This will immediately revoke the current link."
+      >
+        <div className="flex flex-col gap-4 py-2">
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Are you sure you want to reset the professor report link for <strong className="text-text-primary">{header.code}</strong>? Any previously shared link will immediately stop working and show &quot;Link expired&quot;.
+          </p>
+
+          <div className="flex items-center gap-2 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setResetReportConfirmOpen(false)}
+              className="flex-1 text-xs min-h-[44px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              loading={resettingToken}
+              onClick={handleResetToken}
+              className="flex-1 text-xs min-h-[44px] bg-red-600 hover:bg-red-500 font-semibold text-white"
+            >
+              Confirm Reset
+            </Button>
+          </div>
+        </div>
+      </BottomSheet>
 
       {/* No Class Modal */}
       <BottomSheet

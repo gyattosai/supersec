@@ -47,7 +47,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
   }).format(now)
 
   // Query data for tabs
-  const [sessionsRes, enrollmentsRes, requestsRes] = await Promise.all([
+  const [sessionsRes, enrollmentsRes, requestsRes, activeLinkRes] = await Promise.all([
     payload.find({
       collection: 'sessions',
       where: { subject: { equals: subject.id } },
@@ -75,7 +75,25 @@ export default async function SubjectHomePage({ params }: PageProps) {
       limit: 100,
       overrideAccess: true,
     }),
+    payload.find({
+      collection: 'reportLinks',
+      where: {
+        and: [
+          { subject: { equals: subject.id } },
+          { revokedAt: { equals: null } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    }),
   ])
+
+  let reportToken = activeLinkRes.docs[0]?.token
+  if (!reportToken) {
+    const { createReportLink } = await import('@/lib/data/reports')
+    const newLink = await createReportLink(payload, { subjectId: subject.id })
+    reportToken = newLink.token
+  }
 
   const header = projectSubjectHomeHeader(
     {
@@ -145,6 +163,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
       roster={roster}
       requests={requests}
       monitoring={monitoring}
+      reportToken={reportToken}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,
