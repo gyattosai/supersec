@@ -4,10 +4,10 @@
 
 **Blocked by:** 01: Mobile UI Primitives & Linear Tokens
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Lightweight Server Component at `/s/[slug]` rendering compile-time allowlisted fields (`PUBLIC_SUBJECT_FIELDS`).
-- [ ] Published sessions list displaying attendance marks and recitations without leaking private student notes.
-- [ ] Slide-up Bottom Sheet dispute drawer with tabs: "I was present", "Excuse" (with reason & photo upload), "I recited" (with delta).
-- [ ] In-DB rate limiting feedback (429 feedback when exceeding 5 requests in 10 minutes) and honeypot protection.
-- [ ] Unit tests for public field projection safety and dispute form submission.
+- [x] Lightweight Server Component at `/s/[slug]` rendering compile-time allowlisted fields (`PUBLIC_SUBJECT_FIELDS`).
+- [x] Published sessions list displaying attendance marks and recitations without leaking private student notes.
+- [x] Slide-up Bottom Sheet dispute drawer with tabs: "I was present", "Excuse" (with reason & photo upload), "I recited" (with delta).
+- [x] In-DB rate limiting feedback (429 feedback when exceeding 5 requests in 10 minutes) and honeypot protection.
+- [x] Unit tests for public field projection safety and dispute form submission.

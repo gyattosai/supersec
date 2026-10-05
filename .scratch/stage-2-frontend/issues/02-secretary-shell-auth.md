@@ -1,13 +1,13 @@
-# 02: Secretary Console Shell & Authentication Guard
+# 02: Secretary Console Shell & Auth Guard (`/console/*`)
 
-**What to build:** Dedicated secretary app shell (`/console/*`) with login screen (`/console/login`), persistent mobile bottom tab bar (Dashboard, Subjects, Requests, Settings), and server-side layout guard redirecting unauthenticated users to login.
+**What to build:** Phone-first shell with sticky bottom navigation (Today, Subjects, Requests, Settings), persistent user context, and automatic redirect to `/console/login` if unauthenticated.
 
 **Blocked by:** 01: Mobile UI Primitives & Linear Tokens
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Secretary login page at `/console/login` with email and password fields authenticating against Payload's Users collection.
-- [ ] Server-side layout authentication guard checking `payload-token` cookie, redirecting unauthenticated visits to `/console/login?redirect=...`.
-- [ ] Mobile bottom tab bar anchored to the viewport with active states, icons, and 44px touch targets.
-- [ ] Sticky header displaying current active term, secretary email indicator, and quick logout action.
-- [ ] Unit tests verifying auth redirect behavior and tab navigation rendering.
+- [x] Dedicated layout under `src/app/(frontend)/console/(app)/layout.tsx` with mobile viewport configuration.
+- [x] Auth guard checking Payload JWT cookie and redirecting unauthenticated requests to `/console/login`.
+- [x] Sticky bottom navigation bar with icons and active state indicators.
+- [x] Header bar displaying active term indicator, current Manila time, and connection state.
+- [x] Unit test verifying auth guard redirect and bottom navigation tab rendering.

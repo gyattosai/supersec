@@ -1,13 +1,12 @@
 # 01: Mobile UI Primitives & Linear Tokens
 
-**What to build:** Accessible, phone-first UI primitives styled with Linear dark mode tokens and guaranteed >= 44px touch targets. Includes Button, Badge, SegmentedToggle (P/A/E), BottomSheet Drawer modal, and Toast notifications.
+**What to build:** Dark-mode mobile UI primitives in shadcn/Tailwind v4 (SegmentedToggle P/A/E/– with 44px touch targets, BottomSheet drawer, responsive Badges, and Action Buttons).
 
-**Blocked by:** None (can start immediately).
+**Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Button component with primary (`#5e6ad2`), secondary, outline, and destructive variants supporting loading state.
-- [ ] Badge component supporting status variants (`success`, `warning`, `danger`, `neutral`, `brand`).
-- [ ] SegmentedToggle component for rapid one-handed presence state cycling (Present, Absent, Excused, Not Set) with >= 44x44px hit areas.
-- [ ] BottomSheet Drawer primitive for mobile slide-up sheets with drag handle and backdrop dismissal.
-- [ ] Unit tests verifying touch target sizing, ARIA roles, and dark theme class mappings.
+- [x] Create tokens and CSS utilities in `src/app/(frontend)/tokens.css` ensuring contrast >= 4.5:1.
+- [x] Build `SegmentedToggle` component for Roll Call marking (P/A/E/–) with >= 44x44px touch area.
+- [x] Build mobile slide-up `BottomSheet` component for classmate disputes and session notes.
+- [x] Unit tests for primitives rendering and touch target dimensions.

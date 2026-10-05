@@ -133,13 +133,21 @@ export default async function ProfessorReportPage({
       </header>
 
       {/* Main Professor Report Table & Controls */}
-      <ProfessorReportView
-        token={token}
-        subject={subject}
-        range={range}
-        heldSessionsCount={heldSessionsCount}
-        students={students}
-      />
+      <React.Suspense
+        fallback={
+          <div className="p-8 text-center text-xs text-text-tertiary rounded-xl border border-border bg-surface-1">
+            Loading report table...
+          </div>
+        }
+      >
+        <ProfessorReportView
+          token={token}
+          subject={subject}
+          range={range}
+          heldSessionsCount={heldSessionsCount}
+          students={students}
+        />
+      </React.Suspense>
 
       <footer className="mt-8 text-center text-xs text-text-quaternary">
         SuperSec · Automated class secretary ledger

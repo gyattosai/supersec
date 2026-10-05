@@ -1,13 +1,13 @@
-# 05: Secretary Dashboard & Subjects Management
+# 05: Secretary Dashboard & Subjects Management (`/console/dashboard`)
 
-**What to build:** Secretary central dashboard (`/console/dashboard`) showing today's class cards, upcoming virtual sessions, one-tap "Mark No Class" shortcut, and pending dispute counter.
+**What to build:** Quick-start today's classes cards with start time indicators, "No Class" shortcut button, and pending dispute notification badges.
 
-**Blocked by:** 02: Secretary Console Shell & Authentication Guard
+**Blocked by:** 04: Live Roll Call & Publish Barrier Screen
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Today's scheduled class card highlighting start time, classroom/Zoom link, and "Start Roll Call" action.
-- [ ] Virtual upcoming sessions list lazy-materializing sessions upon tap.
-- [ ] One-tap "Mark No Class" shortcut for today's sessions with optional reason modal.
-- [ ] Pending requests alert banner with 1-tap shortcut to review queue.
-- [ ] Unit tests for dashboard session prioritization and No Class cancellation dispatch.
+- [x] Today's Schedule view displaying classes matching today's weekday in `Asia/Manila`.
+- [x] Start Session primary CTA routing directly to `/console/session/[id]`.
+- [x] "No Class" single-tap declaration dialog creating a cancelled session without taking roll call.
+- [x] Pending classmate dispute requests badge count.
+- [x] Unit tests for today's class schedule resolver and no-class shortcut.

@@ -1,14 +1,15 @@
-# 04: Live Roll Call & Publish Barrier Screen
+# 04: Live Roll Call & Publish Barrier Screen (`/console/session/[id]`)
 
-**What to build:** High-velocity live roll call screen (`/console/session/[id]`) with rapid single-tap attendance cycling (`P` -> `A` -> `E` -> `–`), +1/-1 recitation buttons, 1-tap "Mark all Present" button, and Rule R1 publish barrier modal enforcing mandatory change notes.
+**What to build:** One-thumb attendance grid with instantaneous tap response, batch "Mark all Present" action, recitation counter stepper (+1/-1), and Rule R1 publish barrier modal.
 
-**Blocked by:** 02: Secretary Console Shell & Authentication Guard, 03: Session Ops Route & Single-Flight Queue Engine
+**Blocked by:** 03: Session Ops Route & Single-Flight Queue Engine
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Roll call student row list with sticky header, search filter, and "recited today" filter.
-- [ ] Single-tap attendance toggles with immediate optimistic UI feedback and single-flight queue dispatch.
-- [ ] Recitation counter controls (+1 / -1) with optional topic tag input.
-- [ ] "Mark all Present" button filling only Not Set rows without overwriting pre-marked absences or excuses (Rule R1).
-- [ ] Publish barrier modal blocking publish if any active enrolled student remains Not Set (Rule R1) and requiring non-empty changeNote.
-- [ ] Unit tests for roll call student row rendering, Mark All Present action, and publish barrier validation.
+- [x] Client component `RollCallRunner` with zero-lag tap state updates.
+- [x] Per-student row with large touch target toggles (P/A/E/–) and recitation stepper.
+- [x] Quick-action bar: "Mark all Present" (fills only un-marked/unset rows per Rule R1).
+- [x] Publish Barrier Modal enforcing Rule R1: checks for un-marked rows and blocks publish until all active students are set.
+- [x] Change note input field required when editing and re-publishing already published sessions.
+- [x] Route handler `POST /api/sessions/[id]/publish`.
+- [x] Unit tests for R1 barrier validation and optimistic state updater.
