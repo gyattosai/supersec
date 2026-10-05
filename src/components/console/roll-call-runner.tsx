@@ -266,7 +266,7 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
         <div className="flex items-center gap-2 shrink-0">
           {pendingSyncCount > 0 ? (
             <Badge variant="warning" className="flex items-center gap-1.5 py-1">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <RefreshCw className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
               <span>Syncing ({pendingSyncCount})</span>
             </Badge>
           ) : (
@@ -319,7 +319,7 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
                 </span>
               )}
               {score.unset > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold animate-pulse">
+                <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold animate-pulse motion-reduce:animate-none">
                   {score.unset} Unset
                 </span>
               ) : (

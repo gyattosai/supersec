@@ -35,26 +35,26 @@ export function RollCallRow({
   const recitations = entry.recitations || 0
   const attendance = entry.attendance
 
-  // Semantic row visual rhythm per ADR 0013
+  // Semantic row visual rhythm per ADR 0013 and Impeccable craft floor (clean 1px perimeter border)
   const statusStyles = React.useMemo(() => {
     switch (attendance) {
       case 'P':
-        return 'border-l-4 border-l-emerald-500 bg-surface-1 hover:border-border-strong'
+        return 'border-emerald-500/25 bg-emerald-500/[0.04] hover:border-emerald-500/40'
       case 'A':
-        return 'border-l-4 border-l-rose-500 bg-rose-500/5 hover:border-rose-500/40'
+        return 'border-rose-500/30 bg-rose-500/[0.04] hover:border-rose-500/50'
       case 'E':
-        return 'border-l-4 border-l-amber-500 bg-amber-500/5 hover:border-amber-500/40'
+        return 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50'
       case 'C':
-        return 'border-l-4 border-l-purple-500 bg-purple-500/5 hover:border-purple-500/40'
+        return 'border-purple-500/30 bg-purple-500/[0.04] hover:border-purple-500/50'
       default:
-        return 'border-l-4 border-l-orange-400 border-dashed bg-surface-1/70 hover:bg-surface-1'
+        return 'border-amber-500/25 border-dashed bg-surface-1/70 hover:bg-surface-1'
     }
   }, [attendance])
 
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-border transition-colors shadow-sm',
+        'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border transition-colors shadow-xs',
         statusStyles,
       )}
     >
@@ -64,13 +64,13 @@ export function RollCallRow({
           className={cn(
             'flex items-center justify-center h-7 w-7 rounded-lg text-xs font-mono font-semibold shrink-0',
             attendance === 'P'
-              ? 'bg-emerald-500/15 text-emerald-400'
+              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
               : attendance === 'A'
-                ? 'bg-rose-500/20 text-rose-400 font-bold'
+                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 font-bold'
                 : attendance === 'E'
-                  ? 'bg-amber-500/15 text-amber-400'
+                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
                   : attendance === 'C'
-                    ? 'bg-purple-500/15 text-purple-400'
+                    ? 'bg-purple-500/15 text-purple-700 dark:text-purple-400'
                     : 'bg-surface-2 text-text-tertiary',
           )}
         >
@@ -85,22 +85,22 @@ export function RollCallRow({
 
             {/* Attendance Status Badge for quick glance */}
             {attendance === 'A' && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/30">
                 Absent
               </span>
             )}
             {attendance === 'E' && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                 Excused
               </span>
             )}
             {attendance === 'C' && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-700 dark:text-purple-400 border border-purple-500/30">
                 Conflict
               </span>
             )}
             {attendance == null && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-orange-400/15 text-orange-400 border border-orange-400/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                 Not set
               </span>
             )}
@@ -111,7 +111,7 @@ export function RollCallRow({
               <span className="font-mono">{entry.student.studentNumber}</span>
             )}
             {entry.excuseReason && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-amber-300">
+              <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300 font-medium">
                 <FileText className="h-3 w-3" />
                 {entry.excuseReason}
               </span>

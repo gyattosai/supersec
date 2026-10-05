@@ -1291,7 +1291,7 @@ export function SubjectHomeView({
             <div className="p-4 sm:p-5 rounded-xl border border-brand/30 bg-surface-1 shadow-sm flex flex-col gap-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none" />
                   <span className="text-xs font-bold text-text-primary">
                     Active Professor Link
                   </span>
