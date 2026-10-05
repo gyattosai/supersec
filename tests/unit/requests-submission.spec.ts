@@ -110,5 +110,33 @@ describe('Public Dispute Submission & Rate Limiting (Stage 1.8 / Issue #9)', () 
         }),
       ).rejects.toThrow('An excuse reason is required for excuse requests')
     })
+
+    it('rejects duplicate pending requests for the same student, session, and type', async () => {
+      const mockPayload = {
+        find: async ({ collection }: any) => {
+          if (collection === 'rateLimits') return { docs: [] }
+          if (collection === 'sessions') {
+            return { docs: [{ id: 'sess-1', _status: 'published' }] }
+          }
+          if (collection === 'requests') {
+            // Already has a pending request
+            return { docs: [{ id: 'req-existing', status: 'pending' }] }
+          }
+          return { docs: [] }
+        },
+        create: async () => ({}),
+      }
+
+      await expect(
+        submitClassmateRequest(mockPayload as any, {
+          ip: '10.0.0.1',
+          subjectId: 'subj-1',
+          sessionId: 'sess-1',
+          studentId: 'stu-1',
+          type: 'present',
+        }),
+      ).rejects.toThrow('You already have a pending request for this session and request type')
+    })
   })
 })
+

@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately on public session pages).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] "Something wrong?" button on public session pages opens the submission sheet without requiring authentication.
-- [ ] Student selector lists only students actively enrolled in that subject.
-- [ ] Excuse requests allow image proof uploads compressed in the browser to $\le 1$ MB.
-- [ ] Recitation requests require an integer delta indicating recitations claimed.
-- [ ] Honeypot spam fields and duplicate pending submissions by the same student for the same session/type are rejected.
-- [ ] Successful submission creates a `pending` record in the `requests` collection and displays a clear confirmation toast.
+- [x] "Something wrong?" button on public session pages opens the submission sheet without requiring authentication.
+- [x] Student selector lists only students actively enrolled in that subject.
+- [x] Excuse requests allow image proof uploads compressed in the browser to $\le 1$ MB.
+- [x] Recitation requests require an integer delta indicating recitations claimed.
+- [x] Honeypot spam fields and duplicate pending submissions by the same student for the same session/type are rejected.
+- [x] Successful submission creates a `pending` record in the `requests` collection and displays a clear confirmation toast.

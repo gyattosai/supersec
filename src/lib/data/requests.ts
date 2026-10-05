@@ -108,7 +108,26 @@ export async function submitClassmateRequest(payload: Payload, data: SubmitReque
     throw new Error('Requests can only be submitted against published sessions')
   }
 
-  // 4. Create pending request
+  // 4. Verify no duplicate pending request for this student + session + type
+  const existingPending = await payload.find({
+    collection: 'requests',
+    where: {
+      and: [
+        { session: { equals: data.sessionId } },
+        { student: { equals: data.studentId } },
+        { type: { equals: data.type } },
+        { status: { equals: 'pending' } },
+      ],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (existingPending.docs && existingPending.docs.length > 0) {
+    throw new Error('You already have a pending request for this session and request type')
+  }
+
+  // 5. Create pending request
   const created = await payload.create({
     collection: 'requests',
     data: {

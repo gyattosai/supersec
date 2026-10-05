@@ -1,9 +1,47 @@
 'use client'
 
 import * as React from 'react'
-import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { Button } from '@/components/ui/button'
+
+async function compressImageToWebP(file: File, maxDim = 1600, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let width = img.width
+        let height = img.height
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width)
+            width = maxDim
+          } else {
+            width = Math.round((width * maxDim) / height)
+            height = maxDim
+          }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          return reject(new Error('Could not get canvas context'))
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        const dataUrl = canvas.toDataURL('image/webp', quality)
+        resolve(dataUrl)
+      }
+      img.onerror = () => reject(new Error('Failed to load image for compression'))
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
 
 export interface DisputeSheetProps {
   open: boolean
@@ -28,6 +66,8 @@ export function DisputeSheet({
   const [count, setCount] = React.useState(1)
   const [topic, setTopic] = React.useState('')
   const [proofUrl, setProofUrl] = React.useState('')
+  const [proofPreview, setProofPreview] = React.useState<string | null>(null)
+  const [compressing, setCompressing] = React.useState(false)
   const [honeypot, setHoneypot] = React.useState('')
 
   const [submitting, setSubmitting] = React.useState(false)
@@ -81,12 +121,35 @@ export function DisputeSheet({
     }
   }
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setCompressing(true)
+      setError(null)
+      const compressed = await compressImageToWebP(file, 1600, 0.75)
+      setProofPreview(compressed)
+      setProofUrl(compressed)
+    } catch (err: any) {
+      setError(err?.message || 'Failed to compress image')
+    } finally {
+      setCompressing(false)
+    }
+  }
+
+  const handleRemoveProof = () => {
+    setProofPreview(null)
+    setProofUrl('')
+  }
+
   const handleResetAndClose = () => {
     setSuccess(false)
     setError(null)
     setReason('')
     setTopic('')
     setProofUrl('')
+    setProofPreview(null)
     onClose()
   }
 
@@ -210,17 +273,74 @@ export function DisputeSheet({
                 />
               </div>
 
+              {/* Proof Image Upload with WebP Compression */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-secondary">
+                  Attach Excuse Proof Photo (Medical certificate, Excuse letter)
+                </label>
+
+                {proofPreview ? (
+                  <div className="relative rounded-lg border border-border bg-surface-2 p-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-11 w-11 rounded border border-border overflow-hidden shrink-0 bg-surface-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={proofPreview}
+                          alt="Proof preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-text-primary truncate">
+                          Proof attached
+                        </p>
+                        <p className="text-[11px] text-emerald-400 font-medium">
+                          WebP compressed (&le; 1 MB)
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveProof}
+                      className="p-1.5 text-text-tertiary hover:text-text-primary rounded-md hover:bg-surface-3 transition-colors"
+                      title="Remove proof"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center p-4 rounded-lg border border-dashed border-border bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors text-center gap-1.5 min-h-[44px]">
+                    <Upload className="h-5 w-5 text-text-tertiary" />
+                    <span className="text-xs font-medium text-text-primary">
+                      {compressing ? 'Compressing photo...' : 'Tap to upload photo (auto-compressed)'}
+                    </span>
+                    <span className="text-[11px] text-text-quaternary">
+                      PNG, JPG, or WEBP up to 5 MB
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={compressing}
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="proofUrl" className="text-xs font-medium text-text-secondary">
-                  Proof Image Link (Optional)
+                  Or enter proof link (Google Drive / OneDrive)
                 </label>
                 <input
                   id="proofUrl"
                   type="url"
-                  value={proofUrl}
+                  value={proofPreview ? '' : proofUrl}
+                  disabled={Boolean(proofPreview)}
                   onChange={(e) => setProofUrl(e.target.value)}
                   placeholder="https://..."
-                  className="h-11 min-h-[44px] rounded-lg border border-border bg-surface-2 px-3 text-sm text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                  className="h-11 min-h-[44px] rounded-lg border border-border bg-surface-2 px-3 text-sm text-text-primary placeholder:text-text-quaternary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50"
                 />
               </div>
             </div>
