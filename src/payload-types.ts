@@ -73,6 +73,8 @@ export interface Config {
     students: Student;
     enrollments: Enrollment;
     sessions: Session;
+    requests: Request;
+    rateLimits: RateLimit;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +88,8 @@ export interface Config {
     students: StudentsSelect<false> | StudentsSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     sessions: SessionsSelect<false> | SessionsSelect<true>;
+    requests: RequestsSelect<false> | RequestsSelect<true>;
+    rateLimits: RateLimitsSelect<false> | RateLimitsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -253,6 +257,38 @@ export interface Session {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "requests".
+ */
+export interface Request {
+  id: string;
+  subject: string | Subject;
+  session: string | Session;
+  student: string | Student;
+  type: 'present' | 'excuse' | 'recited';
+  reason?: string | null;
+  count?: number | null;
+  topic?: string | null;
+  proofUrl?: string | null;
+  proofStorageId?: string | null;
+  status: 'pending' | 'approved' | 'declined' | 'expired';
+  decidedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rateLimits".
+ */
+export interface RateLimit {
+  id: string;
+  key: string;
+  count: number;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -298,6 +334,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'sessions';
         value: string | Session;
+      } | null)
+    | ({
+        relationTo: 'requests';
+        value: string | Request;
+      } | null)
+    | ({
+        relationTo: 'rateLimits';
+        value: string | RateLimit;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -460,6 +504,36 @@ export interface SessionsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "requests_select".
+ */
+export interface RequestsSelect<T extends boolean = true> {
+  subject?: T;
+  session?: T;
+  student?: T;
+  type?: T;
+  reason?: T;
+  count?: T;
+  topic?: T;
+  proofUrl?: T;
+  proofStorageId?: T;
+  status?: T;
+  decidedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rateLimits_select".
+ */
+export interface RateLimitsSelect<T extends boolean = true> {
+  key?: T;
+  count?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
