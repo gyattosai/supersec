@@ -41,5 +41,21 @@ export const ReportLinks: CollectionConfig = {
       relationTo: 'users',
       label: 'Created By Secretary',
     },
+    {
+      name: 'legacyId',
+      type: 'text',
+      index: true,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'legacyRowId',
+      type: 'text',
+      index: true,
+      admin: {
+        readOnly: true,
+      },
+    },
   ],
 }

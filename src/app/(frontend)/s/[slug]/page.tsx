@@ -1,9 +1,10 @@
 import * as React from 'react'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getPublicSubjectPageData } from '@/lib/data/public-views'
+import { resolveLegacySubjectRedirect } from '@/lib/data/legacy-redirects'
 import { PublicSubjectPortal } from '@/components/public/public-subject-portal'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, MapPin, Video, Clock } from 'lucide-react'
@@ -31,6 +32,10 @@ export default async function PublicSubjectPage({
   const data = await getPublicSubjectPageData(payload, slug)
 
   if (!data) {
+    const legacyRedirect = await resolveLegacySubjectRedirect(payload, slug)
+    if (legacyRedirect) {
+      permanentRedirect(legacyRedirect.destination)
+    }
     notFound()
   }
 
