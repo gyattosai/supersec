@@ -419,7 +419,7 @@ export function SubjectHomeView({
           <Inbox className="h-4 w-4" />
           Requests
           {typeof counts?.pendingRequests === 'number' && counts.pendingRequests > 0 && (
-            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-500/30">
               {counts.pendingRequests}
             </span>
           )}

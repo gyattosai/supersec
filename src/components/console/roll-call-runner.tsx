@@ -302,24 +302,24 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
 
             {/* Presence breakdown pills */}
             <div className="flex items-center gap-1.5 flex-wrap text-xs">
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-medium">
                 {score.present} Present
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 font-medium">
                 {score.absent} Absent
               </span>
               {score.excused > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium">
                   {score.excused} Excused
                 </span>
               )}
               {score.conflict > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20 font-medium">
                   {score.conflict} Conflict
                 </span>
               )}
               {score.unset > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 font-bold animate-pulse motion-reduce:animate-none">
+                <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 border border-orange-500/40 font-bold animate-pulse motion-reduce:animate-none">
                   {score.unset} Unset
                 </span>
               ) : (
@@ -376,7 +376,7 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
               statusFilter === 'unset'
                 ? 'bg-orange-500 text-white font-bold shadow-sm'
                 : score.unset > 0
-                  ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30 font-bold'
+                  ? 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30 font-bold'
                   : 'bg-surface-2 text-text-secondary hover:text-text-primary'
             }`}
           >

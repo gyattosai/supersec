@@ -207,7 +207,7 @@ export function SettingsHub({ userEmail, activeTerm, stats }: SettingsHubProps) 
                 </>
               ) : exportSuccess ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Downloaded!</span>
                 </>
               ) : (
@@ -237,7 +237,7 @@ export function SettingsHub({ userEmail, activeTerm, stats }: SettingsHubProps) 
                 <User className="h-3.5 w-3.5 text-brand-text" />
                 <span className="font-mono">{userEmail}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                 <Database className="h-3.5 w-3.5" />
                 <span>MongoDB Atlas Flex (Connected)</span>
               </div>
