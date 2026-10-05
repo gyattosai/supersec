@@ -1,13 +1,13 @@
 # 01: Gemini Client & AI Change-Note Generator
 
-**What to build:** Install `@google/genai` SDK, configure server-side Gemini client seam with graceful fallback, and build `POST /api/ai/change-note` wired to the "✨ Suggest note" button in the Roll Call Publish Barrier Modal.
+**What to build:** Server-side AI client with graceful fallback and an automated change-note generator that summarizes attendance deltas when republishing an edited session.
 
-**Blocked by:** none
+**Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Install `@google/genai` package.
-- [ ] Create `src/lib/ai/gemini-client.ts` with model `gemini-3.5-flash-lite` and `isAiAvailable()` check.
-- [ ] Implement `POST /api/ai/change-note` computing delta between previous version and draft, stripping private fields.
-- [ ] Add "✨ Suggest with AI" button to `PublishModal` in `src/components/console/roll-call-runner.tsx`.
-- [ ] Unit tests for change-note delta extraction, prompt sanitization, and fallback when API key is missing.
+- [x] Gemini API client initializes with server-only key and falls back cleanly when key is absent.
+- [x] Session republish barrier provides an on-demand "Suggest note with AI" button.
+- [x] AI prompt receives only factual attendance deltas (e.g. absent to excused) and strictly excludes private notes, student IDs, or medical excuse texts.
+- [x] Generated change note populates the editable note input for secretary review before publishing.
+- [x] Unit tests for prompt sanitization, delta computation, and offline fallback.

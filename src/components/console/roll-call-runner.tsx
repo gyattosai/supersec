@@ -9,6 +9,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { RollCallRow, type RollCallEntry } from '@/components/console/roll-call-row'
 import { RollCallQueue, type SessionOp } from '@/lib/roll-call-queue'
 import { canPublishSession, filterRosterEntries, countUnsetStudents } from '@/lib/roll-call-helpers'
+import { computeSessionDeltas } from '@/lib/ai/change-note'
 import { type PresenceState } from '@/components/ui/segmented-toggle'
 
 export interface RollCallRunnerProps {
@@ -39,6 +40,39 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
   const [changeNote, setChangeNote] = React.useState('')
   const [publishing, setPublishing] = React.useState(false)
   const [publishError, setPublishError] = React.useState<string | null>(null)
+  const [suggestingNote, setSuggestingNote] = React.useState(false)
+
+  const initialEntriesRef = React.useRef<any[]>(session.entries || [])
+
+  const studentNamesMap = React.useMemo(() => {
+    const map = new Map<string, string>()
+    for (const e of entries) {
+      const sId = typeof e.student === 'object' && e.student !== null ? e.student.id : e.student
+      const sName = typeof e.student === 'object' && e.student !== null ? e.student.name : 'Unknown'
+      map.set(sId, sName)
+    }
+    return map
+  }, [entries])
+
+  const handleSuggestChangeNote = async () => {
+    setSuggestingNote(true)
+    try {
+      const deltas = computeSessionDeltas(initialEntriesRef.current, entries, studentNamesMap)
+      const res = await fetch('/api/ai/change-note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deltas }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (data.suggestion) {
+        setChangeNote(data.suggestion)
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setSuggestingNote(false)
+    }
+  }
 
   // Single-flight queue instance
   const queueRef = React.useRef<RollCallQueue | null>(null)
@@ -330,9 +364,20 @@ export function RollCallRunner({ session, subject }: RollCallRunnerProps) {
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="changeNote" className="text-xs font-medium text-text-secondary">
-              Change Note (Mandatory)
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="changeNote" className="text-xs font-medium text-text-secondary select-none">
+                Change Note (Mandatory)
+              </label>
+              <button
+                type="button"
+                onClick={handleSuggestChangeNote}
+                disabled={suggestingNote}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-text hover:underline disabled:opacity-50 min-h-[32px] px-1"
+              >
+                <Sparkles className="h-3 w-3" />
+                {suggestingNote ? 'Generating...' : '✨ Suggest note'}
+              </button>
+            </div>
             <input
               id="changeNote"
               type="text"
