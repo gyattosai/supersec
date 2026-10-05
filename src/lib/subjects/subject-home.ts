@@ -1,4 +1,5 @@
 import { getWeekdayAbbrev } from '@/lib/dashboard-helpers'
+import { formatTimeRange12 } from '@/lib/format-time'
 
 export interface SubjectScheduleSlot {
   weekday: string
@@ -108,7 +109,7 @@ export function projectSubjectHomeHeader(
   let nextMeetingBadge = 'No upcoming class'
   if (nextMeeting) {
     const dayLabel = nextMeeting.isToday ? 'Today' : capitalize(nextMeeting.weekday)
-    nextMeetingBadge = `${dayLabel} ${nextMeeting.start}–${nextMeeting.end}`
+    nextMeetingBadge = `${dayLabel} ${formatTimeRange12(nextMeeting.start, nextMeeting.end)}`
   }
 
   return {

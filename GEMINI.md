@@ -122,6 +122,10 @@ Leverage the installed specialized skills and tools based on the task:
    * **Pyramid Balance**: 70% fast unit tests (pure transforms, stats, date rules) · 20% integration tests (Payload local API, access control) · 10% E2E tests (critical paths).
    * **Pre-Deploy Verification**: Run `pnpm test` and ensure 100% of privacy & stats tests pass before deployment.
    * **Mobile Viewport QA**: Use Playwright/DevTools to verify phone layouts (375px–430px) and touch targets (≥ 44px).
+   * **Mandatory Visual & Browser Verification (Playwright / Chrome DevTools MCP)**:
+     - Agents MUST NOT declare UI or screen tasks complete based solely on unit tests or compile success.
+     - Verify screens directly using Playwright or Chrome DevTools MCP tools (`browser_navigate`, `browser_snapshot`, `browser_take_screenshot`).
+     - Confirm absence of runtime 500 server errors, check 12-hour time formatting (`h:mm A`), verify navigation between all screens (Dashboard, Subjects, Requests, Settings), and assert touch targets (≥ 44px) before handing work over.
 
 ---
 

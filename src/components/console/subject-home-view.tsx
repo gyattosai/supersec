@@ -23,6 +23,10 @@ import {
   MessageSquare,
   Flame,
   ChevronRight,
+  BookOpen,
+  Pin,
+  HelpCircle,
+  Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -37,19 +41,35 @@ import type {
   StudentMonitoringResult,
 } from '@/lib/stats/absentee-monitoring'
 
-export type SubjectHomeTab = 'sessions' | 'roster' | 'requests' | 'monitoring' | 'reports'
+export type SubjectHomeTab = 'sessions' | 'roster' | 'posts' | 'requests' | 'monitoring' | 'reports'
+
+export interface SubjectPostItem {
+  id: string
+  type: 'announcement' | 'resource' | 'question'
+  title: string
+  body?: string
+  status: 'published' | 'draft' | 'archived'
+  publishedAt?: string
+  priority?: boolean
+  pinnedUntil?: string
+  category?: string
+  tags?: string[]
+  official?: boolean
+}
 
 interface SubjectHomeViewProps {
   header: SubjectHomeHeaderData
   todayDate: string
   sessions?: SubjectSessionSummaryItem[]
   roster?: SubjectRosterItem[]
+  posts?: SubjectPostItem[]
   requests?: SubjectRequestItem[]
   monitoring?: SubjectMonitoringSummary
   reportToken?: string
   counts?: {
     sessions?: number
     students?: number
+    posts?: number
     pendingRequests?: number
     flaggedStudents?: number
   }
@@ -60,6 +80,7 @@ export function SubjectHomeView({
   todayDate,
   sessions = [],
   roster = [],
+  posts = [],
   requests = [],
   monitoring,
   reportToken = '',
@@ -70,6 +91,19 @@ export function SubjectHomeView({
   const [startingSession, setStartingSession] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
+
+  // Posts & Knowledge State
+  const [postTypeFilter, setPostTypeFilter] = useState<'all' | 'announcement' | 'resource' | 'question'>('all')
+  const [postSearch, setPostSearch] = useState('')
+
+  const filteredPosts = (posts || []).filter((post) => {
+    if (postTypeFilter !== 'all' && post.type !== postTypeFilter) return false
+    if (postSearch.trim()) {
+      const q = postSearch.toLowerCase()
+      return post.title.toLowerCase().includes(q) || (post.body && post.body.toLowerCase().includes(q))
+    }
+    return true
+  })
 
   // Professor Report Token State
   const [currentReportToken, setCurrentReportToken] = useState(reportToken)
@@ -356,6 +390,24 @@ export function SubjectHomeView({
 
         <button
           type="button"
+          onClick={() => setActiveTab('posts')}
+          className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-colors min-h-[44px] ${
+            activeTab === 'posts'
+              ? 'border-brand text-brand font-semibold'
+              : 'border-transparent text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          <BookOpen className="h-4 w-4" />
+          Posts
+          {typeof counts?.posts === 'number' && counts.posts > 0 && (
+            <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+              {counts.posts}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('requests')}
           className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-colors min-h-[44px] ${
             activeTab === 'requests'
@@ -579,6 +631,161 @@ export function SubjectHomeView({
                     ? `No enrolled students match "${rosterSearch}"`
                     : 'No active students enrolled in this subject.'}
                 </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'posts' && (
+          <div className="flex flex-col gap-4">
+            {/* Filter buttons & Action Shortcuts */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
+                {(
+                  [
+                    { id: 'all', label: 'All Posts' },
+                    { id: 'announcement', label: 'Announcements' },
+                    { id: 'resource', label: 'Resources' },
+                    { id: 'question', label: 'Q&A' },
+                  ] as const
+                ).map((tab) => {
+                  const count = (posts || []).filter((p) =>
+                    tab.id === 'all' ? true : p.type === tab.id,
+                  ).length
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setPostTypeFilter(tab.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors min-h-[38px] ${
+                        postTypeFilter === tab.id
+                          ? 'bg-brand/10 border-brand/30 text-brand font-semibold'
+                          : 'bg-surface-1 border-border text-text-secondary hover:text-text-primary hover:bg-surface-2'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-surface-2 border border-border">
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href={`/console/posts/new?type=announcement&subject=${header.subjectId}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                >
+                  <Plus className="h-3.5 w-3.5 text-brand" />
+                  <span>Announcement</span>
+                </Link>
+                <Link
+                  href={`/console/posts/new?type=resource&subject=${header.subjectId}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                >
+                  <Plus className="h-3.5 w-3.5 text-brand" />
+                  <span>Resource</span>
+                </Link>
+                <Link
+                  href={`/console/posts/new?type=question&subject=${header.subjectId}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                >
+                  <Plus className="h-3.5 w-3.5 text-brand" />
+                  <span>Q&A</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Posts Content */}
+            {filteredPosts.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {filteredPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-surface-1 shadow-sm hover:border-border-hover transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                              post.type === 'announcement'
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                : post.type === 'resource'
+                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            }`}
+                          >
+                            {post.type === 'question' ? 'Q&A' : post.type}
+                          </span>
+                          {post.priority && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-brand/10 text-brand-text border border-brand/20">
+                              <Pin className="h-3 w-3" />
+                              Pinned
+                            </span>
+                          )}
+                          {post.official && (
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Official
+                            </span>
+                          )}
+                          <span
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded border capitalize ${
+                              post.status === 'published'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : post.status === 'draft'
+                                  ? 'bg-surface-2 text-text-tertiary border-border'
+                                  : 'bg-surface-2 text-text-quaternary border-border'
+                            }`}
+                          >
+                            {post.status}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-semibold text-text-primary mt-1">
+                          {post.title}
+                        </h3>
+                        {post.body && (
+                          <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
+                            {post.body}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-surface-1 p-8 text-center text-xs text-text-secondary flex flex-col items-center">
+                <BookOpen className="h-8 w-8 text-text-tertiary mb-3 opacity-60" />
+                <p className="font-semibold text-text-primary text-sm">Knowledge Hub & Posts</p>
+                <p className="mt-1 max-w-md text-text-secondary">
+                  Publish class announcements, lecture resources & attachments, or answer frequent student questions with an Official Secretary badge.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <Link
+                    href={`/console/posts/new?type=announcement&subject=${header.subjectId}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-brand" />
+                    <span>Create Announcement</span>
+                  </Link>
+                  <Link
+                    href={`/console/posts/new?type=resource&subject=${header.subjectId}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-brand" />
+                    <span>Share Resource</span>
+                  </Link>
+                  <Link
+                    href={`/console/posts/new?type=question&subject=${header.subjectId}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 text-xs font-medium text-text-primary transition-colors min-h-[38px]"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-brand" />
+                    <span>Answer Q&A</span>
+                  </Link>
+                </div>
               </div>
             )}
           </div>

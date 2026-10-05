@@ -7,6 +7,7 @@ import { getPublicSubjectPageData } from '@/lib/data/public-views'
 import { PublicSessionsView } from '@/components/classmate/public-sessions-view'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, MapPin, Video, Clock } from 'lucide-react'
+import { formatTimeRange12 } from '@/lib/format-time'
 
 export const metadata: Metadata = {
   title: 'Subject Attendance · SuperSec',
@@ -70,7 +71,12 @@ export default async function PublicSubjectPage({
             <div className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5 text-text-quaternary" />
               <span>
-                {subject.schedule.map((s: any) => `${s.day} ${s.startTime}-${s.endTime}`).join(', ')}
+                {subject.schedule
+                  .map(
+                    (s: any) =>
+                      `${(s.weekday || s.day || '').charAt(0).toUpperCase() + (s.weekday || s.day || '').slice(1)} ${formatTimeRange12(s.start || s.startTime, s.end || s.endTime)}`,
+                  )
+                  .join(', ')}
               </span>
             </div>
           )}

@@ -2,9 +2,18 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+import { LogOut, LayoutDashboard, BookOpen, Inbox, Settings } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { getNavigationTabs } from '@/lib/navigation'
+import { cn } from '@/lib/utils'
+
+const ICON_MAP = {
+  dashboard: LayoutDashboard,
+  subjects: BookOpen,
+  requests: Inbox,
+  settings: Settings,
+}
 
 export interface ConsoleHeaderProps {
   termName?: string
@@ -12,6 +21,8 @@ export interface ConsoleHeaderProps {
 
 export function ConsoleHeader({ termName }: ConsoleHeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const tabs = getNavigationTabs(pathname)
   const [loggingOut, setLoggingOut] = React.useState(false)
 
   const handleLogout = async () => {
@@ -41,6 +52,28 @@ export function ConsoleHeader({ termName }: ConsoleHeaderProps) {
             {termName}
           </Badge>
         )}
+
+        {/* Desktop Navigation */}
+        <nav aria-label="Desktop navigation" className="hidden md:flex items-center gap-1 ml-4">
+          {tabs.map((tab) => {
+            const Icon = ICON_MAP[tab.id]
+            return (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  tab.isActive
+                    ? 'bg-surface-2 text-text-primary font-semibold shadow-xs'
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-2/60',
+                )}
+              >
+                <Icon className={cn('h-3.5 w-3.5', tab.isActive ? 'text-brand-text' : '')} />
+                <span>{tab.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
       <div className="flex items-center gap-2">

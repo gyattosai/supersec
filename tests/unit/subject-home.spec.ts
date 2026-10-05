@@ -66,7 +66,7 @@ describe('Subject Home Hub & Quick Actions (Ticket 01)', () => {
       expect(header.sectionMark).toBe('OLCA113N001')
       expect(header.professor).toBe('Sir Ariel Casimiro')
       expect(header.publicUrl).toBe('/s/olcbstm01-k7q2')
-      expect(header.nextMeetingBadge).toContain('Tue 18:00–19:30')
+      expect(header.nextMeetingBadge).toContain('Tue 6:00 PM – 7:30 PM')
     })
   })
 })

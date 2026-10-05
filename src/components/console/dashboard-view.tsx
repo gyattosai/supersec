@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { formatTimeRange12 } from '@/lib/format-time'
 
 export interface TodayClassItem {
   subject: {
@@ -95,9 +96,7 @@ export function DashboardView({
   const firstFlaggedSubject = allSubjects.find((s) => (s.flaggedCount ?? 0) > 0)
   const monitoringHref = firstFlaggedSubject
     ? `/console/subjects/${firstFlaggedSubject.id}?tab=monitoring`
-    : allSubjects.length > 0
-      ? `/console/subjects/${allSubjects[0].id}?tab=monitoring`
-      : '#all-subjects'
+    : '/console/subjects'
 
   const handleConfirmGlobalNoClass = async () => {
     if (!globalNoClassReason.trim()) {
@@ -358,7 +357,7 @@ export function DashboardView({
                 <div className="flex items-center gap-1.5 text-xs text-text-secondary shrink-0 font-medium">
                   <Clock className="h-3.5 w-3.5 text-text-tertiary" />
                   <span>
-                    {item.slot.start} – {item.slot.end}
+                    {formatTimeRange12(item.slot.start, item.slot.end)}
                   </span>
                 </div>
               </div>
@@ -439,100 +438,33 @@ export function DashboardView({
         )}
       </div>
 
-      {/* All Subjects Section */}
+      {/* Dedicated All Subjects Navigation Card */}
       {allSubjects && allSubjects.length > 0 && (
-        <div className="flex flex-col gap-3 mt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-text-secondary" />
-              <h2 className="text-base font-semibold text-text-primary">
-                All Subjects
-              </h2>
-              <Badge variant="neutral" className="text-xs">
-                {allSubjects.length}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {allSubjects.map((subj) => (
-              <div
-                key={subj.id}
-                className="p-4 rounded-xl border border-border bg-surface-1 shadow-1 flex flex-col justify-between gap-3 hover:border-border-hover transition-colors"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-xs font-bold text-brand-text uppercase tracking-wider">
-                      {subj.code} {subj.sectionMark ? `· ${subj.sectionMark}` : ''}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {subj.flaggedCount && subj.flaggedCount > 0 ? (
-                        <Link
-                          href={`/console/subjects/${subj.id}?tab=monitoring`}
-                          className="inline-flex items-center"
-                        >
-                          <Badge variant="danger" className="text-[11px] gap-1 hover:opacity-80 transition-opacity">
-                            <AlertTriangle className="h-3 w-3" />
-                            {subj.flaggedCount} flagged
-                          </Badge>
-                        </Link>
-                      ) : null}
-                      <Badge variant="neutral" className="text-[11px]">
-                        {subj.studentCount} student{subj.studentCount === 1 ? '' : 's'}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/console/subjects/${subj.id}`}
-                    className="group block hover:opacity-90 transition-opacity"
-                  >
-                    <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
-                      {subj.name}
-                    </h3>
-                  </Link>
-                  {subj.professor && (
-                    <p className="text-xs text-text-tertiary mt-0.5">
-                      Prof. {subj.professor}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    {subj.schedule.map((slot, i) => (
-                      <span
-                        key={i}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-surface-2 text-text-secondary border border-border"
-                      >
-                        <Clock className="h-3 w-3 text-text-tertiary" />
-                        <span className="capitalize">{slot.weekday}</span> {slot.start}–{slot.end}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={() => handleStartSessionForSubject(subj)}
-                    loading={startingSubjectId === subj.id}
-                    className="flex-1 text-xs min-h-[44px]"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1.5" />
-                    Start Session
-                  </Button>
-                  <Link
-                    href={`/s/${subj.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center min-h-[44px] px-3 rounded-lg border border-border bg-surface-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors shrink-0"
-                    title="Open public classmate view"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                    Public View
-                  </Link>
-                </div>
+        <div className="flex flex-col gap-2 mt-1">
+          <Link
+            href="/console/subjects"
+            className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface-1 hover:bg-surface-2 transition-colors shadow-1 group min-h-[44px]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-surface-2 group-hover:bg-surface-3 flex items-center justify-center text-brand transition-colors">
+                <BookOpen className="h-5 w-5" />
               </div>
-            ))}
-          </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors">
+                    All Subjects
+                  </span>
+                  <Badge variant="neutral" className="text-xs">
+                    {allSubjects.length}
+                  </Badge>
+                </div>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Open subjects, manage student rosters, and view official reports
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-text-tertiary group-hover:text-text-primary transition-colors" />
+          </Link>
         </div>
       )}
 

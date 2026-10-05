@@ -59,7 +59,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
       where: {
         and: [
           { subject: { equals: subject.id } },
-          { dropped: { not_equals: true } },
+          { status: { equals: 'active' } },
         ],
       },
       depth: 1,
@@ -131,7 +131,7 @@ export default async function SubjectHomePage({ params }: PageProps) {
       sectionMark: enr.sectionMark,
       hasScheduleConflict: Boolean(enr.hasScheduleConflict),
       enrolledOn: enr.enrolledOn,
-      dropped: Boolean(enr.dropped),
+      dropped: enr.status === 'dropped' || Boolean(enr.dropped),
       droppedOn: enr.droppedOn,
       displayOrder: enr.displayOrder,
     }
@@ -161,12 +161,14 @@ export default async function SubjectHomePage({ params }: PageProps) {
       todayDate={todayDate}
       sessions={sessions}
       roster={roster}
+      posts={[]}
       requests={requests}
       monitoring={monitoring}
       reportToken={reportToken}
       counts={{
         sessions: sessionsRes.totalDocs,
         students: enrollmentsRes.totalDocs,
+        posts: 0,
         pendingRequests: pendingRequestsCount,
         flaggedStudents: monitoring.totalFlaggedCount,
       }}
