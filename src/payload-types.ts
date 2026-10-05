@@ -306,6 +306,8 @@ export interface ReportLink {
   token: string;
   revokedAt?: string | null;
   createdBy?: (string | null) | User;
+  legacyId?: string | null;
+  legacyRowId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -712,6 +714,8 @@ export interface ReportLinksSelect<T extends boolean = true> {
   token?: T;
   revokedAt?: T;
   createdBy?: T;
+  legacyId?: T;
+  legacyRowId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

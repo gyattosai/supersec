@@ -128,7 +128,9 @@
   }
 }
 
-[data-theme="light"] {
+[data-theme="light"],
+.light,
+[data-mode="light"] {
   --bg-canvas: #fbfbfc;
   --bg-surface-1: #f4f5f6;
   --bg-surface-2: #ffffff;
