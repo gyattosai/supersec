@@ -72,6 +72,7 @@ export interface Config {
     subjects: Subject;
     students: Student;
     enrollments: Enrollment;
+    sessions: Session;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     students: StudentsSelect<false> | StudentsSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
+    sessions: SessionsSelect<false> | SessionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -225,6 +227,32 @@ export interface Enrollment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions".
+ */
+export interface Session {
+  id: string;
+  subject: string | Subject;
+  date: string;
+  kind: 'class' | 'noClass';
+  phase?: ('live' | 'finished') | null;
+  noClassReason?: string | null;
+  entries?:
+    | {
+        student: string | Student;
+        attendance?: ('P' | 'A' | 'E') | null;
+        recitations?: number | null;
+        recitationTopic?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  changeNote?: string | null;
+  legacyRowId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -266,6 +294,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'enrollments';
         value: string | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'sessions';
+        value: string | Session;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -403,6 +435,31 @@ export interface EnrollmentsSelect<T extends boolean = true> {
   legacyRowId?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions_select".
+ */
+export interface SessionsSelect<T extends boolean = true> {
+  subject?: T;
+  date?: T;
+  kind?: T;
+  phase?: T;
+  noClassReason?: T;
+  entries?:
+    | T
+    | {
+        student?: T;
+        attendance?: T;
+        recitations?: T;
+        recitationTopic?: T;
+        id?: T;
+      };
+  changeNote?: T;
+  legacyRowId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

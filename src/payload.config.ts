@@ -10,6 +10,7 @@ import { Terms } from './collections/Terms'
 import { Subjects } from './collections/Subjects'
 import { Students } from './collections/Students'
 import { Enrollments } from './collections/Enrollments'
+import { Sessions } from './collections/Sessions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -21,7 +22,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Terms, Subjects, Students, Enrollments],
+  collections: [Users, Terms, Subjects, Students, Enrollments, Sessions],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'supersec-local-development-secret-key-32chars-min',
   typescript: {
