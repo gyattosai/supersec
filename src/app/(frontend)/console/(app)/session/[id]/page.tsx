@@ -2,6 +2,7 @@ import * as React from 'react'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { formatStudentDisplayName } from '@/lib/data/students'
 import { RollCallRunner } from '@/components/console/roll-call-runner'
 
 interface SessionPageProps {
@@ -52,7 +53,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
     entries: (sessionDoc.entries || []).map((e: any) => ({
       student: {
         id: typeof e.student === 'object' && e.student !== null ? e.student.id : e.student,
-        name: typeof e.student === 'object' && e.student !== null ? e.student.name : 'Unknown',
+        name: formatStudentDisplayName(e.student),
         studentNumber:
           typeof e.student === 'object' && e.student !== null ? e.student.studentNumber : undefined,
       },

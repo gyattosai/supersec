@@ -110,6 +110,18 @@ _Avoid_: Note, subject, remark
 The one-tap action that populates every Not Set entry in a session with Present, leaving existing entries unchanged.
 _Avoid_: Fill all, check all, mark all
 
+**Roll Call Scoreboard**:
+The live summary component displaying real-time roll call metrics (Present, Absent, Excused, Not Set, and Attendance %) during an active class session.
+_Avoid_: Session stats, live counter, attendance banner
+
+**Status Filter Chips**:
+Fast filter triggers above the roll call roster that isolate entries by presence state (`All`, `Unset`, `Absent`, `Excused`, `Present`).
+_Avoid_: Status tabs, attendance filters, row filters
+
+**Live Session Indicator**:
+A global status badge shown in console navigation when an unfinished roll call session is active, providing one-tap return to the live session.
+_Avoid_: Active banner, session button, live chip
+
 ## Session Lifecycle
 
 **Upcoming**:

@@ -17,9 +17,9 @@ export default async function ConsoleLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-canvas text-text-primary">
+    <div className="min-h-screen flex flex-col bg-canvas text-text-primary overflow-x-hidden">
       <ConsoleHeader />
-      <main className="flex-1 pb-20 md:pb-6 px-4 py-4 max-w-4xl w-full mx-auto">
+      <main className="flex-1 pb-20 md:pb-6 px-4 py-4 max-w-6xl w-full mx-auto">
         {children}
       </main>
       <BottomNav />

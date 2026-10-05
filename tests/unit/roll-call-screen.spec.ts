@@ -3,6 +3,7 @@ import {
   canPublishSession,
   filterRosterEntries,
   countUnsetStudents,
+  calculateSessionLiveScore,
 } from '@/lib/roll-call-helpers'
 
 describe('Live Roll Call Screen Helpers & Barriers (Ticket 04)', () => {
@@ -56,6 +57,43 @@ describe('Live Roll Call Screen Helpers & Barriers (Ticket 04)', () => {
       expect(results).toHaveLength(1)
       expect(results[0].student.name).toBe('Alice Santos')
       expect(results[0].recitations).toBe(2)
+    })
+
+    it('filters entries by statusFilter (unset, present, absent, etc.)', () => {
+      const unsetResults = filterRosterEntries(sampleEntries as any, { statusFilter: 'unset' })
+      expect(unsetResults).toHaveLength(1)
+      expect(unsetResults[0].student.name).toBe('Charlie Cruz')
+
+      const absentResults = filterRosterEntries(sampleEntries as any, { statusFilter: 'absent' })
+      expect(absentResults).toHaveLength(1)
+      expect(absentResults[0].student.name).toBe('Bob Reyes')
+
+      const presentResults = filterRosterEntries(sampleEntries as any, { statusFilter: 'present' })
+      expect(presentResults).toHaveLength(1)
+      expect(presentResults[0].student.name).toBe('Alice Santos')
+    })
+  })
+
+  describe('Session Live Scoreboard calculation', () => {
+    it('computes real-time presence counts and percentage accurately', () => {
+      const entries = [
+        { student: { id: 's1', name: 'S1' }, attendance: 'P' },
+        { student: { id: 's2', name: 'S2' }, attendance: 'P' },
+        { student: { id: 's3', name: 'S3' }, attendance: 'A' },
+        { student: { id: 's4', name: 'S4' }, attendance: 'E' },
+        { student: { id: 's5', name: 'S5' }, attendance: 'C' },
+        { student: { id: 's6', name: 'S6' }, attendance: null },
+      ]
+
+      const score = calculateSessionLiveScore(entries as any)
+      expect(score.total).toBe(6)
+      expect(score.present).toBe(2)
+      expect(score.absent).toBe(1)
+      expect(score.excused).toBe(1)
+      expect(score.conflict).toBe(1)
+      expect(score.unset).toBe(1)
+      // Attendance % = Present / (Present + Absent) = 2 / (2 + 1) = 67%
+      expect(score.attendancePercentage).toBe(67)
     })
   })
 })
