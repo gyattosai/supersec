@@ -128,3 +128,143 @@ export async function markNoClass(
 
   return session
 }
+
+export async function recordAttendance(
+  payload: Payload,
+  sessionId: string,
+  studentId: string,
+  attendance: 'P' | 'A' | 'E' | null,
+) {
+  if (attendance !== null && !['P', 'A', 'E'].includes(attendance)) {
+    throw new Error(`Invalid attendance status: ${attendance}`)
+  }
+
+  const session = await payload.findByID({
+    collection: 'sessions',
+    id: sessionId,
+    overrideAccess: true,
+  })
+
+  if (!session || !session.entries) {
+    throw new Error(`Session ${sessionId} not found`)
+  }
+
+  const entries: SessionEntry[] = session.entries.map((e: any) => {
+    const entryStudentId = typeof e.student === 'object' ? e.student.id : e.student
+    if (entryStudentId === studentId) {
+      return {
+        ...e,
+        student: entryStudentId,
+        attendance,
+      }
+    }
+    return {
+      ...e,
+      student: entryStudentId,
+    }
+  })
+
+  const updated = await payload.update({
+    collection: 'sessions',
+    id: sessionId,
+    data: {
+      entries,
+    },
+    overrideAccess: true,
+  })
+
+  return updated
+}
+
+export async function adjustRecitation(
+  payload: Payload,
+  sessionId: string,
+  studentId: string,
+  delta: number,
+  topic?: string,
+) {
+  const session = await payload.findByID({
+    collection: 'sessions',
+    id: sessionId,
+    overrideAccess: true,
+  })
+
+  if (!session || !session.entries) {
+    throw new Error(`Session ${sessionId} not found`)
+  }
+
+  const entries: SessionEntry[] = session.entries.map((e: any) => {
+    const entryStudentId = typeof e.student === 'object' ? e.student.id : e.student
+    if (entryStudentId === studentId) {
+      const current = e.recitations || 0
+      const nextCount = Math.max(0, current + delta)
+      return {
+        ...e,
+        student: entryStudentId,
+        recitations: nextCount,
+        recitationTopic: topic !== undefined ? topic : e.recitationTopic,
+      }
+    }
+    return {
+      ...e,
+      student: entryStudentId,
+    }
+  })
+
+  const updated = await payload.update({
+    collection: 'sessions',
+    id: sessionId,
+    data: {
+      entries,
+    },
+    overrideAccess: true,
+  })
+
+  return updated
+}
+
+export async function markAllPresent(
+  payload: Payload,
+  sessionId: string,
+): Promise<{ updatedCount: number; session: any }> {
+  const session = await payload.findByID({
+    collection: 'sessions',
+    id: sessionId,
+    overrideAccess: true,
+  })
+
+  if (!session || !session.entries) {
+    throw new Error(`Session ${sessionId} not found`)
+  }
+
+  let updatedCount = 0
+
+  // Rule R1: "Mark all Present" fills only "Not set" rows, never touching P, A, or E
+  const entries: SessionEntry[] = session.entries.map((e: any) => {
+    const entryStudentId = typeof e.student === 'object' ? e.student.id : e.student
+    if (!e.attendance) {
+      updatedCount++
+      return {
+        ...e,
+        student: entryStudentId,
+        attendance: 'P',
+      }
+    }
+    return {
+      ...e,
+      student: entryStudentId,
+    }
+  })
+
+  const updated = await payload.update({
+    collection: 'sessions',
+    id: sessionId,
+    data: {
+      entries,
+    },
+    overrideAccess: true,
+  })
+
+  return { updatedCount, session: updated }
+}
+
