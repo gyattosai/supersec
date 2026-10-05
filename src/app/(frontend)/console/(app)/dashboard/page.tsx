@@ -1,58 +1,82 @@
 import * as React from 'react'
-import Link from 'next/link'
-import { BookOpen, Calendar, Clock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+import { getActiveTerm } from '@/lib/data/terms'
+import { getTodayClasses, matchExistingSession, getWeekdayAbbrev } from '@/lib/dashboard-helpers'
+import { DashboardView, type TodayClassItem } from '@/components/console/dashboard-view'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const payload = await getPayload({ config })
+  const todayDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())
+  const todayWeekday = getWeekdayAbbrev(todayDate)
+
+  const activeTerm = await getActiveTerm(payload, todayDate)
+  let todayClasses: TodayClassItem[] = []
+
+  if (activeTerm?.id) {
+    const subjectsRes = await payload.find({
+      collection: 'subjects',
+      where: {
+        and: [
+          { term: { equals: activeTerm.id } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 100,
+      overrideAccess: true,
+    })
+
+    const sessionsRes = await payload.find({
+      collection: 'sessions',
+      where: {
+        date: { equals: todayDate },
+      },
+      limit: 100,
+      overrideAccess: true,
+    })
+
+    const scheduled = getTodayClasses(subjectsRes.docs as any[], todayWeekday)
+
+    todayClasses = scheduled.map((sc) => {
+      const existing = matchExistingSession(sessionsRes.docs as any[], sc.subject.id, todayDate)
+      return {
+        subject: {
+          id: sc.subject.id,
+          code: sc.subject.code,
+          name: sc.subject.name,
+          sectionMark: sc.subject.sectionMark,
+          room: sc.subject.room,
+          zoomUrl: sc.subject.zoomUrl,
+        },
+        slot: sc.slot,
+        existingSession: existing
+          ? {
+              id: existing.id,
+              _status: existing._status,
+              type: existing.type,
+            }
+          : null,
+      }
+    })
+  }
+
+  const pendingReqRes = await payload.find({
+    collection: 'requests',
+    where: {
+      status: { equals: 'pending' },
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  const pendingRequestsCount = pendingReqRes.totalDocs || 0
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-text-primary">
-            Dashboard
-          </h1>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Today&apos;s schedule and active roll calls
-          </p>
-        </div>
-      </div>
-
-      {/* Quick shortcuts */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="p-4 rounded-xl border border-border bg-surface-1 flex flex-col justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-brand-text mb-1">
-              <Calendar className="h-4 w-4" />
-              <span>Today&apos;s Classes</span>
-            </div>
-            <p className="text-sm font-medium text-text-primary">
-              No active session running right now
-            </p>
-          </div>
-          <Link href="/console/subjects">
-            <Button variant="secondary" size="sm" className="w-full">
-              View All Subjects
-            </Button>
-          </Link>
-        </div>
-
-        <div className="p-4 rounded-xl border border-border bg-surface-1 flex flex-col justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-text-tertiary mb-1">
-              <BookOpen className="h-4 w-4" />
-              <span>Roster & Enrollment</span>
-            </div>
-            <p className="text-sm font-medium text-text-primary">
-              Manage class directories and paste rosters
-            </p>
-          </div>
-          <Link href="/console/subjects">
-            <Button variant="outline" size="sm" className="w-full">
-              Manage Rosters
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </div>
+    <DashboardView
+      todayDate={todayDate}
+      todayClasses={todayClasses}
+      pendingRequestsCount={pendingRequestsCount}
+      activeTermName={activeTerm?.name}
+    />
   )
 }
